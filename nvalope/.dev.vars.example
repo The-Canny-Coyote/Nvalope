@@ -1,0 +1,2 @@
+# Copy to .dev.vars and set a secret (min 32 chars). Do not commit .dev.vars.
+JWT_SECRET=your-dev-secret-at-least-32-characters-long

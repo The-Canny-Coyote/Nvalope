@@ -1,0 +1,25 @@
+node_modules
+dist
+*.local
+temp-app
+.env
+.env.*
+!.env.example
+
+# Editor/IDE (optional: remove .cursor/ if you want to share rules with the team)
+.cursor/
+
+# Documentation (kept locally only)
+docs/
+
+# Deploy staging (local use only)
+To Deploy/
+
+# Internal / not for public repo
+instructions.md
+scripts/create-stripe-products.js
+
+# Test and coverage artifacts
+coverage/
+playwright-report/
+test-results/

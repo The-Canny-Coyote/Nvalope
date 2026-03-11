@@ -1,0 +1,17 @@
+# CSP is injected at build time by vite-plugin-csp-guard (meta tag in index.html).
+# Cloudflare-injected scripts (e.g. Web Analytics) are not in the build; add hashes or allow origin if needed.
+
+# Root and index: avoid long cache so users get fresh HTML after deploy (and correct hashed asset URLs)
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+
+# Hashed assets: safe to cache forever; avoids stale HTML pointing at old 404ing assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Ensure OG image is served with correct type for Facebook/crawlers
+/og-image.png
+  Content-Type: image/png
+  Cache-Control: public, max-age=86400

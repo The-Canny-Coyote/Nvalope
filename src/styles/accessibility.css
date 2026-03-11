@@ -1,0 +1,434 @@
+/* Accessibility Mode Styles */
+
+/* Screen Reader Mode: stronger focus indicators so assistive tech users can see focus clearly */
+.accessibility-screen-reader-mode *:focus,
+.accessibility-screen-reader-mode *:focus-visible {
+  outline-width: 3px !important;
+  outline-offset: 2px !important;
+  outline-style: solid !important;
+}
+.accessibility-screen-reader-mode button:focus-visible,
+.accessibility-screen-reader-mode a:focus-visible,
+.accessibility-screen-reader-mode input:focus-visible,
+.accessibility-screen-reader-mode select:focus-visible,
+.accessibility-screen-reader-mode textarea:focus-visible,
+.accessibility-screen-reader-mode [role="button"]:focus-visible,
+.accessibility-screen-reader-mode [role="tab"]:focus-visible,
+.accessibility-screen-reader-mode [role="switch"]:focus-visible {
+  outline-width: 4px !important;
+  outline-offset: 2px !important;
+}
+
+/* When user toggles Reduced Motion: no transitions or animations so slider changes feel instant and not distracting */
+.accessibility-reduced-motion,
+.accessibility-reduced-motion *,
+.accessibility-reduced-motion *::before,
+.accessibility-reduced-motion *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+  animation: none !important;
+}
+
+/* When user toggles High Contrast: stronger borders and focus so UI stands out (toggle, not preset) */
+.accessibility-high-contrast button,
+.accessibility-high-contrast a[href],
+.accessibility-high-contrast input,
+.accessibility-high-contrast select,
+.accessibility-high-contrast [role="button"],
+.accessibility-high-contrast .border,
+.accessibility-high-contrast [class*="border"] {
+  border-width: 2px !important;
+  border-color: currentColor !important;
+}
+.accessibility-high-contrast *:focus-visible {
+  outline-width: 3px !important;
+  outline-offset: 2px !important;
+}
+.accessibility-high-contrast .text-muted-foreground {
+  color: color-mix(in srgb, currentColor 75%, transparent) !important;
+}
+
+/* Focus Mode - minimize distractions, list-based navigation; higher contrast than standard (distinct from Maximum Contrast) */
+/* No container box or glow; theme colors stay so it feels like the same app with less clutter */
+@media (prefers-reduced-motion: reduce) {
+  .accessibility-focus-mode *,
+  .accessibility-focus-mode *::before,
+  .accessibility-focus-mode *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.accessibility-focus-mode {
+  /* No border or background wrapper; use theme as-is for consistency */
+
+  /* Fully disable non-essential animations, transitions, auto-play, flashing */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [autoplay], [data-autoplay] {
+    display: none !important;
+  }
+
+  /* Hide secondary UI to prevent task-switching (donation cards, extra promo) */
+  .focus-mode-hide {
+    display: none !important;
+  }
+
+  /* Consistent, predictable layout: one-task-at-a-time feel */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700 !important;
+    margin-bottom: 0.5em !important;
+  }
+  p {
+    max-width: 65ch;
+    margin-bottom: 1em !important;
+  }
+  ul, ol {
+    margin-bottom: 1em !important;
+  }
+
+  /* Larger touch targets; text scale slider still applies */
+  button, a, input, select, label {
+    min-height: 48px !important;
+    min-width: 44px !important;
+    font-size: calc(1.125rem * var(--text-scale, 1)) !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Increased spacing between elements */
+  .space-y-2 > * + * { margin-top: 1.5rem !important; }
+  .space-y-3 > * + * { margin-top: 2rem !important; }
+  .space-y-4 > * + * { margin-top: 2.5rem !important; }
+
+  /* Simplified borders; predictable corners */
+  * {
+    border-radius: 0.5rem !important;
+  }
+
+  /* Strong focus indicator (higher contrast than standard, but theme color — not black/white like Maximum Contrast) */
+  *:focus, *:focus-visible {
+    outline: 3px solid var(--primary) !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Calm Mode - muted colors, no motion, extra space */
+.accessibility-calm-mode {
+  /* Disable all animations and transitions (including Tailwind animate-in/out and Radix data-state) */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [class*="animate-"],
+  [data-state="open"],
+  [data-state="closed"] {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Muted colors - desaturate everything */
+  filter: saturate(0.6);
+  
+  /* Extra whitespace */
+  padding: 2rem !important;
+  
+  .space-y-2 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  .space-y-3 > * + * {
+    margin-top: 2rem !important;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 2.5rem !important;
+  }
+  
+  /* Softer, gentler appearance */
+  * {
+    border-radius: 0.75rem !important;
+  }
+  
+  /* Hide decorative elements */
+  .drop-shadow-lg,
+  .drop-shadow-xl {
+    filter: none !important;
+  }
+  
+  /* Feature windows (cards, section content, glass panels, dialogs) stand out more against the background */
+  .card,
+  .glass-card,
+  [data-testid="section-content"] .card,
+  [data-radix-popper-content-wrapper],
+  [role="dialog"] {
+    border-width: 2px !important;
+    border-color: rgba(139, 105, 68, 0.35) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(139, 105, 68, 0.12) !important;
+    background-color: color-mix(in srgb, var(--card) 98%, var(--background)) !important;
+  }
+}
+
+/* Clear Mode - readability typography (sliders still apply via --text-scale, --line-height-scale, --letter-spacing-px) */
+.accessibility-clear-mode {
+  /* Proven sans-serifs (avoid Comic Sans per studies); no ligatures */
+  * {
+    font-family: Verdana, Arial, sans-serif !important;
+    font-variant-ligatures: none !important;
+  }
+  input[type="number"],
+  [style*="Courier New"] {
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+  /* Minimum 16px base; text scale slider still applies */
+  font-size: max(1rem, calc(1.125rem * var(--text-scale, 1))) !important;
+  /* Line-height 1.5–1.8; slider refines */
+  * {
+    line-height: calc(var(--line-height-scale, 1) * 1.6) !important;
+    letter-spacing: calc(0.12em + var(--letter-spacing-px, 0px)) !important;
+    word-spacing: 0.16em !important;
+  }
+  /* Paragraph spacing ~2× font size; left-align; limit line length 45–75ch */
+  p, .space-y-2 > * + *, .space-y-3 > * + *, .space-y-4 > * + * {
+    margin-top: 0;
+    margin-bottom: 2em !important;
+    text-align: left !important;
+  }
+  .space-y-2 > * + * { margin-top: 1.5rem !important; }
+  .space-y-3 > * + * { margin-top: 2rem !important; }
+  .space-y-4 > * + * { margin-top: 2.5rem !important; }
+  p {
+    max-width: 75ch;
+  }
+  /* Bold for emphasis, no italics/underlines */
+  em, i { font-style: normal !important; font-weight: 700 !important; text-decoration: none !important; }
+  u { text-decoration: none !important; font-weight: 700 !important; }
+  /* High-contrast cream background (4.5:1+); reduce glare */
+  background-color: #fffef5 !important;
+  color: #1a1410 !important;
+  /* Subtle current-element highlight on focus */
+  *:focus, *:focus-visible {
+    outline-offset: 2px;
+  }
+  [role="application"] *:focus {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+.dark .accessibility-clear-mode {
+  background-color: #1a1814 !important;
+  color: #f5f0e8 !important;
+  [role="application"] *:focus {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+/* Maximum Contrast Mode (sliders still apply: --text-scale, --line-height-scale, --letter-spacing-px) */
+.accessibility-contrast-mode {
+  /* Maximum contrast text */
+  color: #000000 !important;
+  
+  /* Bold borders everywhere */
+  * {
+    border-width: 3px !important;
+  }
+  
+  /* High contrast backgrounds */
+  background-color: #ffffff !important;
+  
+  /* Larger focus indicators */
+  *:focus,
+  *:focus-visible {
+    outline: 4px solid #000000 !important;
+    outline-offset: 4px !important;
+  }
+  
+  /* Larger base text; text scale slider still applies */
+  font-size: calc(1.25rem * var(--text-scale, 1)) !important;
+  
+  /* Remove subtle colors - everything black or white */
+  .text-muted-foreground {
+    color: #424242 !important;
+  }
+  
+  .bg-primary {
+    background-color: #000000 !important;
+  }
+  
+  .text-primary {
+    color: #000000 !important;
+  }
+  
+  .border-primary {
+    border-color: #000000 !important;
+  }
+  
+  /* Larger touch targets */
+  button, a, input, select {
+    min-height: 56px !important;
+    padding: 1rem !important;
+  }
+}
+
+/* Dark mode override for Maximum Contrast */
+.dark .accessibility-contrast-mode {
+  color: #ffffff !important;
+  background-color: #000000 !important;
+  
+  .text-muted-foreground {
+    color: #e0e0e0 !important;
+  }
+  
+  .bg-primary {
+    background-color: #ffffff !important;
+  }
+  
+  .text-primary {
+    color: #ffffff !important;
+  }
+  
+  .border-primary {
+    border-color: #ffffff !important;
+  }
+  
+  *:focus,
+  *:focus-visible {
+    outline-color: #ffffff !important;
+  }
+}
+
+/* Tactile Mode - Chunky, key-like buttons; heavy precise click feel (no sound) */
+.accessibility-tactile-mode {
+  /* Minimum touch target size; generous for fingers/styli */
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="button"],
+  label {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 0.75rem 1.25rem !important;
+  }
+  input,
+  select,
+  textarea {
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  /* Boxy, keycap-like shape (not pill-shaped) */
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="button"],
+  .rounded-lg,
+  .rounded {
+    border-radius: 6px !important;
+  }
+  /* Heavy borders for a physical, key-like feel */
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    border-width: 3px !important;
+  }
+  /* Raised default state: slight top-highlight, soft drop shadow; subtle gradient for key-like texture */
+  .accessibility-tactile-mode button:not(.bg-primary),
+  .accessibility-tactile-mode a[href],
+  .accessibility-tactile-mode [role="button"]:not(.bg-primary) {
+    background: linear-gradient(145deg, var(--card) 0%, color-mix(in srgb, var(--card) 85%, black) 100%) !important;
+  }
+  .accessibility-tactile-mode button,
+  .accessibility-tactile-mode a[href],
+  .accessibility-tactile-mode [role="button"] {
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .accessibility-tactile-mode button:active,
+  .accessibility-tactile-mode a[href]:active,
+  .accessibility-tactile-mode [role="button"]:active {
+    transform: translateY(4px) scale(0.97);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.06),
+      inset 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .space-y-2 > * + * {
+    margin-top: 1.25rem !important;
+  }
+  .space-y-3 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  .space-y-4 > * + * {
+    margin-top: 2rem !important;
+  }
+  *:focus,
+  *:focus-visible {
+    outline-offset: 3px !important;
+  }
+  /* Slider bump: larger touch target for range inputs */
+  input[type="range"] {
+    min-height: 60px !important;
+  }
+  /* Touch "give" (applied via JS when touchstart on interactive element; removed on touchend) */
+  .accessibility-tactile-mode button.tactile-touch-give,
+  .accessibility-tactile-mode a[href].tactile-touch-give,
+  .accessibility-tactile-mode [role="button"].tactile-touch-give {
+    transform: scale(1.02);
+  }
+}
+
+/* Dark mode: key-like shadows readable on dark background */
+.dark .accessibility-tactile-mode button,
+.dark .accessibility-tactile-mode a[href],
+.dark .accessibility-tactile-mode [role="button"] {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.dark .accessibility-tactile-mode button:active,
+.dark .accessibility-tactile-mode a[href]:active,
+.dark .accessibility-tactile-mode [role="button"]:active {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Respect reduced motion: no press animation in Tactile when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .accessibility-tactile-mode button,
+  .accessibility-tactile-mode a[href],
+  .accessibility-tactile-mode [role="button"] {
+    transition: none;
+  }
+  .accessibility-tactile-mode button:active,
+  .accessibility-tactile-mode a[href]:active,
+  .accessibility-tactile-mode [role="button"]:active {
+    transform: none;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(0, 0, 0, 0.06);
+  }
+  .dark .accessibility-tactile-mode button:active,
+  .dark .accessibility-tactile-mode a[href]:active,
+  .dark .accessibility-tactile-mode [role="button"]:active {
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.06),
+      0 2px 6px rgba(0, 0, 0, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}

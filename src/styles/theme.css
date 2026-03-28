@@ -1,0 +1,473 @@
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  /* Mobile: safe areas and scrollable layout so content is not cut off */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Mobile: use 100dvh so the app fills the dynamic viewport and isn’t cut off by browser chrome. */
+  html {
+    height: 100%;
+    min-height: 100dvh;
+    min-height: 100vh;
+  }
+  body {
+    height: 100%;
+    min-height: 100dvh;
+    min-height: 100vh;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
+  }
+  #root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :root {
+    /* CSS custom properties for accessibility sliders */
+    --text-scale: 1;
+    --line-height-scale: 1.5;
+    --letter-spacing-px: 0px;
+    --scrollbar-size: 10px;
+    /* Chonkiness: borders and touch targets (driven by scrollbar-size slider) */
+    --chonk-border-width: 1px;
+    --chonk-touch-min: 44px;
+    --chonk-touch-padding-y: 0.25rem;
+    --chonk-touch-padding-x: 0.25rem;
+
+    /* Color scheme */
+    --background: #f5f2e8;
+    --foreground: #0a0e0d;
+    --card: #fffef8;
+    --card-foreground: #0a0e0d;
+    --popover: #fffef8;
+    --popover-foreground: #0a0e0d;
+    --primary: #2d7a3f;
+    --primary-foreground: #fffef8;
+    --secondary: #c4a57b;
+    --secondary-foreground: #0a0e0d;
+    --muted: #e8e3d8;
+    --muted-foreground: #5a5550;
+    --accent: #8b6944;
+    --accent-foreground: #fffef8;
+    --destructive: #dc2626;
+    --destructive-foreground: #fffef8;
+    --border: #d4cfc4;
+    --input: #d4cfc4;
+    --ring: #2d7a3f;
+    --radius: 0.5rem;
+    /* Brown used for Settings, Accessibility, Glossary slices and footer pills */
+    --nvalope-brown: #8b6944;
+  }
+
+  .dark {
+    /* Fintech navy-to-deep palette */
+    --background: #0F172A;
+    --foreground: #F1F5F9;
+    --card: #1E293B;
+    --card-foreground: #F1F5F9;
+    --popover: #1E293B;
+    --popover-foreground: #F1F5F9;
+    --primary: #10B981;
+    --primary-foreground: #0F172A;
+    --secondary: #C4A57B;
+    --secondary-foreground: #0F172A;
+    --muted: #334155;
+    --muted-foreground: #94A3B8;
+    --accent: #34D399;
+    --accent-foreground: #0F172A;
+    --destructive: #EF4444;
+    --destructive-foreground: #F1F5F9;
+    --border: #334155;
+    --input: #334155;
+    --ring: #10B981;
+    --nvalope-brown: #8b6944;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* Apply text size scaling globally to all text elements; short transition for smooth real-time slider updates */
+  body, p, span, div, h1, h2, h3, h4, h5, h6, label, button, input, textarea, select, a, li, td, th {
+    font-size: calc(1em * var(--text-scale));
+    line-height: var(--line-height-scale);
+    letter-spacing: var(--letter-spacing-px);
+    transition: font-size 0.06s ease-out, line-height 0.06s ease-out, letter-spacing 0.06s ease-out;
+  }
+  
+  /* Override for elements that should keep their size */
+  svg, img, canvas {
+    font-size: initial;
+    line-height: initial;
+    letter-spacing: initial;
+  }
+
+  /* Scrollbar chonkiness – uses --scrollbar-size from accessibility (default 10px) */
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+  *::-webkit-scrollbar-track {
+    background: var(--muted);
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Darker main area when a feature section is open so the section card stands out */
+  #main-content[data-section-open] {
+    background: color-mix(in srgb, var(--background) 88%, black);
+  }
+  .dark #main-content[data-section-open] {
+    background: color-mix(in srgb, var(--background) 75%, black);
+  }
+
+  /* Chonkiness: border width and touch targets for interactive elements (app root only); short transition for smooth slider updates */
+  [role="application"] button,
+  [role="application"] input,
+  [role="application"] select,
+  [role="application"] textarea,
+  [role="application"] [role="button"] {
+    border-width: var(--chonk-border-width, 1px);
+    min-height: var(--chonk-touch-min, 44px);
+    padding: var(--chonk-touch-padding-y, 0.25rem) var(--chonk-touch-padding-x, 0.25rem);
+    transition: border-width 0.06s ease-out, min-height 0.06s ease-out, padding 0.06s ease-out;
+  }
+}
+
+@layer utilities {
+  .bg-background { background-color: var(--background); }
+  .bg-foreground { background-color: var(--foreground); }
+  .bg-card { background-color: var(--card); }
+  .bg-card-foreground { background-color: var(--card-foreground); }
+  .bg-popover { background-color: var(--popover); }
+  .bg-popover-foreground { background-color: var(--popover-foreground); }
+  .bg-primary { background-color: var(--primary); }
+  .bg-primary-foreground { background-color: var(--primary-foreground); }
+  .bg-secondary { background-color: var(--secondary); }
+  .bg-secondary-foreground { background-color: var(--secondary-foreground); }
+  .bg-muted { background-color: var(--muted); }
+  .bg-muted-foreground { background-color: var(--muted-foreground); }
+  .bg-accent { background-color: var(--accent); }
+  .bg-accent-foreground { background-color: var(--accent-foreground); }
+  .bg-destructive { background-color: var(--destructive); }
+  .bg-destructive-foreground { background-color: var(--destructive-foreground); }
+  
+  .text-background { color: var(--background); }
+  .text-foreground { color: var(--foreground); }
+  .text-card { color: var(--card); }
+  .text-card-foreground { color: var(--card-foreground); }
+  .text-popover { color: var(--popover); }
+  .text-popover-foreground { color: var(--popover-foreground); }
+  .text-primary { color: var(--primary); }
+  .text-primary-foreground { color: var(--primary-foreground); }
+  .text-secondary { color: var(--secondary); }
+  .text-secondary-foreground { color: var(--secondary-foreground); }
+  .text-muted { color: var(--muted); }
+  .text-muted-foreground { color: var(--muted-foreground); }
+  .text-accent { color: var(--accent); }
+  .text-accent-foreground { color: var(--accent-foreground); }
+  .text-destructive { color: var(--destructive); }
+  .text-destructive-foreground { color: var(--destructive-foreground); }
+  
+  .border-background { border-color: var(--background); }
+  .border-foreground { border-color: var(--foreground); }
+  .border-card { border-color: var(--card); }
+  .border-card-foreground { border-color: var(--card-foreground); }
+  .border-primary { border-color: var(--primary); }
+  .border-primary-foreground { border-color: var(--primary-foreground); }
+  .border-secondary { border-color: var(--secondary); }
+  .border-secondary-foreground { border-color: var(--secondary-foreground); }
+  .border-muted { border-color: var(--muted); }
+  .border-muted-foreground { border-color: var(--muted-foreground); }
+  .border-accent { border-color: var(--accent); }
+  .border-accent-foreground { border-color: var(--accent-foreground); }
+  .border-destructive { border-color: var(--destructive); }
+  .border-destructive-foreground { border-color: var(--destructive-foreground); }
+  
+  .ring-primary { --tw-ring-color: var(--primary); }
+  .ring-ring { --tw-ring-color: var(--ring); }
+}
+
+/* ============================================
+   GLASSMORPHISM UTILITIES
+   ============================================ */
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  box-shadow:
+    0 4px 24px -4px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+.glass-stat {
+  background: color-mix(in srgb, var(--primary) 8%, var(--card));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  border-radius: 1.25rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.glass-stat:hover {
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent),
+              0 8px 24px -8px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.glow-support {
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.glow-support:hover {
+  background: color-mix(in srgb, var(--primary) 15%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Shared hover glow for interactive buttons (primary soft glow) */
+.button-hover-glow {
+  transition: box-shadow 0.2s ease;
+}
+.button-hover-glow:hover {
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* All buttons get glow on hover by default (overridable by more specific rules) */
+button {
+  transition: box-shadow 0.2s ease;
+}
+button:hover {
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Footer About/Glossary links: no hover glow */
+.footer-link-btn:hover {
+  box-shadow: none;
+}
+
+/* Footer pills – brown shade (Settings / Accessibility / Glossary slice color) */
+.footer-pill {
+  background: color-mix(in srgb, var(--nvalope-brown) 10%, var(--card));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--nvalope-brown) 30%, transparent);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.footer-pill:hover {
+  background: color-mix(in srgb, var(--nvalope-brown) 18%, var(--card));
+  border-color: color-mix(in srgb, var(--nvalope-brown) 50%, transparent);
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--nvalope-brown) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--nvalope-brown) 20%, transparent);
+}
+
+/* Frosted glass layout toggle buttons (Wheel / Cards) – transparent with primary tint */
+.glass-button {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+.glass-button:hover {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.glass-button-active {
+  background: color-mix(in srgb, var(--primary) 82%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Pill switch track: glass-style unchecked, primary checked, hover glow (matches glass-button) */
+.switch-track {
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.switch-track[data-state="unchecked"] {
+  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.switch-track[data-state="checked"] {
+  background: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 90%, transparent);
+}
+.switch-track:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  box-shadow: 0 0 20px -4px color-mix(in srgb, var(--primary) 40%, transparent),
+              0 0 40px -8px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* JetBrains Mono-style numeric font stack (offline-safe) */
+.font-nums {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ============================================
+   ACCESSIBILITY PRESET MODES - Dramatic Layout Changes
+   ==================================================== */
+
+/* Focus Mode is defined in accessibility.css (minimize distractions) */
+
+/* Calm Mode - muted colors, no motion, extra space (animation/transition removal in accessibility.css) */
+.accessibility-calm-mode {
+  /* Gentle desaturation - not too extreme */
+  filter: saturate(0.7);
+  
+  /* Extra whitespace */
+  .space-y-2 > * + *, 
+  .space-y-3 > * + *, 
+  .space-y-4 > * + * {
+    margin-top: 24px;
+  }
+  
+  /* Softer borders */
+  * {
+    border-width: 1px;
+    border-color: rgba(139, 105, 68, 0.12);
+  }
+  
+  /* Maximum roundness for softness */
+  button, .rounded-lg, .rounded {
+    border-radius: 16px;
+  }
+  
+  /* Gentler shadows */
+  .shadow-xl, .shadow-lg, .shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Clear Mode is defined in accessibility.css (readability typography & spacing) */
+
+/* Maximum Contrast Mode */
+.accessibility-contrast-mode {
+  /* Maximum contrast colors */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --primary: #006600;
+  --primary-foreground: #ffffff;
+  --muted: #f0f0f0;
+  --muted-foreground: #000000;
+  --border: #000000;
+  --accent: #004400;
+  
+  /* Bold borders everywhere */
+  * {
+    border-width: 2px;
+    border-color: #000000;
+  }
+  
+  /* Larger focus indicators */
+  *:focus, *:focus-visible {
+    outline: 4px solid #000000 !important;
+    outline-offset: 4px !important;
+  }
+  
+  /* Bold text for better visibility */
+  p, span, div, label, button, h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+  }
+  
+  /* Remove subtle effects */
+  .opacity-0, .opacity-50, [class*="opacity-"] {
+    opacity: 1;
+  }
+  
+  /* High contrast buttons */
+  button {
+    border: 2px solid #000000;
+  }
+}
+
+.dark.accessibility-contrast-mode {
+  /* Dark mode maximum contrast */
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --primary: #00ff00;
+  --primary-foreground: #000000;
+  --muted: #1a1a1a;
+  --muted-foreground: #ffffff;
+  --border: #ffffff;
+  --accent: #00cc00;
+  
+  * {
+    border-color: #ffffff;
+  }
+  
+  *:focus, *:focus-visible {
+    outline-color: #ffffff !important;
+  }
+  
+  button {
+    border: 2px solid #ffffff;
+  }
+}
+
+/* Backup failed toast: larger and flash so it stands out */
+@keyframes backup-toast-flash {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  25%, 75% {
+    box-shadow: 0 0 0 3px var(--destructive), 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--destructive), 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.backup-failed-toast {
+  min-width: min(22rem, 90vw) !important;
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+  padding: 1rem 1.25rem !important;
+  animation: backup-toast-flash 1.5s ease-in-out 3;
+}
+
+/*
+ * Sonner: pointerdown on the toast <li> uses event.target.tagName === 'BUTTON' to skip swipe
+ * handling. Clicks on the close icon hit the inner <svg>, so swipe capture ran and broke the X.
+ * Let hits register on the button so close works (see sonner dist Toast onPointerDown).
+ */
+[data-sonner-toast] [data-close-button] svg {
+  pointer-events: none;
+}

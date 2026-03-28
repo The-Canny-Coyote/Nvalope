@@ -55,8 +55,11 @@ test('AI Assistant shows reply with seeded budget data', async ({ page }) => {
   await page.evaluate(
     async (state) => {
       const DB_NAME = 'nvalope-db';
-      const DB_VERSION = 2;
+      const DB_VERSION = 3;
       const STORE_BUDGET = 'budget';
+      const STORE_APP_DATA = 'appData';
+      const STORE_STATEMENT_TEMPLATES = 'statementTemplates';
+      const STORE_ASSIGNMENT_RULES = 'assignmentRules';
       const BUDGET_KEY = 'state';
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -65,6 +68,13 @@ test('AI Assistant shows reply with seeded budget data', async ({ page }) => {
         req.onupgradeneeded = () => {
           const d = req.result;
           if (!d.objectStoreNames.contains(STORE_BUDGET)) d.createObjectStore(STORE_BUDGET);
+          if (!d.objectStoreNames.contains(STORE_APP_DATA)) d.createObjectStore(STORE_APP_DATA);
+          if (!d.objectStoreNames.contains(STORE_STATEMENT_TEMPLATES)) {
+            d.createObjectStore(STORE_STATEMENT_TEMPLATES, { keyPath: 'id' });
+          }
+          if (!d.objectStoreNames.contains(STORE_ASSIGNMENT_RULES)) {
+            d.createObjectStore(STORE_ASSIGNMENT_RULES, { keyPath: 'id' });
+          }
         };
       });
       await new Promise<void>((resolve, reject) => {

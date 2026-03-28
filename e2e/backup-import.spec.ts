@@ -20,7 +20,7 @@ test('Import backup file restores envelope data', async ({ page }) => {
   await dataMgmtBtn.click();
   await page.waitForTimeout(300);
   const backupPath = path.join(__dirname, 'fixtures', 'backup.json');
-  await page.locator('input[type="file"]').setInputFiles(backupPath);
+  await page.locator('input[type="file"][accept=".json,application/json"]').setInputFiles(backupPath);
   await page.waitForTimeout(2000);
   await page.getByRole('button', { name: /Close section/i }).first().click().catch(() => {});
   await page.waitForTimeout(400);

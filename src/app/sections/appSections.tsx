@@ -34,6 +34,7 @@ import { GlossaryContent } from '@/app/components/GlossaryContent';
 import { AppErrorBoundary } from '@/app/components/AppErrorBoundary';
 import { BrandCoyoteMark, brandCoyoteLabelSuffix } from '@/app/components/BrandCoyoteMark';
 import { CACHE_MODULE_LOCAL_AI_HINT } from '@/app/constants/assistantCopy';
+import type { BackupSettingsSnapshot } from '@/app/constants/settings';
 
 /** Wraps section content in an error boundary so one failing section does not crash the app. */
 function SectionWithBoundary({ children, label }: { children: ReactNode; label: string }) {
@@ -118,25 +119,12 @@ export interface UseAppSectionsParams {
   onChooseBackupFolder: () => void;
   /** Download full backup (budget + settings + appData) as a file. Pass optional password to encrypt. */
   onDownloadFullBackup: (password?: string) => void;
-  /** When true, full backups are encrypted with the session password. */
-  encryptBackups?: boolean;
-  setEncryptBackups?: (v: boolean) => void;
   /** Ref to session backup password (for encrypted autobackup). */
   getBackupPasswordRef?: React.MutableRefObject<string | null>;
   setBackupPassword?: (p: string | null) => void;
   onCheckForUpdates: () => void;
   checkingForUpdate: boolean;
-  onApplySettingsFromBackup: (settings: {
-    layoutScale?: number;
-    wheelScale?: number;
-    cardBarRows?: number;
-    cardBarColumns?: number;
-    cardBarPosition?: 'bottom' | 'left' | 'right';
-    cardBarSectionOrder?: number[] | null;
-    showCardBarRowSelector?: boolean;
-    cardsSectionWidthPercent?: number;
-    uiMode?: 'normal';
-  }) => void;
+  onApplySettingsFromBackup: (settings: BackupSettingsSnapshot) => void;
   uiMode?: 'normal';
   setUiMode?: (v: 'normal') => void;
   isPremium?: boolean;
@@ -144,6 +132,10 @@ export interface UseAppSectionsParams {
   saveScrollForRestore?: () => void;
   /** Call after layout has updated (e.g. after opening a collapsible) to restore main scroll position. */
   restoreScrollAfterLayout?: () => void;
+  /** Before opening Settings Core / Optional feature collapsibles. */
+  onBeforeOpenFeatureCollapsibles?: () => void;
+  /** Before opening Settings Data Management collapsible. */
+  onBeforeOpenDataMgmt?: () => void;
   /** When true, Accessibility shows "Card bar size" instead of "Feature wheel size". */
   isMobile?: boolean;
   /** Card bar rows (when position is bottom): 0 = auto, 1–3 = fixed. */
@@ -163,14 +155,6 @@ export interface UseAppSectionsParams {
   setCardsSectionWidthPercent?: (v: number) => void;
   /** Called when user should open the Cache AI Assistant (e.g. from card/simple list). */
   onOpenAssistant?: () => void;
-  /** Optional features collapsible in Settings: open state and setter (lifted so it survives section list updates). */
-  settingsOptionalFeaturesOpen?: boolean;
-  setSettingsOptionalFeaturesOpen?: (open: boolean) => void;
-  /** Core features / Data collapsibles in Settings: lifted so they stay open when toggling modules. */
-  settingsCoreOpen?: boolean;
-  setSettingsCoreOpen?: (open: boolean) => void;
-  settingsDataMgmtOpen?: boolean;
-  setSettingsDataMgmtOpen?: (open: boolean) => void;
   /** Accessibility section collapsibles: lifted so they stay open when changing sliders/presets. */
   accessibilityStandardOptionsOpen?: boolean;
   setAccessibilityStandardOptionsOpen?: (open: boolean) => void;
@@ -216,8 +200,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     onEnableAdvancedAICache,
     onChooseBackupFolder,
     onDownloadFullBackup,
-    encryptBackups = false,
-    setEncryptBackups,
     getBackupPasswordRef,
     setBackupPassword,
   onCheckForUpdates,
@@ -228,6 +210,8 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   isPremium = false,
   saveScrollForRestore,
   restoreScrollAfterLayout,
+  onBeforeOpenFeatureCollapsibles,
+  onBeforeOpenDataMgmt,
   isMobile = false,
   cardBarRows = 0,
   setCardBarRows,
@@ -240,12 +224,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   cardsSectionWidthPercent,
   setCardsSectionWidthPercent,
   onOpenAssistant,
-  settingsOptionalFeaturesOpen = false,
-  setSettingsOptionalFeaturesOpen,
-  settingsCoreOpen = false,
-  setSettingsCoreOpen,
-  settingsDataMgmtOpen = false,
-  setSettingsDataMgmtOpen,
   accessibilityStandardOptionsOpen = false,
   setAccessibilityStandardOptionsOpen,
   accessibilityPresetModesOpen = false,
@@ -377,8 +355,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           onEnableAdvancedAICache={onEnableAdvancedAICache}
           onChooseBackupFolder={onChooseBackupFolder}
           onDownloadFullBackup={onDownloadFullBackup}
-          encryptBackups={encryptBackups}
-          setEncryptBackups={setEncryptBackups}
           getBackupPasswordRef={getBackupPasswordRef}
           setBackupPassword={setBackupPassword}
           onCheckForUpdates={onCheckForUpdates}
@@ -387,14 +363,9 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           uiMode={uiMode}
           setUiMode={setUiMode}
           isPremium={isPremium}
-          optionalFeaturesOpen={settingsOptionalFeaturesOpen}
-          onOptionalFeaturesOpenChange={setSettingsOptionalFeaturesOpen}
-          coreFeaturesOpen={settingsCoreOpen}
-          onCoreFeaturesOpenChange={setSettingsCoreOpen}
-          dataMgmtOpen={settingsDataMgmtOpen}
-          onDataMgmtOpenChange={setSettingsDataMgmtOpen}
           hasBackupFolder={hasBackupFolder}
-          saveScrollForRestore={saveScrollForRestore}
+          onBeforeOpenFeatureCollapsibles={onBeforeOpenFeatureCollapsibles}
+          onBeforeOpenDataMgmt={onBeforeOpenDataMgmt}
           restoreScrollAfterLayout={restoreScrollAfterLayout}
           useCardLayout={useCardLayout}
           setUseCardLayout={setUseCardLayout}
@@ -564,12 +535,8 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     saveScrollForRestore,
     isMobile,
     onOpenAssistant,
-    settingsOptionalFeaturesOpen,
-    setSettingsOptionalFeaturesOpen,
-    settingsCoreOpen,
-    setSettingsCoreOpen,
-    settingsDataMgmtOpen,
-    setSettingsDataMgmtOpen,
+    onBeforeOpenFeatureCollapsibles,
+    onBeforeOpenDataMgmt,
     accessibilityStandardOptionsOpen,
     setAccessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,

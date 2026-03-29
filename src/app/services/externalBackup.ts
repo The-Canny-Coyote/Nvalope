@@ -64,12 +64,10 @@ export function setNotifyCallback(cb: ((message: string) => void) | null): void 
   notifyCallback = cb;
 }
 
-/** Register callback for autobackup progress (start/done). Called from App so UI can show toast with progress. */
 export function setAutobackupNotify(cb: ((phase: 'start' | 'done' | 'error') => void) | null): void {
   autobackupNotify = cb;
 }
 
-/** Register callback for one-time backup folder suggestion toast (called after first input). */
 export function setBackupSuggestionToast(cb: ((message: string) => void) | null): void {
   backupSuggestionToast = cb;
 }
@@ -224,7 +222,6 @@ function getSnapshot(getState: () => FullBackupSnapshot | Record<string, unknown
   return getState();
 }
 
-/** Returns true if snapshot has backupable data (used to avoid writing empty backup). */
 export function hasBackupableData(snapshot: FullBackupSnapshot | Record<string, unknown> | null | undefined): boolean {
   if (!snapshot || typeof snapshot !== 'object') return false;
   const hasBudget =
@@ -261,6 +258,7 @@ export function scheduleBackup(): void {
   }, BACKUP_ON_CHANGE_DEBOUNCE_MS);
 }
 
+/** Writes to folder or local autobackup; respects throttle, silent, and password via getBackupPassword or passwordOverride. */
 export async function triggerBackupNow(
   getState: () => FullBackupSnapshot | Record<string, unknown>,
   force?: boolean,
@@ -309,10 +307,6 @@ export async function triggerBackupNow(
 
 export function stopAutoBackup(): void {}
 
-/**
- * Check if File System Access API is available (e.g. Chrome, Edge).
- * When false, use downloadFullBackup() for a one-file backup in Firefox, Safari, etc.
- */
 export function isExternalBackupSupported(): boolean {
   return typeof window !== 'undefined' && 'showDirectoryPicker' in window;
 }
@@ -334,11 +328,6 @@ function buildBackupPayload(snapshot: FullBackupSnapshot, backupFolderChosen?: b
   };
 }
 
-/**
- * Download a full backup as a single JSON file. Works in all browsers (Firefox, Safari, Chrome, Edge).
- * If password is provided, the file is encrypted (password-protected).
- * Use this when the File System Access API is not available, or as a one-off "save as" option.
- */
 export async function downloadFullBackup(
   snapshot: FullBackupSnapshot,
   options?: { password?: string }
@@ -390,7 +379,6 @@ function setSuggestedBackupFolder(): void {
   }
 }
 
-/** Call when user has already seen backup prompt (e.g. "No thanks" on folder prompt) so we don't show the first-input toast. */
 export function markBackupSuggestionDismissed(): void {
   setSuggestedBackupFolder();
   try {

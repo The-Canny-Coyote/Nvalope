@@ -51,7 +51,6 @@ export default function App() {
   const [selectedWheelSection, setSelectedWheelSection] = useState<number | null>(null);
   const hasBackupFolder = useBackupFolderReminders(selectedWheelSection, showAdvancedAIDownloadNotice);
   const storeCardLayout = useAppStore((s) => s.useCardLayout);
-  const setEncryptBackups = useAppStore((s) => s.setEncryptBackups);
   const cardBarRows = useAppStore((s) => s.cardBarRows);
   const setCardBarRows = useAppStore((s) => s.setCardBarRows);
   const cardBarColumns = useAppStore((s) => s.cardBarColumns);
@@ -157,17 +156,8 @@ export default function App() {
     enableCache();
   }, [saveScrollAndAnchorBeforeModuleToggle, enableCache]);
 
-  const [settingsOptionalFeaturesOpen, setSettingsOptionalFeaturesOpen] = useState(false);
-  const [settingsCoreOpen, setSettingsCoreOpen] = useState(false);
-  const [settingsDataMgmtOpen, setSettingsDataMgmtOpen] = useState(false);
   const [accessibilityStandardOptionsOpen, setAccessibilityStandardOptionsOpen] = useState(false);
   const [accessibilityPresetModesOpen, setAccessibilityPresetModesOpen] = useState(false);
-  const setSettingsOptionalFeaturesOpenWithScrollSave = useCallback((open: boolean) => {
-    if (open) {
-      saveScrollAndAnchorBeforeModuleToggle();
-    }
-    setSettingsOptionalFeaturesOpen(open);
-  }, [saveScrollAndAnchorBeforeModuleToggle]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -397,9 +387,6 @@ export default function App() {
     screenReaderMode,
     selectedMode,
     uiMode,
-    settingsOptionalFeaturesOpen,
-    settingsCoreOpen,
-    settingsDataMgmtOpen,
     accessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
   ]);
@@ -437,12 +424,6 @@ export default function App() {
 
   const allSections = useAppSections({
     enabledModules: effectiveEnabledModules,
-    settingsOptionalFeaturesOpen,
-    setSettingsOptionalFeaturesOpen: setSettingsOptionalFeaturesOpenWithScrollSave,
-    settingsCoreOpen,
-    setSettingsCoreOpen,
-    settingsDataMgmtOpen,
-    setSettingsDataMgmtOpen,
     accessibilityStandardOptionsOpen,
     setAccessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
@@ -486,8 +467,6 @@ export default function App() {
     onEnableAdvancedAICache: handleEnableAdvancedAICacheClick,
     onChooseBackupFolder: handleChooseBackupFolder,
     onDownloadFullBackup: handleDownloadFullBackup,
-    encryptBackups,
-    setEncryptBackups,
     getBackupPasswordRef: backupPasswordRef,
     setBackupPassword,
     onCheckForUpdates: handleCheckForUpdates,
@@ -508,6 +487,8 @@ export default function App() {
     isPremium,
     saveScrollForRestore,
     restoreScrollAfterLayout,
+    onBeforeOpenFeatureCollapsibles: saveScrollAndAnchorBeforeModuleToggle,
+    onBeforeOpenDataMgmt: saveScrollForRestore,
     onOpenAssistant: () => setAssistantOpen(true),
     hasBackupFolder,
     useCardLayout,

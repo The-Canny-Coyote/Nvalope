@@ -32,6 +32,8 @@ import {
 } from '@/app/services/statementImport/statementTemplates';
 import type { NormalizeImportedTransactionResult } from '@/app/services/statementImport/types';
 import { StatementImportPanel } from '@/app/components/StatementImportPanel';
+import { useAppStore } from '@/app/store/appStore';
+import type { BackupSettingsSnapshot } from '@/app/constants/settings';
 
 type StatementPreview = {
   fileName: string;
@@ -47,27 +49,13 @@ export interface BackupSettingsProps {
   enabledModules: string[];
   onChooseBackupFolder: () => void;
   onDownloadFullBackup?: (password?: string) => void;
-  encryptBackups?: boolean;
-  setEncryptBackups?: (v: boolean) => void;
   getBackupPasswordRef?: MutableRefObject<string | null>;
   setBackupPassword?: (p: string | null) => void;
   onCheckForUpdates: () => void;
   checkingForUpdate: boolean;
-  onApplySettingsFromBackup?: (settings: {
-    layoutScale?: number;
-    wheelScale?: number;
-    cardBarRows?: number;
-    cardBarColumns?: number;
-    cardBarPosition?: 'bottom' | 'left' | 'right';
-    cardBarSectionOrder?: number[] | null;
-    showCardBarRowSelector?: boolean;
-    cardsSectionWidthPercent?: number;
-    uiMode?: 'normal';
-  }) => void;
-  dataMgmtOpen?: boolean;
-  onDataMgmtOpenChange?: (open: boolean) => void;
+  onApplySettingsFromBackup?: (settings: BackupSettingsSnapshot) => void;
   hasBackupFolder?: boolean | null;
-  saveScrollForRestore?: () => void;
+  onBeforeOpen?: () => void;
   restoreScrollAfterLayout?: () => void;
   jumpToDataRef: MutableRefObject<(() => void) | null>;
 }
@@ -76,21 +64,19 @@ export function BackupSettings({
   enabledModules,
   onChooseBackupFolder,
   onDownloadFullBackup,
-  encryptBackups = false,
-  setEncryptBackups,
   getBackupPasswordRef,
   setBackupPassword,
   onCheckForUpdates,
   checkingForUpdate,
   onApplySettingsFromBackup,
-  dataMgmtOpen = false,
-  onDataMgmtOpenChange,
   hasBackupFolder = null,
-  saveScrollForRestore,
+  onBeforeOpen,
   restoreScrollAfterLayout,
   jumpToDataRef,
 }: BackupSettingsProps) {
   const { api } = useBudget();
+  const encryptBackups = useAppStore((s) => s.encryptBackups);
+  const setEncryptBackups = useAppStore((s) => s.setEncryptBackups);
   const importInputRef = useRef<HTMLInputElement>(null);
   const statementImportInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -101,22 +87,17 @@ export function BackupSettings({
   const [passwordDialogMode, setPasswordDialogMode] = useState<PasswordDialogMode>('set');
   const [pendingImportEncryptedContent, setPendingImportEncryptedContent] = useState<string | null>(null);
   const [showEncryptedNudge, setShowEncryptedNudge] = useState(false);
-  const [dataMgmtOpenLocal, setDataMgmtOpenLocal] = useState(dataMgmtOpen);
-
-  useEffect(() => {
-    setDataMgmtOpenLocal(dataMgmtOpen);
-  }, [dataMgmtOpen]);
+  const [dataMgmtOpen, setDataMgmtOpen] = useState(false);
 
   const handleDataMgmtOpenChange = useCallback(
     (open: boolean) => {
-      if (open) saveScrollForRestore?.();
-      setDataMgmtOpenLocal(open);
-      onDataMgmtOpenChange?.(open);
+      if (open) onBeforeOpen?.();
+      setDataMgmtOpen(open);
       if (open && restoreScrollAfterLayout) {
         requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
       }
     },
-    [saveScrollForRestore, onDataMgmtOpenChange, restoreScrollAfterLayout]
+    [onBeforeOpen, restoreScrollAfterLayout]
   );
 
   const openDataSection = useCallback(() => {
@@ -431,13 +412,13 @@ export function BackupSettings({
   return (
     <>
       <div id="settings-data">
-        <Collapsible open={dataMgmtOpenLocal} onOpenChange={handleDataMgmtOpenChange} className="pt-4 border-t border-border">
+        <Collapsible open={dataMgmtOpen} onOpenChange={handleDataMgmtOpenChange} className="pt-4 border-t border-border">
           <CollapsibleTrigger
             className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3.5 text-left transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer glass-card shadow-sm"
-            aria-expanded={dataMgmtOpenLocal}
-            onPointerDownCapture={() => saveScrollForRestore?.()}
+            aria-expanded={dataMgmtOpen}
+            onPointerDownCapture={() => onBeforeOpen?.()}
             onKeyDownCapture={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') saveScrollForRestore?.();
+              if (e.key === 'Enter' || e.key === ' ') onBeforeOpen?.();
             }}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -449,7 +430,7 @@ export function BackupSettings({
                 <span className="block text-xs text-muted-foreground">Full backup, budget-only export, import, updates</span>
               </div>
             </div>
-            {dataMgmtOpenLocal ? (
+            {dataMgmtOpen ? (
               <ChevronUp className="h-5 w-5 shrink-0 text-primary" aria-hidden />
             ) : (
               <ChevronDown className="h-5 w-5 shrink-0 text-primary" aria-hidden />
@@ -499,7 +480,7 @@ export function BackupSettings({
                 <Checkbox
                   id="settings-encrypt-backups"
                   checked={encryptBackups}
-                  onCheckedChange={(checked) => setEncryptBackups?.(checked)}
+                  onCheckedChange={(checked) => setEncryptBackups(checked === true)}
                   aria-label="Encrypt backup files with a password"
                   className="size-5 shrink-0 rounded"
                 />

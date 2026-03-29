@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { MutableRefObject } from 'react';
 import {
   Receipt,
@@ -62,11 +62,7 @@ export interface FeatureTogglesProps {
   enableModule: (moduleId: string) => void;
   disableModule: (moduleId: string) => void;
   enableCache: () => void;
-  optionalFeaturesOpen?: boolean;
-  onOptionalFeaturesOpenChange?: (open: boolean) => void;
-  coreFeaturesOpen?: boolean;
-  onCoreFeaturesOpenChange?: (open: boolean) => void;
-  saveScrollForRestore?: () => void;
+  onBeforeOpen?: () => void;
   restoreScrollAfterLayout?: () => void;
   /** Set by BackupSettings; Jump to Data calls this to open Data Management. */
   jumpToDataRef: MutableRefObject<(() => void) | null>;
@@ -77,11 +73,7 @@ export function FeatureToggles({
   enableModule,
   disableModule,
   enableCache,
-  optionalFeaturesOpen = false,
-  onOptionalFeaturesOpenChange,
-  coreFeaturesOpen = false,
-  onCoreFeaturesOpenChange,
-  saveScrollForRestore,
+  onBeforeOpen,
   restoreScrollAfterLayout,
   jumpToDataRef,
 }: FeatureTogglesProps) {
@@ -93,31 +85,20 @@ export function FeatureToggles({
   const receiptCategoryPreferRegex = useAppStore((s) => s.receiptCategoryPreferRegex);
   const setReceiptCategoryPreferRegex = useAppStore((s) => s.setReceiptCategoryPreferRegex);
 
-  const [optionalOpen, setOptionalOpen] = useState(optionalFeaturesOpen);
-  const [coreOpen, setCoreOpen] = useState(coreFeaturesOpen);
+  const [optionalOpen, setOptionalOpen] = useState(false);
+  const [coreOpen, setCoreOpen] = useState(false);
   const [showWebLLMDeleteDialog, setShowWebLLMDeleteDialog] = useState(false);
 
-  useEffect(() => {
-    setOptionalOpen(optionalFeaturesOpen);
-  }, [optionalFeaturesOpen]);
-  useEffect(() => {
-    setCoreOpen(coreFeaturesOpen);
-  }, [coreFeaturesOpen]);
-
   const handleOptionalOpenChange = (open: boolean) => {
-    if (open) {
-      saveScrollForRestore?.();
-    }
+    if (open) onBeforeOpen?.();
     setOptionalOpen(open);
-    onOptionalFeaturesOpenChange?.(open);
     if (open && restoreScrollAfterLayout) {
       requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
     }
   };
   const handleCoreOpenChange = (open: boolean) => {
-    if (open) saveScrollForRestore?.();
+    if (open) onBeforeOpen?.();
     setCoreOpen(open);
-    onCoreFeaturesOpenChange?.(open);
     if (open && restoreScrollAfterLayout) {
       requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
     }
@@ -144,7 +125,7 @@ export function FeatureToggles({
       <nav className="flex flex-wrap items-center gap-2" aria-label="Jump to section">
         <span className="text-xs text-muted-foreground mr-1">Jump to:</span>
         {[
-          { id: 'settings-core', label: 'Core features', open: () => setCoreOpen(true) },
+          { id: 'settings-core', label: 'Core features', open: () => handleCoreOpenChange(true) },
           { id: 'settings-optional', label: 'Optional features', open: () => handleOptionalOpenChange(true) },
           { id: 'settings-data', label: 'Data', open: () => jumpToDataRef.current?.() },
         ].map(({ id, label, open }) => (
@@ -164,9 +145,9 @@ export function FeatureToggles({
           <CollapsibleTrigger
             className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3.5 text-left transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer glass-card shadow-sm"
             aria-expanded={coreOpen}
-            onPointerDownCapture={() => saveScrollForRestore?.()}
+            onPointerDownCapture={() => onBeforeOpen?.()}
             onKeyDownCapture={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') saveScrollForRestore?.();
+              if (e.key === 'Enter' || e.key === ' ') onBeforeOpen?.();
             }}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -232,9 +213,9 @@ export function FeatureToggles({
           <CollapsibleTrigger
             className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3.5 text-left transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer glass-card shadow-sm"
             aria-expanded={optionalOpen}
-            onPointerDownCapture={() => saveScrollForRestore?.()}
+            onPointerDownCapture={() => onBeforeOpen?.()}
             onKeyDownCapture={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') saveScrollForRestore?.();
+              if (e.key === 'Enter' || e.key === ' ') onBeforeOpen?.();
             }}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">

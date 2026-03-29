@@ -43,7 +43,9 @@ export interface FullBackupSnapshot {
 const BACKUP_ON_CHANGE_DEBOUNCE_MS = 3000;
 const BACKUP_EVERY_N_CHANGES = 3;
 const BACKUP_LATEST_FILENAME = 'nvalope-backup-latest.json';
-let scheduleBackupTimer: ReturnType<typeof setTimeout> | null = null;
+let scheduleBackupDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+/** Retries scheduled backup after triggerBackupNow was throttled (min interval). */
+let backupThrottleRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let changeCountSinceLastBackup = 0;
 
 let fullSnapshotGetter: (() => FullBackupSnapshot) | null = null;
@@ -239,21 +241,56 @@ export function startAutoBackup(_getState: () => FullBackupSnapshot | Record<str
  * Cancel any scheduled backup (e.g. on app unmount so we never run with a null getter).
  */
 export function cancelScheduledBackup(): void {
-  if (scheduleBackupTimer) {
-    clearTimeout(scheduleBackupTimer);
-    scheduleBackupTimer = null;
+  if (scheduleBackupDebounceTimer) {
+    clearTimeout(scheduleBackupDebounceTimer);
+    scheduleBackupDebounceTimer = null;
   }
+  if (backupThrottleRetryTimer) {
+    clearTimeout(backupThrottleRetryTimer);
+    backupThrottleRetryTimer = null;
+  }
+}
+
+/** Clears debounce timers and counters; used by Vitest only. */
+export function resetBackupSchedulerStateForTests(): void {
+  if (!import.meta.env.VITEST) return;
+  cancelScheduledBackup();
+  changeCountSinceLastBackup = 0;
+  lastBackupAttempt = 0;
+}
+
+function attemptScheduledBackup(): void {
+  const getState = () => fullSnapshotGetter?.() ?? {};
+  void triggerBackupNow(getState, false).then((result) => {
+    if (result.ok) {
+      changeCountSinceLastBackup = 0;
+      if (backupThrottleRetryTimer) {
+        clearTimeout(backupThrottleRetryTimer);
+        backupThrottleRetryTimer = null;
+      }
+      return;
+    }
+    if (result.error === 'Throttled') {
+      const elapsed = Date.now() - lastBackupAttempt;
+      const wait = Math.max(0, MIN_BACKUP_INTERVAL_MS - elapsed);
+      if (backupThrottleRetryTimer) clearTimeout(backupThrottleRetryTimer);
+      backupThrottleRetryTimer = setTimeout(() => {
+        backupThrottleRetryTimer = null;
+        attemptScheduledBackup();
+      }, wait);
+      return;
+    }
+    changeCountSinceLastBackup = 0;
+  });
 }
 
 export function scheduleBackup(): void {
   changeCountSinceLastBackup += 1;
-  if (scheduleBackupTimer) clearTimeout(scheduleBackupTimer);
-  scheduleBackupTimer = setTimeout(() => {
-    scheduleBackupTimer = null;
+  if (scheduleBackupDebounceTimer) clearTimeout(scheduleBackupDebounceTimer);
+  scheduleBackupDebounceTimer = setTimeout(() => {
+    scheduleBackupDebounceTimer = null;
     if (changeCountSinceLastBackup >= BACKUP_EVERY_N_CHANGES) {
-      changeCountSinceLastBackup = 0;
-      const getState = () => fullSnapshotGetter?.() ?? {};
-      void triggerBackupNow(getState, false);
+      attemptScheduledBackup();
     }
   }, BACKUP_ON_CHANGE_DEBOUNCE_MS);
 }
@@ -417,7 +454,9 @@ export function maybeShowBackupReminder(showToast: (message: string) => void): v
     const last = raw ? parseInt(raw, 10) : 0;
     if (Date.now() - last < BACKUP_REMINDER_INTERVAL_MS) return;
     localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
-    showToast('Tip: A backup copy is saved on this device every 3 changes. To keep a copy elsewhere, download a full backup or set a backup folder (Chrome/Edge) in Settings → Data Management.');
+    showToast(
+      'Tip: After about three changes, a backup copy is saved on this device (at most once per minute). To keep a file elsewhere, download a full backup or set a backup folder (Chrome/Edge) in Settings → Data Management.'
+    );
   } catch {
     // ignore
   }
@@ -442,13 +481,13 @@ export function markFirstInput(): void {
       if (hasSuggestedBackupFolder()) return;
       setSuggestedBackupFolder();
       backupSuggestionToast(
-        'Tip: A copy is saved on this device every 3 changes. To keep a file elsewhere, set a backup folder or download a backup in Settings → Data Management.'
+        'Tip: After about three changes, a copy is saved on this device (at most once per minute). To keep a file elsewhere, set a backup folder or download a backup in Settings → Data Management.'
       );
     } else {
       if (hasSuggestedDownloadBackup()) return;
       setSuggestedDownloadBackup();
       backupSuggestionToast(
-        'Tip: A copy is saved on this device every 3 changes. Download a backup from Settings → Data Management to save a file elsewhere (e.g. USB drive).'
+        'Tip: After about three changes, a copy is saved on this device (at most once per minute). Download a backup from Settings → Data Management to save a file elsewhere (e.g. USB drive).'
       );
     }
   })();

@@ -64,7 +64,7 @@ export function AppDialogs({
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-left">
                 <p>
-                  A new version is ready. A backup copy is saved on this device every 3 changes. For an extra copy elsewhere, use <strong>Download full backup</strong> or (Chrome/Edge) set a backup folder in Settings → Data Management.
+                  A new version is ready. After about three changes, a backup copy is saved on this device (at most once per minute). For an extra copy elsewhere, use <strong>Download full backup</strong> or (Chrome/Edge) set a backup folder in Settings → Data Management.
                 </p>
                 <p>
                   You can <strong>Reload now</strong> to update. Your data and settings in this browser will remain after the reload. You can also close this and update later when you’re ready.
@@ -76,7 +76,7 @@ export function AppDialogs({
                 )}
                 {hasBackupFolder === false && isExternalBackupSupported && (
                   <p className="text-muted-foreground">
-                    In Chrome or Edge you can set a backup folder in Settings → Data Management so a file is also saved there every 3 changes.
+                    In Chrome or Edge you can set a backup folder in Settings → Data Management so a file is also saved there when autobackup runs (about three changes, at most once per minute).
                   </p>
                 )}
               </div>
@@ -108,12 +108,12 @@ export function AppDialogs({
                 </p>
                 {hasBackupFolder === true && (
                   <p>
-                    You have a backup folder set. One file there is updated every 3 changes. The files in that folder are on your disk and are not deleted if you clear &quot;cookies and other site data&quot;—you would only need to choose the folder again in Settings after clearing.
+                    You have a backup folder set. One file there is updated when autobackup runs (after about three changes, at most once per minute). The files in that folder are on your disk and are not deleted if you clear &quot;cookies and other site data&quot;—you would only need to choose the folder again in Settings after clearing.
                   </p>
                 )}
                 {hasBackupFolder === false && (
                   <p>
-                    A backup copy is saved on this device every 3 changes. If you clear &quot;cookies and other site data&quot; in your browser, that copy and all app data are removed. To keep a copy outside the app (e.g. on a USB drive), download a full backup from Settings → Data Management or set a backup folder (Chrome/Edge).
+                    After about three changes, a backup copy is saved on this device (at most once per minute). If you clear &quot;cookies and other site data&quot; in your browser, that copy and all app data are removed. To keep a copy outside the app (e.g. on a USB drive), download a full backup from Settings → Data Management or set a backup folder (Chrome/Edge).
                   </p>
                 )}
               </div>

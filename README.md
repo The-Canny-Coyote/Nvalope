@@ -1,6 +1,6 @@
 # Nvalope
 
-A **privacy-first, customizable, and accessible budgeting PWA.** All data stays on your device. Works offline after first load.
+A **free, privacy-focused, offline-capable envelope budgeting PWA.** No ads or tracking. All data stays on your device. Works offline after first load.
 
 **Live app:** [nvalope.app](https://nvalope.app) · **Website:** [https://nvalope.app](https://nvalope.app)
 

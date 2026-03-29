@@ -106,7 +106,8 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'Nvalope — Budget App',
         short_name: 'Nvalope',
-        description: 'A privacy-first envelope budgeting app. All data stays on your device. Fully offline after first load.',
+        description:
+          'A free, privacy-focused, offline-capable envelope budgeting PWA. No ads or tracking. All data stays on your device. Fully offline after first load.',
         start_url: '/',
         display: 'standalone',
         orientation: 'any',

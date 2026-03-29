@@ -304,16 +304,27 @@ export function MainContent({
                     </sup>
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1.5">
-                    A Free Privacy-focused, Offline Capable, Envelope Budgeting PWA.
+                    A Free Privacy-Focused, Offline Capable, Envelope Budgeting PWA.
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     No account needed and no data leaves your device unless you choose.
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Absolutely no ads and no tracking.
+                    Absolutely no ads or tracking.
                   </p>
                 </div>
               </Card>
+              <p className="mt-3 text-center focus-mode-hide">
+                <a
+                  href="/install-pwa.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                  aria-label="Open full guide: install Nvalope as an app on your device (opens in a new tab)"
+                >
+                  Install Nvalope on your device — step-by-step
+                </a>
+              </p>
             </div>
 
             <div className="mt-4 focus-mode-hide flex flex-col items-center gap-1 relative z-20">
@@ -519,26 +530,45 @@ export function MainContent({
                   >
                     ?
                   </PopoverTrigger>
-                <PopoverContent side="top" className="max-w-sm text-left text-xs">
-                  <p className="font-medium text-foreground mb-1">Install this app</p>
-                  <p className="text-muted-foreground mb-2">
-                    Add Nvalope to your device so it opens like a native app. Your data stays on your device.
+                <PopoverContent
+                  side="top"
+                  className="max-w-md w-[min(calc(100vw-2rem),28rem)] max-h-[min(70vh,22rem)] overflow-y-auto text-left text-xs p-3 sm:p-4"
+                >
+                  <p className="font-medium text-foreground mb-1">Install as an app (PWA)</p>
+                  <p className="text-muted-foreground mb-2 leading-snug">
+                    A <strong className="text-foreground">Progressive Web App</strong> means this site can be added to your home screen or app list so Nvalope opens like a standalone app. Your budget data stays on your device; installing does not send anything to our servers.
                   </p>
-                  <p className="font-medium text-foreground mb-1.5">Quick guide</p>
-                  <ul className="space-y-1.5 text-muted-foreground list-disc list-inside">
+                  <p className="text-muted-foreground mb-2 leading-snug">
+                    <strong className="text-foreground">Default:</strong> use the steps below. If your browser already shows an <strong className="text-foreground">Install</strong> prompt, you can accept it—then you’re done.
+                  </p>
+                  <p className="font-medium text-foreground mb-1.5">How to install on each device</p>
+                  <ul className="space-y-1.5 text-muted-foreground list-disc list-inside leading-snug [&_strong]:text-foreground">
                     <li>
-                      <strong>iPhone/iPad (Safari):</strong> Tap the Share button (square with arrow) → “Add to Home Screen” → Add.
+                      <strong>iPhone / iPad:</strong> Open Nvalope in <strong>Safari</strong>. Tap Share (square with arrow) → <strong>Add to Home Screen</strong> → Add.
                     </li>
                     <li>
-                      <strong>Android (Chrome):</strong> Menu (⋮) → “Install app” or “Add to Home screen”.
+                      <strong>Android:</strong> In <strong>Chrome</strong>, use the menu (⋮) → <strong>Install app</strong> or <strong>Add to Home screen</strong>, or tap Install when the banner appears.
                     </li>
                     <li>
-                      <strong>Desktop (Chrome, Edge):</strong> Click the install icon (⊕ or computer) in the address bar, or menu → “Install Nvalope”.
+                      <strong>Windows / Mac — Chrome or Edge:</strong> Click the <strong>install</strong> icon in the address bar, or menu (⋮) → <strong>Install Nvalope</strong> / install this site as an app.
                     </li>
                     <li>
-                      <strong>Desktop (Safari):</strong> File → “Add to Dock” (macOS) or use another browser to install.
+                      <strong>Mac — Safari:</strong> Full PWA install works like iPhone; on desktop Safari, prefer <strong>Chrome or Edge</strong> for install, or <strong>File → Add to Dock</strong> for a shortcut.
+                    </li>
+                    <li>
+                      <strong>Firefox:</strong> Menu → look for <strong>Install</strong> if shown; otherwise use Chrome or Edge for one-click install.
                     </li>
                   </ul>
+                  <p className="mt-2 pt-2 border-t border-border">
+                    <a
+                      href="/install-pwa.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    >
+                      Full guide: install on every device (new tab)
+                    </a>
+                  </p>
                 </PopoverContent>
               </Popover>
               </div>
@@ -592,6 +622,16 @@ export function MainContent({
                 aria-label="Nvalope on GitHub (opens in new tab)"
               >
                 GitHub
+              </a>
+              <span aria-hidden="true">·</span>
+              <a
+                href="/install-pwa.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="How to install Nvalope as an app on your device (opens in new tab)"
+              >
+                Install the app
               </a>
             </footer>
           </div>

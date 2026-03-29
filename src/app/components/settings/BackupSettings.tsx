@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { ChevronDown, ChevronUp, Database, Lock } from 'lucide-react';
-import { isExternalBackupSupported } from '@/app/services/externalBackup';
+import { isExternalBackupSupported, scheduleBackup } from '@/app/services/externalBackup';
 import { SHOW_BANK_STATEMENT_IMPORT } from '@/app/constants/features';
 import { useBudget } from '@/app/store/BudgetContext';
 import { parseBudgetBackup, type BudgetBackup } from '@/app/store/budgetTypes';
@@ -153,7 +153,9 @@ export function BackupSettings({
       void importTemplatesAndRulesFromParsed({
         templates: si.templates ?? [],
         rules: si.rules ?? [],
-      }).catch(() => delayedToast.error('Could not restore statement templates from this backup.'));
+      })
+        .then(() => scheduleBackup())
+        .catch(() => delayedToast.error('Could not restore statement templates from this backup.'));
     }
     if (onApplySettingsFromBackup && raw.settings && typeof raw.settings === 'object') {
       const settings = raw.settings as Record<string, unknown>;
@@ -455,8 +457,14 @@ export function BackupSettings({
               <>
                 <p className="text-xs text-muted-foreground">
                   <strong>Bank statement import</strong> is in this section: expand <strong>Data Management</strong>, then use{' '}
-                  <strong>Import bank statement</strong>. Supported formats: CSV, PDF, OFX/QFX, and QIF. Parsing runs on your device; CSV or OFX is
-                  usually most reliable.
+                  <strong>Import bank statement</strong>. Supported formats: CSV, PDF, OFX/QFX, and QIF. Everything is parsed on your device; CSV or
+                  OFX exports are usually the most reliable.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  For <strong>CSV</strong> (a spreadsheet-style download): Nvalope reads the first row of your file as column names and{' '}
+                  <strong>tries to auto-fill</strong> which column is the date, description, and amount. You normally do not need to touch those
+                  choices unless the preview looks wrong—then you pick the right column from each menu. You can also save a mapping for the next
+                  time you import from the same bank.
                 </p>
                 <p className="text-xs text-primary font-medium">
                   <strong>Transaction history</strong> is an optional feature and is off by default. If you use bank statement import, enable{' '}
@@ -464,11 +472,17 @@ export function BackupSettings({
                 </p>
               </>
             )}
-            <p className="text-xs text-muted-foreground">
-              {isExternalBackupSupported()
-                ? 'Autobackup: a copy is saved every 3 changes (on this device, or to a folder you choose in Chrome/Edge). You can also download a full backup anytime.'
-                : 'Autobackup: a copy is saved on this device every 3 changes. Download a full backup anytime to save a file elsewhere (e.g. USB drive).'}
-            </p>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p>
+                After about three changes you make (budget, settings, or app data), Nvalope saves a backup copy on this device. Automatic saves run at most once per minute. Use{' '}
+                <strong className="text-foreground">Download full backup</strong> anytime for a file you control.
+              </p>
+              <p>
+                {isExternalBackupSupported()
+                  ? 'Chrome, Edge, and other Chromium browsers can ask you to choose a folder on your disk (File System Access API). One file there is updated when autobackup runs. Safari and Firefox do not let websites pick an arbitrary folder—here, autobackup stays on this device until you download a copy.'
+                  : 'This browser does not support choosing a folder on your disk for automatic backups. Autobackup still runs to a copy on this device (IndexedDB); use Download full backup to save a file elsewhere (e.g. USB drive).'}
+              </p>
+            </div>
             <p className="text-xs text-muted-foreground">
               We recommend storing backup files on an external storage device (e.g. USB drive or external disk) so you have a copy if this device is lost or replaced.
             </p>
@@ -510,7 +524,7 @@ export function BackupSettings({
             )}
             {hasBackupFolder === true && isExternalBackupSupported() && (
               <p className="text-xs text-muted-foreground">
-                Backup folder set. One file there is updated every 3 changes (in addition to the copy on this device).
+                Backup folder set. One file there is updated when autobackup runs (after about three changes, at most once per minute), in addition to the copy on this device.
               </p>
             )}
             {isExternalBackupSupported() ? (
@@ -620,6 +634,7 @@ export function BackupSettings({
                         createdAt: new Date().toISOString(),
                       };
                       await putStatementTemplate(rec);
+                      scheduleBackup();
                     }}
                   />
                 )}

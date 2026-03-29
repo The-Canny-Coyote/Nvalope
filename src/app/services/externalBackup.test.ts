@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const { saveLocalAutobackupMock } = vi.hoisted(() => ({
+  saveLocalAutobackupMock: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('./localBackupIdb', () => ({
+  saveLocalAutobackup: saveLocalAutobackupMock,
+}));
+
 import {
+  MIN_BACKUP_INTERVAL_MS,
   triggerBackupNow,
   getBackupFolderHandle,
   writeBackupToFolder,
@@ -8,6 +18,8 @@ import {
   cancelScheduledBackup,
   scheduleBackup,
   hasBackupableData,
+  resetBackupSchedulerStateForTests,
+  setFullSnapshotGetter,
 } from './externalBackup';
 import { isEncryptedBackup } from '@/app/utils/backupCrypto';
 
@@ -17,6 +29,7 @@ describe('externalBackup', () => {
   });
   afterEach(() => {
     vi.restoreAllMocks();
+    resetBackupSchedulerStateForTests();
   });
 
   it('triggerBackupNow returns result with ok boolean when no backup folder', async () => {
@@ -167,5 +180,51 @@ describe('externalBackup', () => {
     const parsed = JSON.parse(written) as Record<string, unknown>;
     expect(parsed.version).toBe(2);
     expect(parsed.budget).toEqual({});
+  });
+
+  describe('scheduleBackup (debounce + throttle retry)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      resetBackupSchedulerStateForTests();
+      saveLocalAutobackupMock.mockClear();
+      vi.stubGlobal('window', { ...globalThis.window });
+      setFullSnapshotGetter(() => ({
+        budget: { envelopes: [] },
+        settings: {},
+        premium: false,
+      }));
+    });
+    afterEach(() => {
+      resetBackupSchedulerStateForTests();
+      setFullSnapshotGetter(null);
+      vi.useRealTimers();
+    });
+
+    it('writes local autobackup after three changes and debounce', async () => {
+      scheduleBackup();
+      scheduleBackup();
+      scheduleBackup();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(saveLocalAutobackupMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries after the throttle window when the next run is too soon', async () => {
+      scheduleBackup();
+      scheduleBackup();
+      scheduleBackup();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(saveLocalAutobackupMock).toHaveBeenCalledTimes(1);
+      saveLocalAutobackupMock.mockClear();
+
+      scheduleBackup();
+      scheduleBackup();
+      scheduleBackup();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(saveLocalAutobackupMock).not.toHaveBeenCalled();
+
+      const elapsedAfterThrottle = 3000;
+      await vi.advanceTimersByTimeAsync(MIN_BACKUP_INTERVAL_MS - elapsedAfterThrottle);
+      expect(saveLocalAutobackupMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

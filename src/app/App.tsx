@@ -30,6 +30,7 @@ import { useModules } from '@/app/hooks/useModules';
 import { useScrollRestore } from '@/app/hooks/useScrollRestore';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { useNotificationQueue } from '@/app/hooks/useNotificationQueue';
+import { useShallow } from 'zustand/react/shallow';
 import { useAppStore, getAppStoreSettingsSnapshot } from '@/app/store/appStore';
 import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
 import { useCheckUpdatesToast } from '@/app/hooks/useCheckUpdatesToast';
@@ -133,6 +134,47 @@ export default function App() {
 
   const { isPremium, effectiveEnabledModules } = usePremiumEntitlements(enabledModules);
 
+  /**
+   * Persisted/settings fields that affect the backup snapshot (mount-skipped effect → scheduleBackup).
+   * Excludes budget period fields synced from app data in onAppDataWritten to avoid double-counting scheduleBackup
+   * when setAppData updates both appDataRef and the store.
+   */
+  const backupSettingsTrigger = useAppStore(
+    useShallow((s) => ({
+      enabledModules: s.enabledModules,
+      selectedMode: s.selectedMode,
+      textSize: s.textSize,
+      reducedMotion: s.reducedMotion,
+      highContrast: s.highContrast,
+      screenReaderMode: s.screenReaderMode,
+      lineHeight: s.lineHeight,
+      letterSpacing: s.letterSpacing,
+      layoutScale: s.layoutScale,
+      wheelScale: s.wheelScale,
+      scrollbarSize: s.scrollbarSize,
+      isPremiumLocal: s.isPremiumLocal,
+      webLLMEnabled: s.webLLMEnabled,
+      assistantUseLLM: s.assistantUseLLM,
+      useCardLayout: s.useCardLayout,
+      cardBarRows: s.cardBarRows,
+      cardBarColumns: s.cardBarColumns,
+      cardBarPosition: s.cardBarPosition,
+      cardBarMinimized: s.cardBarMinimized,
+      cardBarLockExpanded: s.cardBarLockExpanded,
+      cardBarSectionOrder: s.cardBarSectionOrder,
+      showCardBarRowSelector: s.showCardBarRowSelector,
+      cardsSectionWidthPercent: s.cardsSectionWidthPercent,
+      showGridBackground: s.showGridBackground,
+      uiMode: s.uiMode,
+      titleAreaMinimized: s.titleAreaMinimized,
+      supportBlockMinimized: s.supportBlockMinimized,
+      storageBarMinimized: s.storageBarMinimized,
+      wheelMinimized: s.wheelMinimized,
+      receiptCategoryPreferRegex: s.receiptCategoryPreferRegex,
+      encryptBackups: s.encryptBackups,
+    }))
+  );
+
   // Save scroll and optional anchor before module toggle so restore effect keeps position when toggling features in Settings
   const saveScrollAndAnchorBeforeModuleToggle = useCallback(() => {
     saveScrollForRestore();
@@ -177,9 +219,7 @@ export default function App() {
       if (SHOW_BANK_STATEMENT_IMPORT) {
         if (localStorage.getItem(MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY) === 'true') return;
         localStorage.setItem(MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY, 'true');
-        delayedToast.info('Import bank statements under Settings → Data Management → Import bank statement.', {
-          duration: 12_000,
-        });
+        delayedToast.info('Import bank statements under Settings → Data Management → Import bank statement.');
         return;
       }
       if (sessionStorage.getItem(BANK_STMT_COMING_SOON_SESSION_KEY) === '1') return;
@@ -283,7 +323,7 @@ export default function App() {
     }
     const t = setTimeout(() => scheduleBackup(), BACKUP_DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [enabledModules, selectedMode, textSize, reducedMotion, highContrast, screenReaderMode, lineHeight, letterSpacing, layoutScale, wheelScale, isPremium]);
+  }, [backupSettingsTrigger, isPremium]);
 
   const handleBudgetSaved = useCallback(() => {
     scheduleBackup();
@@ -543,7 +583,9 @@ export default function App() {
         onBackupChooseFolder={handleChooseBackupFolder}
         onBackupNoThanks={() => {
           markBackupSuggestionDismissed();
-          delayedToast.info('A backup copy is saved every 3 changes. You can set a backup folder or download a backup in Settings → Data Management.');
+          delayedToast.info(
+            'After about three changes, a backup copy is saved on this device (at most once per minute). You can set a backup folder or download a backup in Settings → Data Management.'
+          );
         }}
         updateAvailable={updateAvailable}
         onUpdateAvailableOpenChange={setUpdateAvailable}

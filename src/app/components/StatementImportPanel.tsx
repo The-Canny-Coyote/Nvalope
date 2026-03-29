@@ -235,15 +235,47 @@ export function StatementImportPanel({
         <p className="text-xs text-muted-foreground">
           File: {fileName} ({parsed.format.toUpperCase()})
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {classification.matchedTemplateName ? (
-            <>Matched format template: <strong className="text-foreground">{classification.matchedTemplateName}</strong></>
-          ) : parsed.format === 'csv' ? (
-            <>
-              No saved template for this header. Adjust column mapping below, then use &quot;Save mapping as template&quot; to reuse it next time.
-            </>
-          ) : null}
-        </p>
+        {parsed.format === 'csv' && parsed.csvColumns && (
+          <div className="mt-2 rounded-md border border-border bg-background/60 p-2 space-y-2 text-xs text-muted-foreground leading-snug">
+            <p className="font-medium text-foreground">CSV exports — how column mapping works</p>
+            <p>
+              A <strong className="text-foreground">CSV</strong> is a common spreadsheet-style download from your bank: each line is usually one
+              transaction, and the <strong className="text-foreground">first line</strong> lists column names (such as Date, Description, or
+              Amount). You do not need to open the file in Excel or Numbers—Nvalope reads it here.
+            </p>
+            <p>
+              <strong className="text-foreground">By default</strong>, we <strong className="text-foreground">auto-detect</strong> which column is
+              the date, description, and amount by matching those header names. The dropdowns below list your file’s column names; when detection
+              works, they are filled in for you.
+            </p>
+            <p>
+              <strong className="text-foreground">If those fields look right</strong> and the transactions in the preview match what you see on
+              your bank’s website or PDF, you can usually continue—no need to understand CSV. Saving or importing is fine when auto-detection
+              looks correct.
+            </p>
+            <p>
+              <strong className="text-foreground">Change the mapping only if something looks wrong</strong>—for example wrong dates, missing
+              amounts, or text in the wrong place. Each dropdown is asking: &quot;Which column in <em>my</em> file holds this piece of
+              data?&quot; Pick the matching column name from your bank’s header row. Use either one{' '}
+              <strong className="text-foreground">Amount</strong> column (positive and negative in a single column) or separate{' '}
+              <strong className="text-foreground">Debit</strong> and <strong className="text-foreground">Credit</strong> columns, whichever
+              matches your export.
+            </p>
+            {classification.matchedTemplateName ? (
+              <p>
+                <strong className="text-foreground">Saved layout applied:</strong> we used your saved template for{' '}
+                <strong className="text-foreground">{classification.matchedTemplateName}</strong>. If your bank changed their export format,
+                adjust the dropdowns above; otherwise the defaults should be fine.
+              </p>
+            ) : (
+              <p>
+                <strong className="text-foreground">No saved layout for this file’s header yet.</strong> After the auto-detected mapping looks
+                good, use <strong className="text-foreground">Save column mapping as template</strong> so the next import from this bank can reuse
+                it and skip guessing.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {parsed.format === 'csv' && parsed.csvColumns && onSaveCsvTemplate && (

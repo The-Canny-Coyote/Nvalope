@@ -64,7 +64,7 @@ export function BackupFolderPrompt({
         <AlertDialogHeader>
           <AlertDialogTitle>Set autobackup folder?</AlertDialogTitle>
           <AlertDialogDescription>
-            You can save your budget and settings to a folder on your device (or on an external storage device such as a USB drive or external disk). The app keeps one backup file there and updates it every 3 changes. If you clear &quot;cookies and other site data&quot; in your browser, the app&apos;s data and the local backup copy are deleted—but the <strong>files in your backup folder stay on your disk</strong> and are not removed. You would only need to choose the folder again in Settings so the app can write to it. You can turn on encrypted backups in Settings → Data Management so files are password-protected. Do you want to choose a folder now?
+            You can save your budget and settings to a folder on your device (or on an external storage device such as a USB drive or external disk). The app keeps one backup file there and updates it when autobackup runs (after about three changes you make, at most once per minute). If you clear &quot;cookies and other site data&quot; in your browser, the app&apos;s data and the local backup copy are deleted—but the <strong>files in your backup folder stay on your disk</strong> and are not removed. You would only need to choose the folder again in Settings so the app can write to it. You can turn on encrypted backups in Settings → Data Management so files are password-protected. Do you want to choose a folder now?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

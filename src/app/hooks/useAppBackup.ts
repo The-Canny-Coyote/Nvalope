@@ -129,7 +129,7 @@ export function useAppBackup({
     const ok = await requestBackupFolder();
     if (ok) {
       window.dispatchEvent(new CustomEvent('nvalope-backup-folder-updated'));
-      delayedToast.success('Backup folder set. One file will be updated there every 3 changes you make.');
+      delayedToast.success('Backup folder set. One file will be updated there when autobackup runs (after about three changes, at most once per minute).');
       const pwd = encryptBackups ? getBackupPasswordRef?.current ?? undefined : undefined;
       const result = await triggerBackupNow(getSnapshotRef.current, true, true, pwd);
       if (!result.ok && result.error) delayedToast.error(result.error);

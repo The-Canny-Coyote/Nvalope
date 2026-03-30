@@ -42,6 +42,8 @@ export interface SettingsContentProps {
   /** Lifted from App: Optional features collapsible open state. */
   optionalFeaturesOpen?: boolean;
   onOptionalFeaturesOpenChange?: (open: boolean) => void;
+  hasPremiumAi?: boolean;
+  premiumFeaturesConfigured?: boolean;
 }
 
 export function SettingsContent({
@@ -70,6 +72,8 @@ export function SettingsContent({
   onCoreFeaturesOpenChange,
   optionalFeaturesOpen,
   onOptionalFeaturesOpenChange,
+  hasPremiumAi = false,
+  premiumFeaturesConfigured = false,
 }: SettingsContentProps) {
   const jumpToDataRef = useRef<(() => void) | null>(null);
 
@@ -88,6 +92,8 @@ export function SettingsContent({
         onCoreFeaturesOpenChange={onCoreFeaturesOpenChange}
         optionalFeaturesOpen={optionalFeaturesOpen}
         onOptionalFeaturesOpenChange={onOptionalFeaturesOpenChange}
+        hasPremiumAi={hasPremiumAi}
+        premiumFeaturesConfigured={premiumFeaturesConfigured}
       />
       <BackupSettings
         enabledModules={enabledModules}

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ChangeEvent } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { useAppStore } from '@/app/store/appStore';
+import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
+import { hasEntitlement } from '@/app/premium/entitlements';
 import Tesseract from 'tesseract.js';
 import { AppDataIdbError, getAppData, setAppData } from '@/app/services/appDataIdb';
 import { parseReceiptText, validateReceiptTransaction } from '@/app/services/receiptParser';
@@ -46,6 +48,9 @@ export function useReceiptScanner() {
   const { state, api } = useBudget();
   const receiptCategoryPreferRegex = useAppStore((s) => s.receiptCategoryPreferRegex);
   const webLLMEnabled = useAppStore((s) => s.webLLMEnabled);
+  const enabledModules = useAppStore((s) => s.enabledModules);
+  const { entitlementsFromApi } = usePremiumEntitlements(enabledModules);
+  const hasPremiumAi = hasEntitlement('premium_ai', entitlementsFromApi);
   const [scans, setScans] = useState<ReceiptScanResult[]>([]);
   const scansRef = useRef<ReceiptScanResult[]>(scans);
   scansRef.current = scans;
@@ -135,6 +140,7 @@ export function useReceiptScanner() {
         const suggestion = await suggestCategory(text.slice(0, 2000), state.envelopes, {
           preferRegex: receiptCategoryPreferRegex,
           webLLMEnabled,
+          hasPremiumAi,
         });
         suggestedEnvelopeId = suggestion.envelopeId;
       } catch {

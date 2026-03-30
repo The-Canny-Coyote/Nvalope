@@ -173,6 +173,10 @@ export interface UseAppSectionsParams {
   useCardLayout?: boolean;
   /** Switch from card layout back to section wheel. */
   setUseCardLayout?: (v: boolean) => void;
+  /** Premium AI entitlement (passed to Settings → FeatureToggles WebLLM gate). */
+  hasPremiumAi?: boolean;
+  /** When API base is configured, premium gating can apply. */
+  premiumFeaturesConfigured?: boolean;
 }
 
 export function useAppSections(params: UseAppSectionsParams): AppSection[] {
@@ -241,6 +245,8 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   onCloseSection,
   useCardLayout = false,
   setUseCardLayout,
+  hasPremiumAi = false,
+  premiumFeaturesConfigured = false,
 } = params;
 
   return useMemo(() => {
@@ -382,6 +388,8 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           onCoreFeaturesOpenChange={setSettingsCoreFeaturesOpen}
           optionalFeaturesOpen={settingsOptionalFeaturesOpen}
           onOptionalFeaturesOpenChange={setSettingsOptionalFeaturesOpen}
+          hasPremiumAi={hasPremiumAi}
+          premiumFeaturesConfigured={premiumFeaturesConfigured}
         />
       </SectionWithBoundary>
     ),
@@ -559,5 +567,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     settingsOptionalFeaturesOpen,
     setSettingsOptionalFeaturesOpen,
     hasBackupFolder,
+    hasPremiumAi,
+    premiumFeaturesConfigured,
   ]);
 }

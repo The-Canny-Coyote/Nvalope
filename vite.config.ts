@@ -46,9 +46,9 @@ export default defineConfig(({ mode }) => ({
       policy: {
         'default-src': ["'self'"],
         // Allow Cloudflare Web Analytics + inline scripts (Cloudflare injects inline script at (index):39)
-        // 'wasm-unsafe-eval' for Tesseract.js/WebAssembly; 'unsafe-eval' required by some runtimes (e.g. WebLLM) and when script-src-elem ignores wasm-unsafe-eval
-        'script-src': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
-        'script-src-elem': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
+        // 'wasm-unsafe-eval' for Tesseract.js/WebAssembly / WebLLM WASM; broad 'unsafe-eval' omitted (retest if WebLLM eval-CSP errors appear on upgrade).
+        'script-src': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
+        'script-src-elem': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
         'worker-src': ["'self'", 'blob:', 'https://cdn.jsdelivr.net'],
         'style-src': ["'self'", "'unsafe-inline'"],
         'style-src-elem': ["'self'", "'unsafe-inline'"],

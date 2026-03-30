@@ -16,9 +16,11 @@ import {
   ChevronUp,
   Sparkles,
   Settings,
+  Lock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { MODULE_CONFIG } from '@/app/constants/modules';
+import { getApiBase } from '@/app/premium/entitlements';
 import { LOCAL_LLM_ACCURACY_NOTE } from '@/app/constants/assistantCopy';
 import { BrandCoyoteMark, brandCoyoteLabelSuffix } from '@/app/components/BrandCoyoteMark';
 import { Checkbox } from '@/app/components/ui/checkbox';
@@ -72,6 +74,10 @@ export interface FeatureTogglesProps {
   /** When set with onOptionalFeaturesOpenChange, Optional collapsible is controlled (e.g. lifted to App). */
   optionalFeaturesOpen?: boolean;
   onOptionalFeaturesOpenChange?: (open: boolean) => void;
+  /** When premium is wired, false means WebLLM is gated behind premium_ai until the user upgrades. */
+  hasPremiumAi?: boolean;
+  /** When true, premium entitlements are active (parent can derive from entitlements module). */
+  premiumFeaturesConfigured?: boolean;
 }
 
 export function FeatureToggles({
@@ -86,10 +92,27 @@ export function FeatureToggles({
   onCoreFeaturesOpenChange,
   optionalFeaturesOpen: optionalFeaturesOpenProp,
   onOptionalFeaturesOpenChange,
+  hasPremiumAi: hasPremiumAiFromProps = false,
+  premiumFeaturesConfigured: _premiumFeaturesConfiguredFromProps = false,
 }: FeatureTogglesProps) {
+  /** E2E seam: window flags override props when set before load. Otherwise match App (API base + entitlements). */
+  const premiumFeaturesConfigured =
+    (typeof window !== 'undefined' &&
+      (window as Window & { __NVALOPE_TEST_PREMIUM_CONFIGURED?: boolean }).__NVALOPE_TEST_PREMIUM_CONFIGURED === true) ||
+    getApiBase().length > 0;
+  const hasPremiumAi =
+    typeof window !== 'undefined' && Object.prototype.hasOwnProperty.call(window, '__NVALOPE_TEST_HAS_PREMIUM_AI')
+      ? (window as Window & { __NVALOPE_TEST_HAS_PREMIUM_AI?: boolean }).__NVALOPE_TEST_HAS_PREMIUM_AI === true
+      : hasPremiumAiFromProps;
+  const webLLMPremiumGated = premiumFeaturesConfigured && !hasPremiumAi;
   const webLLMEnabled = useAppStore((s) => s.webLLMEnabled);
   const setWebLLMEnabled = useAppStore((s) => s.setWebLLMEnabled);
-  const webLLMBlockReasons = getWebLLMBlockReasons();
+  /** E2E: headless often has no WebGPU; allow premium-gate UI test without loading WebLLM. */
+  const webLLMBlockReasons =
+    typeof window !== 'undefined' &&
+    (window as Window & { __NVALOPE_TEST_FORCE_WEBLLM_ELIGIBLE?: boolean }).__NVALOPE_TEST_FORCE_WEBLLM_ELIGIBLE === true
+      ? []
+      : getWebLLMBlockReasons();
   const webLLMEligible = webLLMBlockReasons.length === 0;
   const webLLMEnvSnapshot = getWebLLMEnvironmentSnapshot();
   const receiptCategoryPreferRegex = useAppStore((s) => s.receiptCategoryPreferRegex);
@@ -297,7 +320,19 @@ export function FeatureToggles({
 
             <div className="space-y-2 pt-2 border-t border-border">
               <h4 className="text-sm font-medium text-foreground">Local AI (WebLLM)</h4>
-              {webLLMEligible ? (
+              {webLLMPremiumGated && webLLMEligible ? (
+                <div
+                  data-testid="webllm-premium-locked"
+                  className="p-3 border border-border rounded-lg flex items-start gap-3 bg-muted/40"
+                  role="status"
+                  aria-label="Local AI locked"
+                >
+                  <Lock className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" aria-hidden />
+                  <p className="text-sm text-muted-foreground">
+                    Local AI model requires Nvalope Pro (premium_ai). Upgrade to unlock.
+                  </p>
+                </div>
+              ) : webLLMEligible ? (
                 <div className="p-3 border border-primary/20 rounded-lg flex flex-col gap-2 bg-primary/5 transition-colors">
                   <p className="text-xs text-muted-foreground" aria-label="Local AI environment on this device">
                     This browser: secure page {webLLMEnvSnapshot.secureContext ? 'yes' : 'no'}, WebGPU{' '}

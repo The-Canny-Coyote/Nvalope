@@ -33,6 +33,7 @@ import { useNotificationQueue } from '@/app/hooks/useNotificationQueue';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore, getAppStoreSettingsSnapshot } from '@/app/store/appStore';
 import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
+import { getApiBase, hasEntitlement } from '@/app/premium/entitlements';
 import { useCheckUpdatesToast } from '@/app/hooks/useCheckUpdatesToast';
 import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
 import { SHOW_BANK_STATEMENT_IMPORT } from '@/app/constants/features';
@@ -135,7 +136,9 @@ export default function App() {
     onDisableAdvancedAICache: () => setAssistantFallbackToBasic(false),
   });
 
-  const { isPremium, effectiveEnabledModules } = usePremiumEntitlements(enabledModules);
+  const { entitlementsFromApi, isPremium, effectiveEnabledModules } = usePremiumEntitlements(enabledModules);
+  const hasPremiumAi = hasEntitlement('premium_ai', entitlementsFromApi);
+  const premiumFeaturesConfigured = getApiBase().length > 0;
 
   /**
    * Persisted/settings fields that affect the backup snapshot (mount-skipped effect → scheduleBackup).
@@ -563,6 +566,8 @@ export default function App() {
     hasBackupFolder,
     useCardLayout,
     setUseCardLayout,
+    hasPremiumAi,
+    premiumFeaturesConfigured,
   });
 
   const handleWheelSectionChange = useCallback((id: number | null) => {
@@ -639,6 +644,7 @@ export default function App() {
           fallbackReason={assistantFallbackToBasic ? 'You switched to Basic AI. You can turn Advanced AI back on in Settings.' : undefined}
           initialMessages={initialAssistantMessages ?? undefined}
           onMessagesChange={onAssistantMessagesChange}
+          hasPremiumAi={hasPremiumAi}
         />
         <AppErrorBoundary>
           <MainContent

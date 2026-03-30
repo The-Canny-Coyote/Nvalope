@@ -11,6 +11,7 @@ export type ReceiptCategorizationEngine = 'webllm' | 'transformers' | 'regex';
 export type ReceiptCategorizationConfig = {
   preferRegex: boolean;
   webLLMEnabled: boolean;
+  hasPremiumAi?: boolean;
 };
 
 const PWA_INSTALLED_KEY = 'nvalopePWAInstalled';
@@ -27,15 +28,20 @@ function isPWAInstalled(): boolean {
 /**
  * Determine which engine to use for receipt categorization.
  * If user chose "keyword matching only" in Settings, always use regex.
- * Otherwise: WebLLM when capable, enabled, and already loaded (optional PWA); else transformers then regex.
+ * Otherwise: WebLLM when capable, enabled, premium_ai, and already loaded (optional PWA); else transformers then regex.
  */
 export function getReceiptCategorizationEngine(config: ReceiptCategorizationConfig): ReceiptCategorizationEngine {
   if (config.preferRegex) return 'regex';
   const webLLMEnabled = config.webLLMEnabled;
-  if (getWebLLMBlockReasons().length === 0 && webLLMEnabled && isWebLLMEngineLoaded()) {
-    if (isPWAInstalled()) {
-      return 'webllm';
-    }
+  if (
+    !config.preferRegex &&
+    getWebLLMBlockReasons().length === 0 &&
+    webLLMEnabled &&
+    isWebLLMEngineLoaded() &&
+    config.hasPremiumAi === true &&
+    isPWAInstalled()
+  ) {
+    return 'webllm';
   }
   return 'transformers';
 }

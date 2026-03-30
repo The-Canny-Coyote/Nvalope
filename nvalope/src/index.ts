@@ -105,6 +105,13 @@ async function createUser(env: NvalopeEnv): Promise<string> {
 	return userId;
 }
 
+/** Remove stale anonymous users (no entitlements) to cap `users` table growth from repeated session bootstraps. */
+async function purgeExpiredAnonymousSessions(env: NvalopeEnv): Promise<void> {
+	await env.DB.prepare(
+		"DELETE FROM users WHERE created_at < datetime('now', '-60 days') AND id NOT IN (SELECT user_id FROM one_time_entitlements)"
+	).run();
+}
+
 /** Issue a session JWT and return Set-Cookie header value. */
 async function issueSessionCookie(userId: string, env: NvalopeEnv): Promise<string> {
 	const secret = new TextEncoder().encode(env.JWT_SECRET);
@@ -166,6 +173,8 @@ export default {
 			const setCookie = await issueSessionCookie(userId, env);
 			const res = jsonResponse({ ok: true }, 201, headers);
 			res.headers.set('Set-Cookie', setCookie);
+			// Best-effort cleanup: old users without entitlements; non-blocking so POST /api/session stays fast.
+			void purgeExpiredAnonymousSessions(env).catch(() => {});
 			return res;
 		}
 

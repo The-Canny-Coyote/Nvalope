@@ -72,6 +72,8 @@ interface AIChatSheetProps {
   initialMessages?: ChatMessage[];
   /** Called when messages change (for backup persistence) */
   onMessagesChange?: (messages: ChatMessage[]) => void;
+  /** When false, WebLLM is not used even if enabled in settings (premium_ai gate). */
+  hasPremiumAi?: boolean;
 }
 
 const getDefaultMessages = (aiMode: "basic" | "advanced"): ChatMessage[] => [
@@ -86,6 +88,7 @@ export function AIChatSheet({
   fallbackReason,
   initialMessages,
   onMessagesChange,
+  hasPremiumAi = false,
 }: AIChatSheetProps) {
   const { state, getBudgetSummaryForCurrentPeriod } = useBudget();
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -221,7 +224,7 @@ export function AIChatSheet({
         }
       };
 
-      if (!webLLMEnabled || !assistantUseLLM || !webLLMAvailable || webLLMStatus === 'unavailable') {
+      if (!webLLMEnabled || !hasPremiumAi || !assistantUseLLM || !webLLMAvailable || webLLMStatus === 'unavailable') {
         appendRuleBasedReply();
         setIsSending(false);
         return;
@@ -357,6 +360,7 @@ export function AIChatSheet({
       performanceTier,
       state,
       webLLMEnabled,
+      hasPremiumAi,
       assistantUseLLM,
       webLLMAvailable,
       webLLMStatus,

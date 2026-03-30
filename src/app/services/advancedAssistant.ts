@@ -1,3 +1,16 @@
+/**
+ * NVALOPE PREMIUM — RESTRICTED USE
+ *
+ * This file is part of the Nvalope Premium feature set.
+ * Licensed under MIT + Commons Clause. See LICENSE in the project root for full terms.
+ *
+ * You may read, fork, and modify this file for personal or self-hosted non-commercial use.
+ * You may NOT use this file, or any derivative of it, as part of a product or service
+ * that is sold or monetized without a separate commercial license from the author.
+ *
+ * To inquire about a commercial license: support@nvalope.com
+ */
+
 import { formatMoney } from '@/app/utils/format';
 
 export type BudgetSummary = {

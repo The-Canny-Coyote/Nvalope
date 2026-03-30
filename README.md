@@ -50,7 +50,17 @@ Optionally run `npm run test:coverage` to check coverage. Tests are additive and
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Nvalope is source-available under the [MIT + Commons Clause license](./LICENSE).
+
+The core budgeting engine, UI, PWA infrastructure, and Cloudflare Worker are free
+for personal and self-hosted non-commercial use under the MIT terms.
+
+Files in `src/app/premium/`, `src/app/hooks/usePremiumEntitlements.ts`, and
+`src/app/services/advancedAssistant.ts` are additionally subject to the Commons
+Clause restriction and may not be used as the basis of a commercial product
+without a separate license.
+
+To inquire about commercial licensing, contact: support@nvalope.com
 
 ## Support
 

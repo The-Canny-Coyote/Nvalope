@@ -9,8 +9,10 @@
 # Root and index: avoid long cache so users get fresh HTML after deploy (and correct hashed asset URLs)
 /
   Cache-Control: no-cache
+  Content-Security-Policy: frame-ancestors 'none'
 /index.html
   Cache-Control: no-cache
+  Content-Security-Policy: frame-ancestors 'none'
 
 # Hashed assets: safe to cache forever; avoids stale HTML pointing at old 404ing assets
 /assets/*

@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => ({
         // - self: same-origin app/API
         // - *.workers.dev: default Cloudflare Worker API host
         // - cdn.jsdelivr.net + huggingface.*: local AI/receipt model assets
+        // - raw.githubusercontent.com: WebLLM (@mlc-ai) WASM/runtime from mlc-ai/binary-mlc-llm-libs
         // - cloudflareinsights.*: analytics beacons
         'connect-src': [
           "'self'",
@@ -65,6 +66,7 @@ export default defineConfig(({ mode }) => ({
           'https://cdn.jsdelivr.net',
           'https://huggingface.co',
           'https://huggingface.net',
+          'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',
         ],

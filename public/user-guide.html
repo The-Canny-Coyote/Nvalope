@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nvalope User Guide</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 42rem; margin: 0 auto; padding: 1.5rem; line-height: 1.6; color: #1a1a1a; background: #f5f2e8; }
+    h1 { font-size: 1.75rem; margin-top: 0; color: #2d7a3f; }
+    h2 { font-size: 1.2rem; margin-top: 1.75rem; color: #5c4a32; }
+    h3 { font-size: 1.05rem; margin-top: 1.25rem; color: #3d5634; }
+    p { margin: 0.75rem 0; }
+    ul, ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
+    a { color: #2d7a3f; }
+    hr { border: 0; border-top: 1px solid #c4b8a0; margin: 1.25rem 0; }
+    .meta { font-size: 0.9rem; color: #555; margin-bottom: 1rem; }
+    blockquote { font-size: 0.95rem; color: #444; border-left: 3px solid #8b6944; padding-left: 0.75rem; margin: 1rem 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin: 1rem 0; }
+    th, td { border: 1px solid #c4b8a0; padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
+    th { background: rgba(139, 105, 68, 0.12); }
+    nav ol { padding-left: 1.25rem; }
+  </style>
+</head>
+<body>
+<h1>Nvalope User Guide</h1>
+<p>Nvalope is a budgeting app built around one idea: your financial data belongs to you. Everything stays on your device. Nothing is sent to a server. The app works fully offline after you load it the first time.</p>
+<p>This guide covers everything from getting started to advanced features.</p>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#the-basics">The basics</a></li>
+<li><a href="#how-nvalope-is-laid-out">How Nvalope is laid out</a></li>
+<li><a href="#core-features">Core features</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#income">Income</a></li>
+<li><a href="#envelopes--expenses">Envelopes &amp; Expenses</a></li>
+<li><a href="#transactions">Transactions</a></li>
+</ul>
+</li>
+<li><a href="#optional-features">Optional features</a><ul>
+<li><a href="#receipt-scanner">Receipt Scanner</a></li>
+<li><a href="#calendar-view">Calendar View</a></li>
+<li><a href="#analytics">Analytics</a></li>
+<li><a href="#cache-the-ai-assistant">Cache the AI Assistant</a></li>
+<li><a href="#glossary">Glossary</a></li>
+</ul>
+</li>
+<li><a href="#bank-statement-import">Bank statement import</a></li>
+<li><a href="#accessibility">Accessibility</a></li>
+<li><a href="#settings">Settings</a></li>
+<li><a href="#your-data-and-backups">Your data and backups</a></li>
+<li><a href="#installing-nvalope">Installing Nvalope</a></li>
+<li><a href="#privacy">Privacy</a></li>
+</ol>
+<hr>
+<h2 id="the-basics">The basics</h2>
+<p>Nvalope uses <strong>envelope budgeting</strong>. The idea is straightforward: you divide your income into named categories (envelopes), set a spending limit for each, and track your expenses against those limits. When an envelope runs low, you know before you overspend.</p>
+<p>A typical flow looks like this:</p>
+<ol>
+<li>Add your income for the month.</li>
+<li>Create envelopes — Groceries, Rent, Transport, whatever fits your life.</li>
+<li>Log expenses as you spend, or import them from your bank.</li>
+<li>Check your Overview to see where things stand.</li>
+</ol>
+<p>That&#39;s it. No accounts to link, no subscriptions, no data leaving your device.</p>
+<hr>
+<h2 id="how-nvalope-is-laid-out">How Nvalope is laid out</h2>
+<p>When you open the app you&#39;ll see the <strong>Feature Wheel</strong> — a circular menu where each slice represents a section. Tap a slice to open that section. Tap the centre or press the close button to go back.</p>
+<p>If you prefer a more traditional layout, you can switch to <strong>Card Layout</strong> in Settings. In card layout, sections appear as a bar of cards you tap to navigate. You can switch back to the wheel at any time.</p>
+<p>The <strong>Settings</strong> button and theme toggle live at the top of the screen. The AI assistant button (when enabled) appears there too.</p>
+<hr>
+<h2 id="core-features">Core features</h2>
+<p>These four sections are on by default. You can turn any of them off in Settings if you don&#39;t need them.</p>
+<h3 id="overview">Overview</h3>
+<p>Your budget at a glance. Shows:</p>
+<ul>
+<li><strong>Total Income</strong> — everything you&#39;ve logged this period</li>
+<li><strong>Total Budgeted</strong> — the sum of your envelope limits</li>
+<li><strong>Total Spent</strong> — expenses logged across all envelopes</li>
+<li><strong>Remaining</strong> — what&#39;s left unspent</li>
+</ul>
+<p>Below the numbers is a <strong>Budget Health</strong> bar. It reflects how much of your budget you&#39;ve used relative to how far through the period you are. Green means you&#39;re on track. Red means you&#39;re spending ahead of pace.</p>
+<p>The period shown depends on your budget period setting — monthly, biweekly, or weekly (configured in Envelopes &amp; Expenses).</p>
+<hr>
+<h3 id="income">Income</h3>
+<p>Log money coming in. Each income entry has an amount, a source (Salary, Freelance, Side gig — whatever label makes sense to you), and a date.</p>
+<p>Your five most recent income entries appear below the form. Tap the edit icon on any entry to change the amount, source, or date. Tap the trash icon to delete it.</p>
+<p>Income entries appear in the Calendar view and contribute to the totals in Overview and Analytics.</p>
+<hr>
+<h3 id="envelopes--expenses">Envelopes &amp; Expenses</h3>
+<p>This is the heart of the app. Here you:</p>
+<ul>
+<li><strong>Create envelopes</strong> — give each one a name and a spending limit</li>
+<li><strong>Log expenses</strong> — assign them to an envelope, add a description and date</li>
+<li><strong>Track spending</strong> — each envelope shows a progress bar of spent vs. limit</li>
+<li><strong>Set bills</strong> — recurring due dates that appear on the Calendar</li>
+<li><strong>Set savings goals</strong> — optional targets tracked in Analytics</li>
+</ul>
+<p><strong>Budget period</strong> is configured here. You can budget monthly, biweekly, or weekly. Biweekly mode lets you define exactly when each period starts and ends (useful for pay-cycle budgeting). Switching periods is non-destructive — past data keeps its original period labels.</p>
+<p>Tapping an envelope opens its detail view, showing recent expenses for that envelope and a link into the full transaction history filtered to that envelope.</p>
+<p>The <strong>Quick Add</strong> button at the top lets you log an expense fast without opening an envelope — just pick the envelope from a dropdown.</p>
+<hr>
+<h3 id="transactions">Transactions</h3>
+<p>The full history of every expense and income entry, searchable and filterable. You can:</p>
+<ul>
+<li><strong>Search</strong> by description or envelope name</li>
+<li><strong>Filter</strong> by envelope, including an Uncategorized filter for expenses without an assigned envelope</li>
+<li><strong>Edit</strong> any transaction to change the amount, description, date, or envelope</li>
+<li><strong>Delete</strong> entries you no longer want</li>
+</ul>
+<p>When you tap an envelope link in Transactions, it opens the Envelopes view pre-filtered to that envelope. Tapping an entry in the Calendar opens the Transactions view filtered to that date.</p>
+<hr>
+<h2 id="optional-features">Optional features</h2>
+<p>These are off by default. Turn them on in <strong>Settings → Optional features</strong>.</p>
+<h3 id="receipt-scanner">Receipt Scanner</h3>
+<p>Point your camera at a receipt (or upload an image from your device) and Nvalope will read it automatically — extracting the merchant name, total amount, line items, tax, date, and currency.</p>
+<p>From the scan result you can:</p>
+<ul>
+<li>Edit any field the scanner got wrong</li>
+<li>Assign individual line items to different envelopes</li>
+<li>Tap <strong>Save</strong> to add the line items to your budget as expenses and save the receipt to your archive</li>
+</ul>
+<p>Saved receipts go to <strong>Receipt Archive</strong> (accessible from the wheel or card bar), where you can review them later.</p>
+<p><strong>Glossary support:</strong> If your receipts use store abbreviations or codes for item names (common with grocery stores), you can load a JSON glossary file that maps those codes to readable names. A sample glossary is available to download from within the scanner.</p>
+<p><strong>How the scanner works on your device:</strong> The app uses on-device OCR — no image is ever sent to a server. Category suggestions for your line items use a lightweight AI model that also runs locally in your browser. If that model isn&#39;t available, the app falls back to pattern matching. Either way, nothing leaves your device.</p>
+<hr>
+<h3 id="calendar-view">Calendar View</h3>
+<p>A monthly and weekly calendar showing all your transactions, income entries, and bill due dates in one place. Tap any day to see what happened. Tap an event to jump to it in Transactions or Income.</p>
+<p>You can also add expenses and income directly from the Calendar — tap a day, then use the add buttons that appear.</p>
+<p>A search bar at the top filters events across the current month by description, source, or envelope name.</p>
+<hr>
+<h3 id="analytics">Analytics</h3>
+<p>Eight charts that show your spending from different angles:</p>
+<ul>
+<li><strong>Spending by envelope</strong> — where your money went this period, by category</li>
+<li><strong>Spending over time</strong> — a trend line across the last 3, 6, or 12 months</li>
+<li><strong>Daily spending</strong> — how much you spent each day over the last 7, 30, or 90 days</li>
+<li><strong>Income vs. expenses</strong> — side-by-side comparison by period</li>
+<li><strong>Envelope usage</strong> — how much of each envelope&#39;s limit you&#39;ve used</li>
+<li><strong>Top envelopes</strong> — your highest-spending categories</li>
+<li><strong>Income by source</strong> — breakdown of where your income comes from</li>
+<li><strong>Savings progress</strong> — how close you are to each savings goal</li>
+</ul>
+<p>Most charts let you switch between display types — pie, bar, area, or line — depending on what makes the data clearest to you. Tap a slice or bar on envelope charts to jump to that envelope&#39;s transactions.</p>
+<hr>
+<h3 id="cache-the-ai-assistant">Cache the AI Assistant</h3>
+<p>Cache is an AI assistant that knows your budget. Ask it questions in plain language:</p>
+<ul>
+<li><em>How much have I spent on groceries this month?</em></li>
+<li><em>What&#39;s left in my Transport envelope?</em></li>
+<li><em>Which envelope is closest to its limit?</em></li>
+</ul>
+<p>Cache reads your current budget data to answer — no data is sent anywhere, and no account is required.</p>
+<p><strong>Two modes are available:</strong></p>
+<p><strong>Standard</strong> uses a fast, rules-based engine that answers common budget questions reliably and works on any device, fully offline.</p>
+<p><strong>Local AI model</strong> (optional, toggled inside the assistant) downloads a small language model directly to your device. Once downloaded, it runs entirely in your browser. This mode can answer more open-ended questions and follow conversation context better. The download is several hundred megabytes — you&#39;ll be prompted before it starts. You can delete the downloaded files at any time from within the assistant.</p>
+<blockquote>
+<p>Note: The local AI model requires a WebGPU-capable browser (recent Chrome or Edge) and a device with at least 4 GB of RAM. If your device doesn&#39;t meet these requirements, Standard mode is used automatically.</p>
+</blockquote>
+<blockquote>
+<p>As with any AI, verify important numbers against your actual budget data.</p>
+</blockquote>
+<hr>
+<h3 id="glossary">Glossary</h3>
+<p>A reference section covering financial terms (envelope, allocation, balance), privacy terms (what IndexedDB is, what &quot;on-device&quot; means, what a PWA is), and design principles. Useful if you&#39;re new to envelope budgeting or want to understand how the app handles your data.</p>
+<hr>
+<h2 id="bank-statement-import">Bank statement import</h2>
+<p>You can import transactions directly from your bank&#39;s export files. Go to <strong>Settings → Data Management → Import bank statement</strong>.</p>
+<p>Supported formats: <strong>CSV, OFX, QFX, QIF, and PDF</strong>.</p>
+<p>The import process:</p>
+<ol>
+<li>Choose your file. The app detects the format automatically.</li>
+<li>For CSV files, map your columns to the right fields (date, description, amount) if the app doesn&#39;t detect them automatically. Once mapped, the template is saved for next time.</li>
+<li>Preview the transactions. Potential duplicates are flagged — you can skip them, keep both, or replace the existing entry.</li>
+<li>Confirm to add the transactions to your budget.</li>
+</ol>
+<p>Credits (incoming amounts) can optionally be imported as income entries rather than expenses. Uncategorized imports land in your transaction history where you can assign envelopes to them manually.</p>
+<hr>
+<h2 id="accessibility">Accessibility</h2>
+<p>Nvalope has extensive accessibility support, all in the <strong>Accessibility</strong> section of the wheel.</p>
+<p><strong>Preset modes</strong> — five purpose-built profiles you can apply with one tap:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Focus</td>
+<td>Strips decorative elements, increases contrast, reduces visual noise</td>
+</tr>
+<tr>
+<td>Calm</td>
+<td>Soft colours, relaxed spacing, reduced motion</td>
+</tr>
+<tr>
+<td>Clear</td>
+<td>Large text, high legibility</td>
+</tr>
+<tr>
+<td>Contrast</td>
+<td>High contrast throughout for low-vision use</td>
+</tr>
+<tr>
+<td>Tactile</td>
+<td>Larger touch targets, stronger visual feedback on interactions</td>
+</tr>
+</tbody></table>
+<p><strong>Manual controls</strong> let you go beyond the presets:</p>
+<ul>
+<li><strong>Text size</strong> — scale all text up or down</li>
+<li><strong>Line height</strong> — increase spacing between lines</li>
+<li><strong>Letter spacing</strong> — widen or tighten character spacing</li>
+<li><strong>Layout scale</strong> — make the entire layout larger or smaller</li>
+<li><strong>Wheel scale</strong> — resize the feature wheel independently</li>
+<li><strong>Scrollbar size</strong> — thicker scrollbars for easier grabbing</li>
+<li><strong>Chonkiness</strong> — increase the visual weight of UI elements</li>
+<li><strong>Reduced motion</strong> — disables animations throughout the app</li>
+<li><strong>High contrast</strong> — increases contrast beyond the default theme</li>
+<li><strong>Screen reader mode</strong> — additional labels and structure for screen readers</li>
+</ul>
+<p>All accessibility settings are saved locally and persist across sessions.</p>
+<hr>
+<h2 id="settings">Settings</h2>
+<p>Settings covers three areas:</p>
+<p><strong>Appearance</strong> — switch between the Feature Wheel and Card Layout.</p>
+<p><strong>Optional features</strong> — turn individual sections on or off. Core sections (Overview, Income, Envelopes, Accessibility) can also be hidden if you don&#39;t use them. The AI assistant and advanced features are here too.</p>
+<p><strong>Data Management</strong> — everything to do with your budget data:</p>
+<ul>
+<li><strong>Choose backup folder</strong> — pick a folder on your device and Nvalope will automatically save a backup there after every few changes</li>
+<li><strong>Download full backup</strong> — download a complete snapshot of your budget, settings, and receipt archive as a JSON file. You can optionally encrypt it with a password.</li>
+<li><strong>Export budget data</strong> — export just your budget (transactions, envelopes, income) without settings or receipts</li>
+<li><strong>Import from file</strong> — restore from a previous backup or import budget data exported from another device</li>
+<li><strong>Import bank statement</strong> — see <a href="#bank-statement-import">Bank statement import</a></li>
+<li><strong>Check for updates</strong> — manually check if a newer version of the app is available</li>
+</ul>
+<hr>
+<h2 id="your-data-and-backups">Your data and backups</h2>
+<p>All of your data lives in your browser&#39;s IndexedDB storage — a local database that stays on your device. It is not synced to any server.</p>
+<p><strong>What this means practically:</strong></p>
+<ul>
+<li>If you clear &quot;cookies and site data&quot; for nvalope.app in your browser settings, your budget data will be deleted. Keep a backup.</li>
+<li>If you use a different browser or device, your data won&#39;t be there. Use the export/import feature to move it.</li>
+<li>The app does not have a &quot;forgot password&quot; flow because there&#39;s no account — your data is yours alone.</li>
+</ul>
+<p><strong>Backup recommendations:</strong></p>
+<p>The safest approach is to use both options together:</p>
+<ol>
+<li>Set a <strong>backup folder</strong> (Settings → Data Management) so the app saves automatically after changes.</li>
+<li>Periodically <strong>download a full backup</strong> to keep a copy somewhere safe — a personal cloud drive, an external drive, or both.</li>
+</ol>
+<p>Backups can optionally be encrypted with a password. If you encrypt a backup, keep the password — there is no recovery option because the key is never stored anywhere but your own memory.</p>
+<hr>
+<h2 id="installing-nvalope">Installing Nvalope</h2>
+<p>Nvalope is a Progressive Web App (PWA). You can use it in any modern browser, or install it on your device so it works like a native app.</p>
+<p><strong>On desktop (Chrome or Edge):</strong> Look for the install icon in the address bar, or open the browser menu and choose &quot;Install Nvalope.&quot;</p>
+<p><strong>On iPhone/iPad (Safari):</strong> Tap the Share button, then &quot;Add to Home Screen.&quot;</p>
+<p><strong>On Android (Chrome):</strong> Tap the three-dot menu, then &quot;Add to Home Screen&quot; or &quot;Install app.&quot;</p>
+<p>Once installed, Nvalope works fully offline after the first load. If a new version of the app is available, you&#39;ll see an update prompt. Tap &quot;Update now&quot; to get it — your data is not affected by updates.</p>
+<hr>
+<h2 id="privacy">Privacy</h2>
+<p>Nvalope was designed with privacy as a constraint, not a feature checkbox.</p>
+<ul>
+<li><strong>No account required.</strong> You never sign up, log in, or provide an email address.</li>
+<li><strong>No tracking.</strong> No analytics, no behaviour monitoring, no advertising.</li>
+<li><strong>No server storage.</strong> Your budget data, receipts, and transaction history never leave your device.</li>
+<li><strong>Optional features are off by default.</strong> The receipt scanner, AI assistant, and bank import are all opt-in.</li>
+<li><strong>The AI assistant runs on your device.</strong> When the local model is used, it runs in your browser. When the standard assistant is used, it uses your local data with no network calls.</li>
+<li><strong>Backups are yours.</strong> Downloaded backups go to your device. The app never has access to them after you save them.</li>
+</ul>
+<p>The one exception to &quot;nothing leaves your device&quot; is app updates — the app checks for new versions when you ask it to (or on install). No personal data is included in that request.</p>
+<p>For the full privacy policy: <strong>Settings → Legal &amp; support</strong>, or <a href="https://nvalope.app/privacy.html">nvalope.app/privacy.html</a>.</p>
+
+  <p class="meta"><a href="/install-pwa.html">Install Nvalope on your device</a> · <a href="/">← Back to Nvalope</a></p>
+</body>
+</html>

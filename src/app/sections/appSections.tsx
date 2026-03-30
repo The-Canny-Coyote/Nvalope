@@ -160,6 +160,11 @@ export interface UseAppSectionsParams {
   setAccessibilityStandardOptionsOpen?: (open: boolean) => void;
   accessibilityPresetModesOpen?: boolean;
   setAccessibilityPresetModesOpen?: (open: boolean) => void;
+  /** Settings Core / Optional feature collapsibles: lifted so they stay open when enabling or disabling modules. */
+  settingsCoreFeaturesOpen?: boolean;
+  setSettingsCoreFeaturesOpen?: (open: boolean) => void;
+  settingsOptionalFeaturesOpen?: boolean;
+  setSettingsOptionalFeaturesOpen?: (open: boolean) => void;
   /** When true, user has chosen a backup folder; show status in Data Management. */
   hasBackupFolder?: boolean | null;
   /** When user applies a preset mode, call to close the Accessibility panel so they see the home screen for that mode. */
@@ -228,6 +233,10 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   setAccessibilityStandardOptionsOpen,
   accessibilityPresetModesOpen = false,
   setAccessibilityPresetModesOpen,
+  settingsCoreFeaturesOpen = false,
+  setSettingsCoreFeaturesOpen,
+  settingsOptionalFeaturesOpen = false,
+  setSettingsOptionalFeaturesOpen,
   hasBackupFolder = null,
   onCloseSection,
   useCardLayout = false,
@@ -369,6 +378,10 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           restoreScrollAfterLayout={restoreScrollAfterLayout}
           useCardLayout={useCardLayout}
           setUseCardLayout={setUseCardLayout}
+          coreFeaturesOpen={settingsCoreFeaturesOpen}
+          onCoreFeaturesOpenChange={setSettingsCoreFeaturesOpen}
+          optionalFeaturesOpen={settingsOptionalFeaturesOpen}
+          onOptionalFeaturesOpenChange={setSettingsOptionalFeaturesOpen}
         />
       </SectionWithBoundary>
     ),
@@ -541,6 +554,10 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     setAccessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
     setAccessibilityPresetModesOpen,
+    settingsCoreFeaturesOpen,
+    setSettingsCoreFeaturesOpen,
+    settingsOptionalFeaturesOpen,
+    setSettingsOptionalFeaturesOpen,
     hasBackupFolder,
   ]);
 }

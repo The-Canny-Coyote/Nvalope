@@ -314,7 +314,7 @@ export function MainContent({
                   </p>
                 </div>
               </Card>
-              <p className="mt-3 text-center focus-mode-hide">
+              <div className="mt-3 text-center focus-mode-hide flex flex-col items-center gap-1">
                 <a
                   href="/install-pwa.html"
                   target="_blank"
@@ -324,7 +324,16 @@ export function MainContent({
                 >
                   Install Nvalope on your device — step-by-step
                 </a>
-              </p>
+                <a
+                  href="/user-guide.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                  aria-label="Open the Nvalope user guide (opens in a new tab)"
+                >
+                  User guide — how to use Nvalope
+                </a>
+              </div>
             </div>
 
             <div className="mt-4 focus-mode-hide flex flex-col items-center gap-1 relative z-20">
@@ -632,6 +641,16 @@ export function MainContent({
                 aria-label="How to install Nvalope as an app on your device (opens in new tab)"
               >
                 Install the app
+              </a>
+              <span aria-hidden="true">·</span>
+              <a
+                href="/user-guide.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="Nvalope user guide — full documentation (opens in new tab)"
+              >
+                User guide
               </a>
             </footer>
           </div>

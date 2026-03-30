@@ -9,6 +9,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "build": "vite build",
+    "build:user-guide": "node scripts/build-user-guide-html.mjs",
     "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=nvalope --branch=main && npx wrangler pages deploy dist --project-name=nvalope --branch=master",
     "dev": "vite",
     "test": "vitest",

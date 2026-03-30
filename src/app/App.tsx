@@ -43,6 +43,9 @@ const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-
 const MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY = 'nvalope-manual-statement-import-toast-seen';
 const BANK_STMT_COMING_SOON_SESSION_KEY = 'nvalope-bank-stmt-coming-soon-session';
 
+/** Settings section id — must match `settingsSection.id` in appSections. */
+const SETTINGS_SECTION_ID = 6;
+
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -185,14 +188,21 @@ export default function App() {
       anchorRestoreRef.current = { sectionId: selectedWheelSection, offsetTop: offsetInContent };
     }
   }, [saveScrollForRestore, selectedWheelSection, mainScrollRef]);
-  const enableModuleWithScrollSave = useCallback((id: string) => {
-    saveScrollAndAnchorBeforeModuleToggle();
-    enableModule(id);
-  }, [saveScrollAndAnchorBeforeModuleToggle, enableModule]);
-  const disableModuleWithScrollSave = useCallback((id: string) => {
-    saveScrollAndAnchorBeforeModuleToggle();
-    disableModule(id);
-  }, [saveScrollAndAnchorBeforeModuleToggle, disableModule]);
+
+  const enableModuleWithScrollSave = useCallback(
+    (id: string) => {
+      saveScrollAndAnchorBeforeModuleToggle();
+      enableModule(id);
+    },
+    [saveScrollAndAnchorBeforeModuleToggle, enableModule]
+  );
+  const disableModuleWithScrollSave = useCallback(
+    (id: string) => {
+      saveScrollAndAnchorBeforeModuleToggle();
+      disableModule(id);
+    },
+    [saveScrollAndAnchorBeforeModuleToggle, disableModule]
+  );
   const enableCacheWithScrollSave = useCallback(() => {
     saveScrollAndAnchorBeforeModuleToggle();
     enableCache();
@@ -200,6 +210,14 @@ export default function App() {
 
   const [accessibilityStandardOptionsOpen, setAccessibilityStandardOptionsOpen] = useState(false);
   const [accessibilityPresetModesOpen, setAccessibilityPresetModesOpen] = useState(false);
+  const [settingsCoreFeaturesOpen, setSettingsCoreFeaturesOpen] = useState(false);
+  const [settingsOptionalFeaturesOpen, setSettingsOptionalFeaturesOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedWheelSection === SETTINGS_SECTION_ID) return;
+    setSettingsCoreFeaturesOpen(false);
+    setSettingsOptionalFeaturesOpen(false);
+  }, [selectedWheelSection]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -353,7 +371,11 @@ export default function App() {
     });
   }, [getBackupSnapshotStable]);
 
-  // Restore scroll position after module enable/disable or accessibility toggles so the view doesn’t move.
+  // Restore scroll position after layout changes (sliders, collapsibles, etc.). Module toggles save scroll via
+  // saveScrollAndAnchorBeforeModuleToggle; we intentionally omit enabledModules from deps so the restore effect
+  // does not re-run on every module list change (avoids clamp/ResizeObserver fighting while scrollHeight settles).
+  // Trade-off: if another section is open and enabling a module causes a large wheel/layout shift, scroll may
+  // not match a “perfect” restore for that rare case.
   useLayoutEffect(() => {
     const main = mainScrollRef.current;
     const section = sectionContentRef.current;
@@ -373,6 +395,9 @@ export default function App() {
     } else if (savedTop != null) {
       top = savedTop;
       scrollTopToRestoreRef.current = null;
+      if (anchor != null) {
+        anchorRestoreRef.current = null;
+      }
     }
     if (top === null) return;
 
@@ -413,9 +438,8 @@ export default function App() {
       if (coalescedRaf !== 0) cancelAnimationFrame(coalescedRaf);
       ro.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs stable; restore on section/layout change only
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs stable; restore on section/layout change only (not enabledModules — see comment above)
   }, [
-    enabledModules,
     textSize,
     lineHeight,
     letterSpacing,
@@ -429,6 +453,8 @@ export default function App() {
     uiMode,
     accessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
+    settingsCoreFeaturesOpen,
+    settingsOptionalFeaturesOpen,
   ]);
 
   // Intentionally no scroll-into-view on section select: the page stays at its current position when a slice or card is clicked.
@@ -468,6 +494,10 @@ export default function App() {
     setAccessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
     setAccessibilityPresetModesOpen,
+    settingsCoreFeaturesOpen,
+    setSettingsCoreFeaturesOpen,
+    settingsOptionalFeaturesOpen,
+    setSettingsOptionalFeaturesOpen,
     selectedMode,
     isMobile,
     textSize,

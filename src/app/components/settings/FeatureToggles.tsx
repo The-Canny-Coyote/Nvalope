@@ -66,6 +66,12 @@ export interface FeatureTogglesProps {
   restoreScrollAfterLayout?: () => void;
   /** Set by BackupSettings; Jump to Data calls this to open Data Management. */
   jumpToDataRef: MutableRefObject<(() => void) | null>;
+  /** When set with onCoreFeaturesOpenChange, Core collapsible is controlled (e.g. lifted to App). */
+  coreFeaturesOpen?: boolean;
+  onCoreFeaturesOpenChange?: (open: boolean) => void;
+  /** When set with onOptionalFeaturesOpenChange, Optional collapsible is controlled (e.g. lifted to App). */
+  optionalFeaturesOpen?: boolean;
+  onOptionalFeaturesOpenChange?: (open: boolean) => void;
 }
 
 export function FeatureToggles({
@@ -76,6 +82,10 @@ export function FeatureToggles({
   onBeforeOpen,
   restoreScrollAfterLayout,
   jumpToDataRef,
+  coreFeaturesOpen: coreFeaturesOpenProp,
+  onCoreFeaturesOpenChange,
+  optionalFeaturesOpen: optionalFeaturesOpenProp,
+  onOptionalFeaturesOpenChange,
 }: FeatureTogglesProps) {
   const webLLMEnabled = useAppStore((s) => s.webLLMEnabled);
   const setWebLLMEnabled = useAppStore((s) => s.setWebLLMEnabled);
@@ -85,20 +95,24 @@ export function FeatureToggles({
   const receiptCategoryPreferRegex = useAppStore((s) => s.receiptCategoryPreferRegex);
   const setReceiptCategoryPreferRegex = useAppStore((s) => s.setReceiptCategoryPreferRegex);
 
-  const [optionalOpen, setOptionalOpen] = useState(false);
-  const [coreOpen, setCoreOpen] = useState(false);
+  const [defaultCoreOpen, setDefaultCoreOpen] = useState(false);
+  const [defaultOptionalOpen, setDefaultOptionalOpen] = useState(false);
+  const coreOpen = coreFeaturesOpenProp ?? defaultCoreOpen;
+  const optionalOpen = optionalFeaturesOpenProp ?? defaultOptionalOpen;
   const [showWebLLMDeleteDialog, setShowWebLLMDeleteDialog] = useState(false);
 
   const handleOptionalOpenChange = (open: boolean) => {
     if (open) onBeforeOpen?.();
-    setOptionalOpen(open);
+    if (onOptionalFeaturesOpenChange) onOptionalFeaturesOpenChange(open);
+    else setDefaultOptionalOpen(open);
     if (open && restoreScrollAfterLayout) {
       requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
     }
   };
   const handleCoreOpenChange = (open: boolean) => {
     if (open) onBeforeOpen?.();
-    setCoreOpen(open);
+    if (onCoreFeaturesOpenChange) onCoreFeaturesOpenChange(open);
+    else setDefaultCoreOpen(open);
     if (open && restoreScrollAfterLayout) {
       requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
     }

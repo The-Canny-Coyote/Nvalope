@@ -36,6 +36,12 @@ export interface SettingsContentProps {
   useCardLayout?: boolean;
   /** Switch from card layout back to section wheel. */
   setUseCardLayout?: (v: boolean) => void;
+  /** Lifted from App: Core features collapsible open state. */
+  coreFeaturesOpen?: boolean;
+  onCoreFeaturesOpenChange?: (open: boolean) => void;
+  /** Lifted from App: Optional features collapsible open state. */
+  optionalFeaturesOpen?: boolean;
+  onOptionalFeaturesOpenChange?: (open: boolean) => void;
 }
 
 export function SettingsContent({
@@ -60,6 +66,10 @@ export function SettingsContent({
   restoreScrollAfterLayout,
   useCardLayout = false,
   setUseCardLayout,
+  coreFeaturesOpen,
+  onCoreFeaturesOpenChange,
+  optionalFeaturesOpen,
+  onOptionalFeaturesOpenChange,
 }: SettingsContentProps) {
   const jumpToDataRef = useRef<(() => void) | null>(null);
 
@@ -74,6 +84,10 @@ export function SettingsContent({
         onBeforeOpen={onBeforeOpenFeatureCollapsibles}
         restoreScrollAfterLayout={restoreScrollAfterLayout}
         jumpToDataRef={jumpToDataRef}
+        coreFeaturesOpen={coreFeaturesOpen}
+        onCoreFeaturesOpenChange={onCoreFeaturesOpenChange}
+        optionalFeaturesOpen={optionalFeaturesOpen}
+        onOptionalFeaturesOpenChange={onOptionalFeaturesOpenChange}
       />
       <BackupSettings
         enabledModules={enabledModules}

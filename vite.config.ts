@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => ({
         // - self: same-origin app/API
         // - *.workers.dev: default Cloudflare Worker API host
         // - cdn.jsdelivr.net + huggingface.*: local AI/receipt model assets
+        // - *.xethub.hf.co: Hugging Face Xet CAS bridge (signed URLs for model shards from transformers.js / Hub)
         // - raw.githubusercontent.com: WebLLM (@mlc-ai) WASM/runtime from mlc-ai/binary-mlc-llm-libs
         // - cloudflareinsights.*: analytics beacons
         'connect-src': [
@@ -66,6 +67,7 @@ export default defineConfig(({ mode }) => ({
           'https://cdn.jsdelivr.net',
           'https://huggingface.co',
           'https://huggingface.net',
+          'https://*.xethub.hf.co',
           'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',

@@ -64,7 +64,12 @@ export default defineConfig(({ mode }) => ({
           "'self'",
           'https://*.workers.dev',
           'https://cdn.jsdelivr.net',
+          // WebLLM model/config downloads (avoid per-host CSP whack-a-mole)
           'https://huggingface.co',
+          'https://*.huggingface.co',
+          'https://hf.co',
+          'https://*.hf.co',
+          'https://*.huggingfaceusercontent.com',
           'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',

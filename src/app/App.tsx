@@ -40,6 +40,7 @@ import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
 const BACKUP_DEBOUNCE_MS = 2000;
 
 const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-seen';
+const SHOW_AI_REWORK_TOAST = false;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -215,6 +216,11 @@ export default function App() {
   const [accessibilityPresetModesOpen, setAccessibilityPresetModesOpen] = useState(false);
   const [settingsCoreFeaturesOpen, setSettingsCoreFeaturesOpen] = useState(false);
   const [settingsOptionalFeaturesOpen, setSettingsOptionalFeaturesOpen] = useState(false);
+
+  useEffect(() => {
+    if (!SHOW_AI_REWORK_TOAST) return;
+    delayedToast.info('The AI Assistant is currently being reworked and will be available soon.');
+  }, []);
 
   useEffect(() => {
     if (selectedWheelSection === SETTINGS_SECTION_ID) return;

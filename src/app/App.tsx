@@ -40,7 +40,8 @@ import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
 const BACKUP_DEBOUNCE_MS = 2000;
 
 const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-seen';
-const SHOW_AI_REWORK_TOAST = false;
+const SHOW_AI_REWORK_TOAST = true;
+const AI_ASSISTANT_ENABLED = false;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -548,7 +549,7 @@ export default function App() {
     restoreScrollAfterLayout,
     onBeforeOpenFeatureCollapsibles: saveScrollAndAnchorBeforeModuleToggle,
     onBeforeOpenDataMgmt: saveScrollForRestore,
-    onOpenAssistant: () => setAssistantOpen(true),
+    onOpenAssistant: AI_ASSISTANT_ENABLED ? () => setAssistantOpen(true) : undefined,
     hasBackupFolder,
     useCardLayout,
     setUseCardLayout,
@@ -621,15 +622,17 @@ export default function App() {
         onBudgetSaved={handleBudgetSaved}
         onLoadError={(msg) => delayedToast.error(msg)}
       >
-        <AIChatSheet
-          open={assistantOpen}
-          onOpenChange={setAssistantOpen}
-          aiMode={effectiveEnabledModules.includes('advancedAICache') && !assistantFallbackToBasic ? 'advanced' : 'basic'}
-          onFallbackToBasic={effectiveEnabledModules.includes('advancedAICache') ? () => setAssistantFallbackToBasic(true) : undefined}
-          fallbackReason={assistantFallbackToBasic ? 'You switched to Basic AI. You can turn Advanced AI back on in Settings.' : undefined}
-          initialMessages={initialAssistantMessages ?? undefined}
-          onMessagesChange={onAssistantMessagesChange}
-        />
+        {AI_ASSISTANT_ENABLED && (
+          <AIChatSheet
+            open={assistantOpen}
+            onOpenChange={setAssistantOpen}
+            aiMode={effectiveEnabledModules.includes('advancedAICache') && !assistantFallbackToBasic ? 'advanced' : 'basic'}
+            onFallbackToBasic={effectiveEnabledModules.includes('advancedAICache') ? () => setAssistantFallbackToBasic(true) : undefined}
+            fallbackReason={assistantFallbackToBasic ? 'You switched to Basic AI. You can turn Advanced AI back on in Settings.' : undefined}
+            initialMessages={initialAssistantMessages ?? undefined}
+            onMessagesChange={onAssistantMessagesChange}
+          />
+        )}
         <AppErrorBoundary>
           <MainContent
             mainScrollRef={mainScrollRef}
@@ -643,7 +646,7 @@ export default function App() {
             wheelScale={wheelScale}
             enabledModules={effectiveEnabledModules}
             showCacheAnimation={showCacheAnimation}
-            setAssistantOpen={setAssistantOpen}
+            setAssistantOpen={AI_ASSISTANT_ENABLED ? setAssistantOpen : () => {}}
             useCardLayout={useCardLayout}
             setUseCardLayout={setUseCardLayout}
           />

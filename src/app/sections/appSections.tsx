@@ -439,7 +439,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           },
         ]
       : []),
-    ...(enabledModules.includes('cacheAssistant')
+    ...(false && enabledModules.includes('cacheAssistant')
       ? [
           {
             id: 106,
@@ -468,7 +468,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           },
         ]
       : []),
-    ...(enabledModules.includes('advancedAICache')
+    ...(false && enabledModules.includes('advancedAICache')
       ? [
           {
             id: 104,

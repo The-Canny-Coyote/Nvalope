@@ -53,7 +53,7 @@ function WheelMenuComponent({ sections, enabledModules, showCacheAnimation = fal
   const hoverRadiusIncrease = 25;
   const anglePerSection = (2 * Math.PI) / sections.length;
 
-  const isCacheEnabled = enabledModules.includes('cacheAssistant');
+  const isCacheEnabled = false;
 
   const handleSectionClick = (sectionId: number) => {
     onUserAction?.();

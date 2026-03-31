@@ -261,7 +261,7 @@ export function FeatureToggles({
                 Disabling a feature only hides it from view. Your data (receipts, calendar, etc.) is not deleted.
               </p>
               <div className="space-y-1.5 mt-2">
-                {MODULE_CONFIG.filter((m) => !m.core && !m.premiumOnly).map((config) => {
+                {MODULE_CONFIG.filter((m) => !m.core && !m.premiumOnly).filter((m) => m.id !== 'cacheAssistant' && m.id !== 'advancedAICache').map((config) => {
                   const isEnabled = enabledModules.includes(config.id);
                   const isCache = config.id === 'cacheAssistant';
                   const Icon = MODULE_ICONS[config.id] ?? Box;
@@ -298,117 +298,6 @@ export function FeatureToggles({
                 })}
               </div>
             </div>
-
-            <div className="space-y-2 pt-2 border-t border-border">
-              <h4 className="text-sm font-medium text-foreground">Local AI (WebLLM)</h4>
-              {webLLMEligible ? (
-                <div className="p-3 border border-primary/20 rounded-lg flex flex-col gap-2 bg-primary/5 transition-colors">
-                  <p className="text-xs text-muted-foreground" aria-label="Local AI environment on this device">
-                    This browser: secure page {webLLMEnvSnapshot.secureContext ? 'yes' : 'no'}, WebGPU{' '}
-                    {webLLMEnvSnapshot.webGpuPresent ? 'yes' : 'no'}, cross-origin isolated{' '}
-                    {webLLMEnvSnapshot.crossOriginIsolated ? 'yes' : 'no'}
-                    {!webLLMEnvSnapshot.crossOriginIsolated && (
-                      <span>
-                        {' '}
-                        (If the model loads but chat never answers, see <span className="font-medium text-foreground">docs/troubleshooting.md</span>{' '}
-                        — WebLLM.)
-                      </span>
-                    )}
-                  </p>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-foreground">Use local AI model</span>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Run a small language model in your browser. Checking this downloads the model (hundreds of MB). All data stays on your device.
-                      </p>
-                    </div>
-                    <Checkbox
-                      checked={webLLMEnabled}
-                      onCheckedChange={async (checked) => {
-                        if (checked) {
-                          setWebLLMEnabled(true);
-                          const toastId = 'webllm-download-settings';
-                          toast.loading('Downloading local AI model…', {
-                            id: toastId,
-                            description: React.createElement(Progress, { value: 0, className: 'mt-1.5 h-2.5 w-full min-w-[160px]' }),
-                          });
-                          try {
-                            await loadWebLLMEngine((report) => {
-                              const p = report.progress != null ? Math.round(report.progress * 100) : undefined;
-                              toast.loading(report.text || 'Loading…', {
-                                id: toastId,
-                                description: React.createElement(Progress, { value: p ?? 0, className: 'mt-1.5 h-2.5 w-full min-w-[160px]' }),
-                              });
-                            });
-                            toast.success('Local AI model ready.', {
-                              id: toastId,
-                              description: 'Stored in this browser on your device. You can turn it off or delete it in Settings or in the assistant.',
-                            });
-                          } catch {
-                            toast.dismiss(toastId);
-                            toast.error('The assistant couldn\'t load. You can try again from the AI Assistant.');
-                            setWebLLMEnabled(false);
-                          }
-                        } else {
-                          setShowWebLLMDeleteDialog(true);
-                        }
-                      }}
-                      aria-label="Use local AI model (WebLLM)"
-                      className="size-5 shrink-0 rounded"
-                    />
-                  </div>
-                  {webLLMEnabled ? (
-                    <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2.5 py-0.5">{LOCAL_LLM_ACCURACY_NOTE}</p>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Local AI isn’t available on this device or page yet:</p>
-                  <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
-                    {webLLMBlockReasons.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <AlertDialog open={showWebLLMDeleteDialog} onOpenChange={setShowWebLLMDeleteDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete downloaded model files?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Do you want to remove the downloaded AI model files from this device to free space (hundreds of MB)? If you turn the local AI model back on later—here or in the assistant—you will need to redownload the model.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel
-                    onClick={async () => {
-                      setShowWebLLMDeleteDialog(false);
-                      await unloadWebLLMEngine();
-                      setWebLLMEnabled(false);
-                    }}
-                  >
-                    Keep files
-                  </AlertDialogCancel>
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 px-4"
-                    onClick={async () => {
-                      setShowWebLLMDeleteDialog(false);
-                      await unloadWebLLMEngine();
-                      await clearWebLLMCache();
-                      setWebLLMEnabled(false);
-                      toast.success('Model deleted. The downloaded AI model has been removed from this device.', {
-                        description: 'If you turn the LLM back on (here or in the assistant), it will be redownloaded.',
-                      });
-                    }}
-                  >
-                    Delete files
-                  </button>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
 
           </CollapsibleContent>
         </Collapsible>

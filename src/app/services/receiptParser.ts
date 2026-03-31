@@ -63,7 +63,7 @@ const CURRENCY_REGEX = /\$|€|£|¥|\bUSD\b|\bEUR\b|\bGBP\b|\bJPY\b/i;
 /** Subtotal label + amount */
 const SUBTOTAL_LABELS = /\b(SUBTOTAL|SUB\s*TOTAL)\s*[:.]*\s*\$?\s*([\d,.\s]+)/gi;
 /** Tax label + amount */
-const TAX_LABELS = /\b(TAX|GST|VAT)\s*[:.]*\s*\$?\s*([\d,.\s]+)/gi;
+const TAX_LABELS = /\b(TAX|GST|VAT|HST|PST|QST|SALES\s+TAX|STATE\s+TAX|LOCAL\s+TAX)\s*[:.]*\s*\$?\s*([\d,. ]+?)(?=\s*(?:$|[^\d,.\s]))/gi;
 /** Refund/return keywords (excluding REF # reference numbers) */
 const REFUND_KEYWORDS = /\b(REFUND|CREDIT|RETURN)\b/i;
 /** CHANGE DUE with amount; only treat as refund when amount > 0 */
@@ -207,7 +207,8 @@ function extractSubtotal(text: string): number | undefined {
 function extractTax(text: string): number | undefined {
   const matches = [...text.matchAll(TAX_LABELS)];
   if (matches.length === 0) return undefined;
-  const n = toNum(matches[matches.length - 1][2]);
+  const raw = (matches[matches.length - 1][2] ?? '').trim();
+  const n = toNum(raw);
   return isValidAmount(n) ? Math.round(n * 100) / 100 : undefined;
 }
 
@@ -256,6 +257,8 @@ function isHeaderLine(line: string): boolean {
   if (PAYMENT_TOTAL_LINE.test(line)) return true;
   if (HEADER_STARTS.test(line)) {
     const hasPrice = PRICE_AT_END.test(line) || LAST_PRICE_TOKEN.test(line);
+    // Treat TAX/GST/VAT/etc. lines with amounts as line items so the UI can show and adjust them.
+    if (hasPrice && /^\s*(tax|gst|vat|hst|pst|qst|sales\s+tax|state\s+tax|local\s+tax)\b/i.test(line)) return false;
     if (hasPrice && line.replace(/\s*[\d,.]+\s*$/g, '').trim().length >= 4) return false;
     return true;
   }
@@ -280,7 +283,9 @@ function parseLine(line: string): ReceiptLineItem | null {
   const normalized = line.replace(/\s+\.\s+(?=\d)/g, '.');
 
   const allowDesc = (desc: string) =>
-    desc.length >= 2 && !/^\d+$/.test(desc) && (!HEADER_STARTS.test(desc) || desc.length > 6);
+    desc.length >= 2 &&
+    !/^\d+$/.test(desc) &&
+    (!HEADER_STARTS.test(desc) || desc.length > 6 || /^(tax|gst|vat|hst|pst|qst|sales tax|state tax|local tax)$/i.test(desc.trim()));
 
   const atEnd = normalized.match(PRICE_AT_END);
   if (atEnd && atEnd.index != null) {
@@ -385,12 +390,14 @@ export function parseReceiptText(rawText: string, options?: ParseReceiptOptions)
 
   let resultTax = tax;
   let resultLineItems = lineItems;
-  if (resultTax == null && resultLineItems.length > 0) {
-    const taxLabel = /^(tax|gst|vat)$/i;
+  if (resultLineItems.length > 0) {
+    const taxLabel = /^(tax|gst|vat|hst|pst|qst|sales tax|state tax|local tax)$/i;
     const taxIdx = resultLineItems.findIndex((item) => taxLabel.test(item.description.trim()));
     if (taxIdx >= 0) {
-      resultTax = Math.round(resultLineItems[taxIdx].amount * 100) / 100;
       resultLineItems = resultLineItems.map((item, i) => (i === taxIdx ? { ...item, isTax: true } : item));
+      if (resultTax == null) {
+        resultTax = Math.round(resultLineItems[taxIdx].amount * 100) / 100;
+      }
     }
   }
 

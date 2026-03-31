@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Transaction } from '@/app/store/budgetTypes';
+import { Button } from '@/app/components/ui/button';
 
 export interface TransactionEditFormProps {
   transaction: Transaction;
@@ -47,7 +48,7 @@ export function TransactionEditForm({
           min="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           placeholder="Amount"
           required
           aria-label="Amount"
@@ -80,21 +81,21 @@ export function TransactionEditForm({
         aria-label="Description"
       />
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           type="submit"
           disabled={saving}
-          className="px-3 py-1 min-h-[44px] rounded bg-primary text-primary-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-70"
+          className="min-h-[44px]"
           aria-busy={saving}
         >
           {saving ? 'Saving…' : 'Save'}
-        </button>
-        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1 min-h-[44px] rounded border border-primary/30 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-70">
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving} className="min-h-[44px]">
           Cancel
-        </button>
+        </Button>
         {!isNew && (
-          <button type="button" onClick={onDelete} disabled={saving} className="px-3 py-1 min-h-[44px] rounded border border-destructive text-destructive text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-70">
+          <Button type="button" variant="destructive" onClick={onDelete} disabled={saving} className="min-h-[44px]">
             Delete
-          </button>
+          </Button>
         )}
       </div>
     </form>

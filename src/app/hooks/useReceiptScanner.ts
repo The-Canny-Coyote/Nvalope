@@ -2,8 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ChangeEvent } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { useAppStore } from '@/app/store/appStore';
-import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
-import { hasEntitlement } from '@/app/premium/entitlements';
 import Tesseract from 'tesseract.js';
 import { AppDataIdbError, getAppData, setAppData } from '@/app/services/appDataIdb';
 import { parseReceiptText, validateReceiptTransaction } from '@/app/services/receiptParser';
@@ -46,11 +44,6 @@ function todayISO() {
 
 export function useReceiptScanner() {
   const { state, api } = useBudget();
-  const receiptCategoryPreferRegex = useAppStore((s) => s.receiptCategoryPreferRegex);
-  const webLLMEnabled = useAppStore((s) => s.webLLMEnabled);
-  const enabledModules = useAppStore((s) => s.enabledModules);
-  const { entitlementsFromApi } = usePremiumEntitlements(enabledModules);
-  const hasPremiumAi = hasEntitlement('premium_ai', entitlementsFromApi);
   const [scans, setScans] = useState<ReceiptScanResult[]>([]);
   const scansRef = useRef<ReceiptScanResult[]>(scans);
   scansRef.current = scans;
@@ -138,9 +131,7 @@ export function useReceiptScanner() {
       let suggestedEnvelopeId: string | undefined;
       try {
         const suggestion = await suggestCategory(text.slice(0, 2000), state.envelopes, {
-          preferRegex: receiptCategoryPreferRegex,
-          webLLMEnabled,
-          hasPremiumAi,
+          preferRegex: true,
         });
         suggestedEnvelopeId = suggestion.envelopeId;
       } catch {
@@ -243,8 +234,24 @@ export function useReceiptScanner() {
         const rawDate = typeof scanToUse.date === 'string' ? scanToUse.date.trim() : '';
         const txDate = rawDate.length === 10 && parseYYYYMMDD(rawDate) ? rawDate : todayISO();
         const batch: { amount: number; envelopeId?: string; description: string; date: string }[] = [];
-        const budgetable = lineItems.filter((li) => li.isTax !== true && li.excludeFromBudget !== true && li.amount > 0 && Number.isFinite(li.amount));
-        const totalToAllocate = roundTo2(scanToUse.amountPaid ?? scanToUse.amount ?? (scanToUse.subtotal != null && scanToUse.tax != null ? scanToUse.subtotal + scanToUse.tax : 0));
+        const budgetable = lineItems.filter(
+          (li) =>
+            li.excludeFromBudget !== true &&
+            li.amount > 0 &&
+            Number.isFinite(li.amount) &&
+            (li.isTax !== true || li.envelopeId != null)
+        );
+        // If any tax line has been explicitly assigned to an envelope, it will
+        // appear in budgetable already. In that case, use the grand total so
+        // amounts reconcile. Otherwise, use subtotal (pre-tax) so non-tax
+        // lines aren't inflated by hidden tax.
+        const hasTaxInBudgetable = budgetable.some((li) => li.isTax === true);
+        const totalToAllocate = roundTo2(
+          scanToUse.amountPaid ??
+            (hasTaxInBudgetable
+              ? (scanToUse.amount ?? 0)
+              : (scanToUse.subtotal ?? scanToUse.amount ?? 0))
+        );
         const allocated = allocateTotalProportionally({ items: budgetable, totalToAllocate });
         for (let idx = 0; idx < budgetable.length; idx++) {
           const item = budgetable[idx];

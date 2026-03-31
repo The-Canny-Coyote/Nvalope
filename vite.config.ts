@@ -8,7 +8,7 @@ import csp from 'vite-plugin-csp-guard'
 /**
  * PWA / WASM: Heavy deps (pdf.js, Tesseract, workers) load as separate chunks. The import worker uses
  * dynamic `import()` for OCR. Do not add all `*.wasm` to precache: large ONNX assets (e.g. transformers)
- * exceed Workbox limits; they stay runtime-cached like the receipt flow. Import-worker chunks are JS + pdf.worker.
+ * exceed Workbox limits; WebLLM model assets stay runtime-cached via jsdelivr. Import-worker chunks are JS + pdf.worker.
  */
 export default defineConfig(({ mode }) => ({
   worker: {
@@ -57,17 +57,13 @@ export default defineConfig(({ mode }) => ({
         // Keep this explicit to reduce exfiltration surface while allowing known runtime endpoints.
         // - self: same-origin app/API
         // - *.workers.dev: default Cloudflare Worker API host
-        // - cdn.jsdelivr.net + huggingface.*: local AI/receipt model assets
-        // - *.xethub.hf.co: Hugging Face Xet CAS bridge (signed URLs for model shards from transformers.js / Hub)
+        // - cdn.jsdelivr.net: WebLLM model assets (jsdelivr CDN)
         // - raw.githubusercontent.com: WebLLM (@mlc-ai) WASM/runtime from mlc-ai/binary-mlc-llm-libs
         // - cloudflareinsights.*: analytics beacons
         'connect-src': [
           "'self'",
           'https://*.workers.dev',
           'https://cdn.jsdelivr.net',
-          'https://huggingface.co',
-          'https://huggingface.net',
-          'https://*.xethub.hf.co',
           'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',
@@ -85,7 +81,7 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         // WebLLM and other large deps produce chunks > 2 MiB; allow precache up to 8 MiB per file
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
-        // Cache Tesseract.js worker/WASM and Transformers.js model assets for offline receipt scanning
+        // Cache WebLLM model assets and other CDN deps for offline usage
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/,
@@ -93,15 +89,6 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: 'nvalope-cdn-assets',
               expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/(.*\.)?huggingface\.(co|net)\/.*/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'nvalope-transformers-models',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

@@ -15,7 +15,7 @@ describe('entitlements', () => {
     team: true,
     bulk_receipt: true,
     premium_ai: true,
-    bank_pull: true,
+    premium_import: true,
   };
 
   describe('isPremiumFeatureEnabled', () => {
@@ -50,7 +50,7 @@ describe('entitlements', () => {
       if (!isPremiumFeatureEnabled()) {
         expect(hasEntitlement('premium_full', fullEntitlements)).toBe(false);
         expect(hasEntitlement('team', fullEntitlements)).toBe(false);
-        expect(hasEntitlement('bank_pull', null)).toBe(false);
+        expect(hasEntitlement('premium_import', null)).toBe(false);
       }
     });
   });

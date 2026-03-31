@@ -242,6 +242,121 @@ describe('parseReceiptText', () => {
     expect(r.subtotal).toBe(46.04);
     expect(r.amount).toBe(46.3);
   });
+
+  describe('tax extraction', () => {
+    it('extracts GST', () => {
+      const r = parseReceiptText('SUBTOTAL 20.00\nGST 1.00\nTOTAL 21.00');
+      expect(r.tax).toBe(1.0);
+    });
+
+    it('extracts VAT', () => {
+      const r = parseReceiptText('SUBTOTAL 50.00\nVAT 10.00\nTOTAL 60.00');
+      expect(r.tax).toBe(10.0);
+    });
+
+    it('extracts HST', () => {
+      const r = parseReceiptText('SUBTOTAL 30.00\nHST 3.90\nTOTAL 33.90');
+      expect(r.tax).toBe(3.9);
+    });
+
+    it('extracts PST', () => {
+      const r = parseReceiptText('SUBTOTAL 30.00\nPST 2.10\nTOTAL 32.10');
+      expect(r.tax).toBe(2.1);
+    });
+
+    it('extracts QST', () => {
+      const r = parseReceiptText('SUBTOTAL 30.00\nQST 2.98\nTOTAL 32.98');
+      expect(r.tax).toBe(2.98);
+    });
+
+    it('extracts SALES TAX (two-word label)', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nSALES TAX 3.52\nTOTAL 47.52');
+      expect(r.tax).toBe(3.52);
+    });
+
+    it('extracts STATE TAX', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nSTATE TAX 2.64\nTOTAL 46.64');
+      expect(r.tax).toBe(2.64);
+    });
+
+    it('extracts LOCAL TAX', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nLOCAL TAX 0.88\nTOTAL 44.88');
+      expect(r.tax).toBe(0.88);
+    });
+
+    it('parses tax with single space instead of decimal (OCR artifact: "3 50")', () => {
+      const r = parseReceiptText('SUBTOTAL 46.50\nTAX 3 50\nTOTAL 50.00');
+      expect(r.tax).toBe(3.5);
+    });
+
+    it('does not absorb trailing whitespace into tax amount', () => {
+      const r = parseReceiptText('TAX  2.30  \nTOTAL 46.30');
+      expect(r.tax).toBe(2.3);
+    });
+
+    it('parses tax with colon separator (TAX: 2.30)', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nTAX: 2.30\nTOTAL 46.30');
+      expect(r.tax).toBe(2.3);
+    });
+
+    it('parses tax with dollar sign (TAX $2.30)', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nTAX $2.30\nTOTAL 46.30');
+      expect(r.tax).toBe(2.3);
+    });
+  });
+
+  describe('isTax line item promotion', () => {
+    it('marks a tax line item with isTax: true when tax appears as a scanned line', () => {
+      const text = 'Milk  3.99\nBread  2.50\nTAX   0.52\nTOTAL 7.01';
+      const r = parseReceiptText(text);
+      const taxLine = r.lineItems.find((li) => li.isTax === true);
+      expect(taxLine).toBeDefined();
+      expect(taxLine!.amount).toBe(0.52);
+    });
+
+    it('promotes isTax line item amount to top-level tax field', () => {
+      const text = 'Milk  3.99\nBread  2.50\nTAX   0.52\nTOTAL 7.01';
+      const r = parseReceiptText(text);
+      expect(r.tax).toBe(0.52);
+    });
+
+    it('keeps the isTax line item in lineItems (not removed)', () => {
+      const text = 'Milk  3.99\nTAX   0.32\nTOTAL 4.31';
+      const r = parseReceiptText(text);
+      expect(r.lineItems.some((li) => li.isTax === true)).toBe(true);
+    });
+
+    it('does not double-count when TAX label and tax line item both appear', () => {
+      const text = 'Milk  3.99\nBread  2.50\nTAX   0.52\nTAX  0.52\nTOTAL 7.01';
+      const r = parseReceiptText(text);
+      expect(r.tax).toBe(0.52);
+    });
+
+    it('does not mark non-tax line items as isTax', () => {
+      const text = 'Milk  3.99\nBread  2.50\nTOTAL 6.49';
+      const r = parseReceiptText(text);
+      expect(r.lineItems.every((li) => !li.isTax)).toBe(true);
+    });
+
+    it('subtotal + tax equals parsed total within rounding', () => {
+      const r = parseReceiptText('SUBTOTAL 44.00\nTAX 2.30\nTOTAL 46.30');
+      expect(r.subtotal).toBeDefined();
+      expect(r.tax).toBeDefined();
+      expect(Math.round(((r.subtotal ?? 0) + (r.tax ?? 0)) * 100) / 100).toBe(r.amount);
+    });
+
+    it('handles TAX 0.00 — zero tax is not captured as a valid amount', () => {
+      const r = parseReceiptText('SUBTOTAL 10.00\nTAX 0.00\nTOTAL 10.00');
+      expect(r.tax).toBeUndefined();
+    });
+
+    it('does not parse a barcode or reference number after TAX as a tax amount', () => {
+      const r = parseReceiptText('STORE\nTAX REF# 1234567890\nTOTAL 25.00');
+      if (r.tax != null) {
+        expect(r.tax).toBeLessThan(100_000);
+      }
+    });
+  });
 });
 
 describe('validateReceiptTransaction', () => {
@@ -306,6 +421,11 @@ describe('validateReceiptTransaction', () => {
     expect(r.error).toMatch(/date|invalid|range/i);
   });
 
+  it('rejects non-date string', () => {
+    const r = validateReceiptTransaction({ amount: 10, description: 'Test', date: 'not-a-date' });
+    expect(r.valid).toBe(false);
+  });
+
   it('rejects date before 2000', () => {
     const r = validateReceiptTransaction({
       amount: 10,
@@ -339,8 +459,4 @@ describe('validateReceiptTransaction', () => {
     expect(validateReceiptTransaction({ amount: -Infinity, description: 'Test', date: validDate }).valid).toBe(false);
   });
 
-  it('rejects invalid date format', () => {
-    const r = validateReceiptTransaction({ amount: 10, description: 'Test', date: 'not-a-date' });
-    expect(r.valid).toBe(false);
-  });
 });

@@ -122,6 +122,7 @@ export function useAccessibility(
     useAppStore.getState().setReducedMotion(false);
     useAppStore.getState().setHighContrast(false);
     useAppStore.getState().setScreenReaderMode(false);
+    useAppStore.getState().setColorblindMode('none');
   }, [onBeforeReset]);
 
   const resetRef = useRef(resetToDefaults);

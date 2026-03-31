@@ -3,9 +3,11 @@ import type { ReceiptLineItem as ParserLineItem } from '@/app/services/receiptPa
 import { delayedToast } from '@/app/services/delayedToast';
 import { formatMoney, getCurrencySymbol } from '@/app/utils/format';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { allocateTotalProportionally } from '@/app/services/receiptAllocation';
 
 const CREATE_ENVELOPE_VALUE = '__create__';
+const EXCLUDE_ENVELOPE_VALUE = '__exclude__';
 
 /** Round to 2 decimal places for money. */
 export function roundTo2(n: number): number {
@@ -71,6 +73,9 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
   const [creatingForLineIndex, setCreatingForLineIndex] = useState<number | null>(null);
   const [newEnvName, setNewEnvName] = useState('');
   const [newEnvLimit, setNewEnvLimit] = useState('');
+  const [showRemoveLineItemDialog, setShowRemoveLineItemDialog] = useState(false);
+  const [pendingRemoveLineItemIndex, setPendingRemoveLineItemIndex] = useState<number | null>(null);
+  const [showRemoveReceiptFromListDialog, setShowRemoveReceiptFromListDialog] = useState(false);
   const amount = scan.amount ?? 0;
   const lineItems = scan.lineItems ?? [];
 
@@ -96,7 +101,10 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
     });
   };
 
-  const updateLineItem = (index: number, updates: Partial<Pick<ReceiptLineItem, 'description' | 'amount' | 'quantity' | 'envelopeId' | 'isTax'>>) => {
+  const updateLineItem = (
+    index: number,
+    updates: Partial<Pick<ReceiptLineItem, 'description' | 'amount' | 'quantity' | 'envelopeId' | 'excludeFromBudget' | 'isTax'>>
+  ) => {
     const applied = updates.amount != null ? { ...updates, amount: roundTo2(updates.amount) } : updates;
     const next = (scan.lineItems ?? []).map((item, i) => (i === index ? { ...item, ...applied } : item));
     applyLineItemsUpdate(next);
@@ -115,12 +123,21 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
   const nonTaxSum = lineItems.filter((li) => li.isTax !== true).reduce((sum, li) => sum + li.amount, 0);
   const taxLinesSum = lineItems.filter((li) => li.isTax === true).reduce((sum, li) => sum + li.amount, 0);
   const hasTaxLines = lineItems.some((li) => li.isTax === true);
+  const hasTax = scan.tax != null && scan.tax > 0;
+  const hasAnyTaxLineEnvelope = lineItems.some((li) => li.isTax === true && li.envelopeId);
+  const showTaxSpreadNote = hasTax && (!hasTaxLines || !hasAnyTaxLineEnvelope);
   const subtotal = scan.subtotal ?? (lineItems.length > 0 ? roundTo2(nonTaxSum) : null);
   const tax = hasTaxLines ? roundTo2(taxLinesSum) : (scan.tax ?? null);
   const grandTotal = scan.amount ?? (subtotal != null && tax != null ? roundTo2(subtotal + tax) : null);
   const amountPaid = scan.amountPaid ?? null;
   const amountToUse = amountPaid ?? grandTotal;
-  const budgetableLines = lineItems.filter((li) => li.isTax !== true && li.excludeFromBudget !== true && li.amount > 0 && Number.isFinite(li.amount));
+  const budgetableLines = lineItems.filter(
+    (li) =>
+      li.excludeFromBudget !== true &&
+      li.amount > 0 &&
+      Number.isFinite(li.amount) &&
+      (li.isTax !== true || li.envelopeId != null)
+  );
   const budgetPreviewTotal =
     amountToUse != null && amountToUse > 0 && budgetableLines.length > 0
       ? roundTo2(amountToUse)
@@ -218,7 +235,8 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                       const v = parseFloat(e.target.value);
                       if (Number.isNaN(v) || v < 0) return;
                       if (v === 0) {
-                        if (window.confirm('Remove this line item?')) removeLineItem(i);
+                        setPendingRemoveLineItemIndex(i);
+                        setShowRemoveLineItemDialog(true);
                         return;
                       }
                       updateLineItem(i, { amount: roundTo2(v) });
@@ -227,9 +245,20 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                     aria-label={`Edit item ${i + 1} amount`}
                   />
                   {item.isTax === true ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0" title="Tax line">
-                      Tax
-                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground" title="Tax line">
+                        Tax
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateLineItem(i, { isTax: false })}
+                        className="text-[10px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        aria-label={`Mark item ${i + 1} as not tax`}
+                        title="Not tax?"
+                      >
+                        Not tax?
+                      </button>
+                    </div>
                   ) : (
                     <label className="flex items-center gap-1 shrink-0 cursor-pointer">
                       <input
@@ -243,19 +272,22 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                     </label>
                   )}
                   <select
-                    value={item.envelopeId ?? ''}
+                    value={item.excludeFromBudget === true ? EXCLUDE_ENVELOPE_VALUE : (item.envelopeId ?? '')}
                     onChange={(e) => {
                       const v = e.target.value;
                       if (v === CREATE_ENVELOPE_VALUE) {
                         setCreatingForLineIndex(i);
+                      } else if (v === EXCLUDE_ENVELOPE_VALUE) {
+                        updateLineItem(i, { excludeFromBudget: true, envelopeId: undefined });
                       } else {
-                        updateLineItem(i, { envelopeId: v || undefined });
+                        updateLineItem(i, { envelopeId: v || undefined, excludeFromBudget: false });
                       }
                     }}
                     className="text-xs px-2 py-1 border border-border rounded-lg bg-background text-foreground min-w-[100px] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
                     aria-label={`Category for item ${i + 1}`}
                   >
                     <option value="">Category</option>
+                    <option value={EXCLUDE_ENVELOPE_VALUE}>Exclude</option>
                     {envelopes.map((env) => (
                       <option key={env.id} value={env.id}>{env.name}</option>
                     ))}
@@ -329,6 +361,9 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
             />
           </span>
         </label>
+        <p className="text-xs text-muted-foreground">
+          Tax is distributed proportionally across your budgeted line items unless you assign it to an envelope or exclude it.
+        </p>
         <label className="flex justify-between items-center gap-2 font-medium text-foreground border-t border-border pt-2">
           <span>Grand total</span>
           <span className="flex items-center gap-1">
@@ -340,7 +375,7 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
               onChange={(e) => {
                 const v = e.target.value !== '' ? parseFloat(e.target.value) : null;
                 if (v != null && !Number.isNaN(v) && v === 0 && onRemoveScan) {
-                  if (window.confirm('Remove this receipt from the list?')) onRemoveScan(scan.id);
+                  setShowRemoveReceiptFromListDialog(true);
                   return;
                 }
                 onUpdate({ amount: v != null && !Number.isNaN(v) ? roundTo2(v) : v });
@@ -393,6 +428,11 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
               <span>Will be added to budget</span>
               <span className="tabular-nums font-medium">{formatMoney(-budgetPreviewTotal, formatOpts)}</span>
             </p>
+            {showTaxSpreadNote && (
+              <p className="text-muted-foreground">
+                Includes {formatMoney(scan.tax ?? 0, formatOpts)} tax spread across items.
+              </p>
+            )}
             <p className="text-muted-foreground">
               {excludedCount > 0
                 ? `${excludedCount} line ${excludedCount === 1 ? 'is' : 'lines are'} excluded from budget.`
@@ -474,6 +514,32 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
             : 'Enter the Grand total if needed, pick categories for line items, then Save.'}
         </p>
       )}
+
+      <ConfirmDialog
+        open={showRemoveLineItemDialog}
+        onOpenChange={(open) => {
+          setShowRemoveLineItemDialog(open);
+          if (!open) setPendingRemoveLineItemIndex(null);
+        }}
+        title="Remove line item?"
+        description="The line will be removed from this receipt."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (pendingRemoveLineItemIndex != null) removeLineItem(pendingRemoveLineItemIndex);
+          setPendingRemoveLineItemIndex(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showRemoveReceiptFromListDialog}
+        onOpenChange={setShowRemoveReceiptFromListDialog}
+        title="Remove receipt?"
+        description="This receipt will be removed from the list."
+        confirmLabel="Remove receipt"
+        onConfirm={() => {
+          if (onRemoveScan) onRemoveScan(scan.id);
+        }}
+      />
 
       <Dialog open={creatingForLineIndex !== null} onOpenChange={(open) => { if (!open) { setCreatingForLineIndex(null); setNewEnvName(''); setNewEnvLimit(''); } }}>
         <DialogContent className="sm:max-w-sm" aria-describedby="new-envelope-desc">

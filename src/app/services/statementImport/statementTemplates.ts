@@ -87,8 +87,16 @@ export function parseTemplatesAndRulesImport(jsonText: string): {
     templates?: StatementTemplateRecord[];
     rules?: AssignmentRule[];
   };
-  const templates = Array.isArray(raw.templates) ? raw.templates : [];
-  const rules = Array.isArray(raw.rules) ? raw.rules : [];
+  const MAX_TEMPLATES = 200;
+  const MAX_RULES = 1000;
+
+  const templates = Array.isArray(raw.templates)
+    ? raw.templates.slice(0, MAX_TEMPLATES)
+    : [];
+  const rules = Array.isArray(raw.rules)
+    ? raw.rules.slice(0, MAX_RULES)
+    : [];
+
   return { templates, rules };
 }
 

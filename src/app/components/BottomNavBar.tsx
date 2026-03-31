@@ -565,12 +565,13 @@ function BottomNavBarComponent({
 
   return (
     <div
-      className={`fixed z-[100] flex min-h-0 max-w-full min-w-0 shrink-0 border-border bg-card/95 backdrop-blur-md shadow-lg ${
+      className={`fixed z-[100] flex min-h-0 max-w-full min-w-0 shrink-0 border-border bg-card shadow-lg ${
         isVertical ? 'flex-col overflow-x-hidden overflow-y-hidden' : 'overflow-x-auto overflow-y-hidden'
       }`}
       style={{
         ...wrapperStyle,
         ...(showExpanded ? fullBarStyle : stripOnlyStyle),
+        backgroundColor: 'var(--card)',
       }}
       onMouseEnter={barMinimized ? () => setHoverExpanded(true) : undefined}
       onMouseLeave={barMinimized ? () => { if (!barLockExpanded) setHoverExpanded(false); } : undefined}

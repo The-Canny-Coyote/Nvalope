@@ -90,7 +90,7 @@
   }
 
   /* Larger touch targets; text scale slider still applies */
-  button, a, input, select, label {
+  button, a, input, select {
     min-height: 48px !important;
     min-width: 44px !important;
     font-size: calc(1.125rem * var(--text-scale, 1)) !important;
@@ -130,8 +130,12 @@
     transition: none !important;
   }
   
-  /* Muted colors - desaturate everything */
-  filter: saturate(0.6);
+  /* Muted colors - CSS variable overrides (no blanket filter, preserves semantic colors) */
+  --primary: color-mix(in srgb, #2d7a3f 70%, #888888);
+  --destructive: color-mix(in srgb, #dc2626 80%, #888888);
+  --accent: color-mix(in srgb, #8b6944 70%, #888888);
+  --muted: color-mix(in srgb, var(--muted) 90%, #888888);
+  --border: color-mix(in srgb, var(--border) 80%, #888888);
   
   /* Extra whitespace */
   padding: 2rem !important;
@@ -172,6 +176,12 @@
   }
 }
 
+.dark .accessibility-calm-mode {
+  --primary: color-mix(in srgb, #10B981 65%, #888888);
+  --destructive: color-mix(in srgb, #EF4444 75%, #888888);
+  --accent: color-mix(in srgb, #34D399 65%, #888888);
+}
+
 /* Clear Mode - readability typography (sliders still apply via --text-scale, --line-height-scale, --letter-spacing-px) */
 .accessibility-clear-mode {
   /* Proven sans-serifs (avoid Comic Sans per studies); no ligatures */
@@ -180,7 +190,7 @@
     font-variant-ligatures: none !important;
   }
   input[type="number"],
-  [style*="Courier New"] {
+  .font-mono {
     font-family: 'Courier New', Courier, monospace !important;
   }
   /* Minimum 16px base; text scale slider still applies */
@@ -431,4 +441,87 @@
       0 2px 6px rgba(0, 0, 0, 0.3),
       0 4px 12px rgba(0, 0, 0, 0.2);
   }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --border: #000000;
+    --muted-foreground: #424242;
+  }
+  .dark {
+    --background: #000000;
+    --foreground: #ffffff;
+    --card: #000000;
+    --card-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --border: #ffffff;
+    --muted-foreground: #e0e0e0;
+  }
+  * {
+    border-width: 2px !important;
+  }
+  *:focus,
+  *:focus-visible {
+    outline: 4px solid currentColor !important;
+    outline-offset: 4px !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .glass-card,
+  .glass-stat {
+    background-color: var(--card) !important;
+  }
+}
+
+/* Colorblind Modes */
+
+.accessibility-colorblind-deuteranopia {
+  --primary: #0077BB;
+  --ring: #0077BB;
+  --destructive: #EE7733;
+  --accent: #0077BB;
+}
+.dark .accessibility-colorblind-deuteranopia {
+  --primary: #44AADD;
+  --ring: #44AADD;
+  --destructive: #EE7733;
+  --accent: #44AADD;
+}
+
+.accessibility-colorblind-tritanopia {
+  --primary: #CC3311;
+  --ring: #CC3311;
+  --accent: #009988;
+}
+.dark .accessibility-colorblind-tritanopia {
+  --primary: #EE6644;
+  --ring: #EE6644;
+  --accent: #44BBAA;
+}
+
+.accessibility-colorblind-monochromacy {
+  --primary: #1a1a1a;
+  --ring: #1a1a1a;
+  --destructive: #666666;
+  --accent: #444444;
+  --muted-foreground: #333333;
+}
+.dark .accessibility-colorblind-monochromacy {
+  --primary: #f0f0f0;
+  --ring: #f0f0f0;
+  --destructive: #aaaaaa;
+  --accent: #cccccc;
+  --muted-foreground: #cccccc;
 }

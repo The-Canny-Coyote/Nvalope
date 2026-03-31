@@ -13,17 +13,22 @@
 
 export type EntitlementKey =
   | 'premium_full'
+  // Future: multi-user and collaboration mode (not yet client-side implemented)
   | 'team'
+  // Gates bulk receipt scanner uploads (batch processing)
   | 'bulk_receipt'
+  // Reserved for future premium AI features (voice, actions).
+  // WebLLM and the advanced assistant are free — no entitlement required.
   | 'premium_ai'
-  | 'bank_pull';
+  // Gates PDF bank statement import and bulk CSV statement import
+  | 'premium_import';
 
 export interface EntitlementsResponse {
   premium_full?: boolean;
   team?: boolean;
   bulk_receipt?: boolean;
   premium_ai?: boolean;
-  bank_pull?: boolean;
+  premium_import?: boolean;
 }
 
 const ENTITLEMENTS_API_PATH = '/api/entitlements';
@@ -93,6 +98,14 @@ export function hasEntitlement(
     if (fromApi === null) return false;
     if (fromApi.premium_full) return true;
     return !!(fromApi as Record<string, boolean>)[key];
+  }
+  // No API URL: production builds must not grant entitlements via localStorage (security).
+  // Use VITE_ENABLE_LOCAL_ENTITLEMENTS=true or run the dev server to test entitlement keys locally.
+  const allowLocalEntitlementFallback =
+    import.meta.env.DEV === true ||
+    (import.meta.env.VITE_ENABLE_LOCAL_ENTITLEMENTS as string | undefined) === 'true';
+  if (!allowLocalEntitlementFallback) {
+    return false;
   }
   if (fromApi?.premium_full) return true;
   if (fromApi && key in fromApi && (fromApi as Record<string, boolean>)[key]) return true;

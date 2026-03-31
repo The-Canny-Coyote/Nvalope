@@ -68,7 +68,6 @@ export interface AppData {
   receiptScans?: StoredReceiptScan[];
   /** Receipt archive: saved receipts with optional compressed images. */
   receiptArchives?: ReceiptArchiveItem[];
-  /** Reserved for future: cached insights, analytics, etc. */
   insights?: unknown;
   [key: string]: unknown;
 }

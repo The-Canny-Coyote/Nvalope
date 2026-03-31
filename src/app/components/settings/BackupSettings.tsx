@@ -34,6 +34,7 @@ import type { NormalizeImportedTransactionResult } from '@/app/services/statemen
 import { StatementImportPanel } from '@/app/components/StatementImportPanel';
 import { useAppStore } from '@/app/store/appStore';
 import type { BackupSettingsSnapshot } from '@/app/constants/settings';
+import { isPremiumFeatureEnabled } from '@/app/premium/entitlements';
 
 type StatementPreview = {
   fileName: string;
@@ -54,6 +55,8 @@ export interface BackupSettingsProps {
   onCheckForUpdates: () => void;
   checkingForUpdate: boolean;
   onApplySettingsFromBackup?: (settings: BackupSettingsSnapshot) => void;
+  /** When premium mode is on, require premium_import for bank statement import UI. */
+  hasPremiumImport?: boolean;
   hasBackupFolder?: boolean | null;
   onBeforeOpen?: () => void;
   restoreScrollAfterLayout?: () => void;
@@ -69,11 +72,15 @@ export function BackupSettings({
   onCheckForUpdates,
   checkingForUpdate,
   onApplySettingsFromBackup,
+  hasPremiumImport = false,
   hasBackupFolder = null,
   onBeforeOpen,
   restoreScrollAfterLayout,
   jumpToDataRef,
 }: BackupSettingsProps) {
+  const showBankStatementImport =
+    SHOW_BANK_STATEMENT_IMPORT &&
+    (!isPremiumFeatureEnabled() || hasPremiumImport);
   const { api } = useBudget();
   const encryptBackups = useAppStore((s) => s.encryptBackups);
   const setEncryptBackups = useAppStore((s) => s.setEncryptBackups);
@@ -112,7 +119,10 @@ export function BackupSettings({
   }, [jumpToDataRef, openDataSection]);
 
   const handleImportClick = () => importInputRef.current?.click();
-  const handleStatementImportClick = () => statementImportInputRef.current?.click();
+  const handleStatementImportClick = () => {
+    if (!showBankStatementImport) return;
+    statementImportInputRef.current?.click();
+  };
 
   const dataMgmtBtn =
     'inline-flex items-center gap-2 py-2 px-4 border border-primary/30 rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-primary/5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-0';
@@ -188,7 +198,13 @@ export function BackupSettings({
         typeof settings.cardsSectionWidthPercent === 'number' && Number.isFinite(settings.cardsSectionWidthPercent)
           ? (settings.cardsSectionWidthPercent as number)
           : undefined;
-      const backupUiMode = settings.uiMode === 'normal' ? 'normal' : undefined;
+      const colorblindMode =
+        settings.colorblindMode === 'none' ||
+        settings.colorblindMode === 'deuteranopia' ||
+        settings.colorblindMode === 'tritanopia' ||
+        settings.colorblindMode === 'monochromacy'
+          ? settings.colorblindMode
+          : undefined;
       if (
         layoutScale !== undefined ||
         wheelScale !== undefined ||
@@ -198,7 +214,7 @@ export function BackupSettings({
         cardBarSectionOrder !== undefined ||
         showCardBarRowSelector !== undefined ||
         cardsSectionWidthPercent !== undefined ||
-        backupUiMode !== undefined
+        colorblindMode !== undefined
       ) {
         onApplySettingsFromBackup({
           layoutScale,
@@ -209,7 +225,7 @@ export function BackupSettings({
           cardBarSectionOrder: cardBarSectionOrder ?? undefined,
           showCardBarRowSelector,
           cardsSectionWidthPercent,
-          uiMode: backupUiMode,
+          colorblindMode,
         });
       }
     }
@@ -219,6 +235,11 @@ export function BackupSettings({
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const MAX_BACKUP_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (file.size > MAX_BACKUP_BYTES) {
+      delayedToast.error('This file is too large to be a valid Nvalope backup. Check that you selected the right file.');
+      return;
+    }
     setImporting(true);
     e.target.value = '';
     const toastId = 'import-file';
@@ -247,6 +268,12 @@ export function BackupSettings({
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
+    if (!showBankStatementImport) return;
+    const MAX_STATEMENT_BYTES = 20 * 1024 * 1024; // 20 MB
+    if (file.size > MAX_STATEMENT_BYTES) {
+      delayedToast.error('This file is too large. Bank statement files are typically under 5 MB. Check that you selected the right file.');
+      return;
+    }
     if (!api) {
       delayedToast.error('Budget not ready. Try again.');
       return;
@@ -453,7 +480,12 @@ export function BackupSettings({
             <p className="text-xs text-muted-foreground">
               <strong>Full backup</strong> = everything (budget, settings, receipts, chat). Use to restore or move to another device. <strong>Budget-only export</strong> = envelopes, transactions, and income only—no settings or app data. Use for sharing or other tools. <strong>Import</strong> = replace this app’s data from a file (full backup or budget-only).
             </p>
-            {SHOW_BANK_STATEMENT_IMPORT && (
+            {SHOW_BANK_STATEMENT_IMPORT && isPremiumFeatureEnabled() && !hasPremiumImport && (
+              <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/30 p-3" role="status">
+                <strong>Bank statement import</strong> (PDF, CSV, OFX/QFX, QIF) requires the premium import entitlement. Upgrade to unlock.
+              </p>
+            )}
+            {showBankStatementImport && (
               <>
                 <p className="text-xs text-muted-foreground">
                   <strong>Bank statement import</strong> is in this section: expand <strong>Data Management</strong>, then use{' '}
@@ -565,7 +597,7 @@ export function BackupSettings({
               aria-hidden
               onChange={handleImportFile}
             />
-            {SHOW_BANK_STATEMENT_IMPORT && (
+            {showBankStatementImport && (
               <input
                 ref={statementImportInputRef}
                 type="file"
@@ -586,7 +618,7 @@ export function BackupSettings({
                 {importing ? '⏳ Importing…' : '📥 Import from file'}
               </button>
             </div>
-            {SHOW_BANK_STATEMENT_IMPORT && (
+            {showBankStatementImport && (
               <>
                 <div className="flex items-center gap-2">
                   <button

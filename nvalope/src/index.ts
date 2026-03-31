@@ -10,6 +10,7 @@ import { SignJWT, jwtVerify } from 'jose';
 // Types for D1 and env (run `npm run cf-typegen` to regenerate from wrangler; then you can remove this block if desired)
 interface NvalopeEnv {
 	DB: D1Database;
+	/** Minimum 32 characters. Set via: wrangler secret put JWT_SECRET */
 	JWT_SECRET: string;
 }
 
@@ -126,11 +127,21 @@ async function issueSessionCookie(userId: string, env: NvalopeEnv): Promise<stri
 	return `${SESSION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
 }
 
-/** Fetch entitlements for user from D1; premium_full grants all. */
+/**
+ * NOTE: JWT TOKEN REVOCATION
+ * Tokens issued by /api/session are valid for 30 days with no server-side
+ * revocation mechanism. A stolen token remains valid until expiry.
+ * For the current anonymous session model this is acceptable.
+ * When paid entitlements are in production, consider:
+ *   - Reducing JWT_EXPIRY to 7d and refreshing on entitlement fetch
+ *   - Adding a token_revoked_at column to the users table
+ *   - Checking issue time against a per-user revocation timestamp
+ * See: https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
+ */
 async function getEntitlementsForUser(
 	env: NvalopeEnv,
 	userId: string
-): Promise<{ premium_full: boolean; team: boolean; bulk_receipt: boolean; premium_ai: boolean; bank_pull: boolean }> {
+): Promise<{ premium_full: boolean; team: boolean; bulk_receipt: boolean; premium_ai: boolean; premium_import: boolean }> {
 	const { results } = await env.DB.prepare(
 		'SELECT entitlement_key FROM one_time_entitlements WHERE user_id = ?'
 	)
@@ -143,10 +154,17 @@ async function getEntitlementsForUser(
 		team: premiumFull || keys.has('team'),
 		bulk_receipt: premiumFull || keys.has('bulk_receipt'),
 		premium_ai: premiumFull || keys.has('premium_ai'),
-		bank_pull: premiumFull || keys.has('bank_pull'),
+		premium_import: premiumFull || keys.has('premium_import'),
 	};
 }
 
+/**
+ * RATE LIMITING: This Worker has no code-level rate limiting on /api/session.
+ * Configure Cloudflare rate limiting rules in the Cloudflare dashboard to limit
+ * POST /api/session to e.g. 10 requests per minute per IP.
+ * Without this, /api/session can be spammed to fill the D1 users table.
+ * See: https://developers.cloudflare.com/waf/rate-limiting-rules/
+ */
 export default {
 	async fetch(
 		request: Request,
@@ -162,12 +180,16 @@ export default {
 
 		const url = new URL(request.url);
 		if (url.pathname === '/api/session' && request.method === 'POST') {
-			if (!env.JWT_SECRET) {
+			if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) {
 				return jsonResponse(
-					{ error: 'Server misconfiguration: JWT_SECRET not set' },
+					{ error: 'Server misconfiguration: JWT_SECRET missing or too short (min 32 chars)' },
 					500,
 					headers
 				);
+			}
+			const contentLength = parseInt(request.headers.get('content-length') ?? '0', 10);
+			if (!isNaN(contentLength) && contentLength > 1024) {
+				return jsonResponse({ error: 'Bad request' }, 400, headers);
 			}
 			const userId = await createUser(env);
 			const setCookie = await issueSessionCookie(userId, env);
@@ -179,9 +201,9 @@ export default {
 		}
 
 		if (url.pathname === '/api/entitlements' && request.method === 'GET') {
-			if (!env.JWT_SECRET) {
+			if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) {
 				return jsonResponse(
-					{ error: 'Server misconfiguration: JWT_SECRET not set' },
+					{ error: 'Server misconfiguration: JWT_SECRET missing or too short (min 32 chars)' },
 					500,
 					headers
 				);

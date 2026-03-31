@@ -3,7 +3,7 @@ import { delayedToast, setToastBlocking } from '@/app/services/delayedToast';
 import { Progress } from '@/app/components/ui/progress';
 import { AIChatSheet } from '@/app/components/AIChatSheet';
 import { AppDialogs } from '@/app/components/AppDialogs';
-import { useAppSections } from '@/app/sections/appSections';
+import { useAppSections, SETTINGS_SECTION_ID } from '@/app/sections/appSections';
 import { BudgetProvider } from '@/app/store/BudgetContext';
 import type { BudgetState } from '@/app/store/budgetTypes';
 import type { FullBackupSnapshot } from '@/app/services/externalBackup';
@@ -33,19 +33,13 @@ import { useNotificationQueue } from '@/app/hooks/useNotificationQueue';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore, getAppStoreSettingsSnapshot } from '@/app/store/appStore';
 import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
-import { getApiBase, hasEntitlement } from '@/app/premium/entitlements';
+import { hasEntitlement } from '@/app/premium/entitlements';
 import { useCheckUpdatesToast } from '@/app/hooks/useCheckUpdatesToast';
 import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
-import { SHOW_BANK_STATEMENT_IMPORT } from '@/app/constants/features';
 
 const BACKUP_DEBOUNCE_MS = 2000;
 
 const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-seen';
-const MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY = 'nvalope-manual-statement-import-toast-seen';
-const BANK_STMT_COMING_SOON_SESSION_KEY = 'nvalope-bank-stmt-coming-soon-session';
-
-/** Settings section id — must match `settingsSection.id` in appSections. */
-const SETTINGS_SECTION_ID = 6;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -66,8 +60,6 @@ export default function App() {
   const cardsSectionWidthPercent = useAppStore((s) => s.cardsSectionWidthPercent);
   const setCardsSectionWidthPercent = useAppStore((s) => s.setCardsSectionWidthPercent);
   const setShowCardBarRowSelector = useAppStore((s) => s.setShowCardBarRowSelector);
-  const uiMode = useAppStore((s) => s.uiMode);
-  const setUiMode = useAppStore((s) => s.setUiMode);
   const [userLayoutOverride, setUserLayoutOverride] = useState<boolean | null>(null);
   const useCardLayout = userLayoutOverride !== null ? userLayoutOverride : storeCardLayout;
   const setUseCardLayout = useCallback((v: boolean) => {
@@ -130,6 +122,8 @@ export default function App() {
     resetToDefaults,
   } = accessibility;
 
+  const colorblindMode = useAppStore((s) => s.colorblindMode);
+
   const { enabledModules, enableModule, disableModule, enableCache } = useModules({
     saveScrollForRestore,
     setShowCacheAnimation,
@@ -137,8 +131,15 @@ export default function App() {
   });
 
   const { entitlementsFromApi, isPremium, effectiveEnabledModules } = usePremiumEntitlements(enabledModules);
-  const hasPremiumAi = hasEntitlement('premium_ai', entitlementsFromApi);
-  const premiumFeaturesConfigured = getApiBase().length > 0;
+  const hasPremiumImport = hasEntitlement('premium_import', entitlementsFromApi);
+
+  function syncAppDataToStore(data: AppData): void {
+    useAppStore.getState().setBudgetPeriodMode(data.budgetPeriodMode ?? 'monthly');
+    useAppStore.getState().setBudgetPeriodModeSwitchDate(data.budgetPeriodModeSwitchDate ?? null);
+    useAppStore.getState().setBiweeklyPeriod1StartDay(data.biweeklyPeriod1StartDay ?? 1);
+    useAppStore.getState().setBiweeklyPeriod1EndDay(data.biweeklyPeriod1EndDay ?? 14);
+    useAppStore.getState().setWeekStartDay(data.weekStartDay ?? 0);
+  }
 
   /**
    * Persisted/settings fields that affect the backup snapshot (mount-skipped effect → scheduleBackup).
@@ -171,12 +172,11 @@ export default function App() {
       showCardBarRowSelector: s.showCardBarRowSelector,
       cardsSectionWidthPercent: s.cardsSectionWidthPercent,
       showGridBackground: s.showGridBackground,
-      uiMode: s.uiMode,
+      colorblindMode: s.colorblindMode,
       titleAreaMinimized: s.titleAreaMinimized,
       supportBlockMinimized: s.supportBlockMinimized,
       storageBarMinimized: s.storageBarMinimized,
       wheelMinimized: s.wheelMinimized,
-      receiptCategoryPreferRegex: s.receiptCategoryPreferRegex,
       encryptBackups: s.encryptBackups,
     }))
   );
@@ -233,27 +233,6 @@ export default function App() {
     }
   }, []);
 
-  // Bank statement import: opening notice (hidden in Settings until SHOW_BANK_STATEMENT_IMPORT).
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      if (SHOW_BANK_STATEMENT_IMPORT) {
-        if (localStorage.getItem(MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY) === 'true') return;
-        localStorage.setItem(MANUAL_STATEMENT_IMPORT_TOAST_SEEN_KEY, 'true');
-        delayedToast.info('Import bank statements under Settings → Data Management → Import bank statement.');
-        return;
-      }
-      if (sessionStorage.getItem(BANK_STMT_COMING_SOON_SESSION_KEY) === '1') return;
-      sessionStorage.setItem(BANK_STMT_COMING_SOON_SESSION_KEY, '1');
-      toast.message('Bank statement uploads will be available soon.', {
-        description: 'Add spending in Envelopes or use backup export and import until this feature launches.',
-        duration: 10_000,
-      });
-    } catch {
-      /* ignore storage / toast failures */
-    }
-  }, []);
-
   const budgetStateRef = useRef<BudgetState | null>(null);
   const isPremiumRef = useRef(isPremium);
   isPremiumRef.current = isPremium;
@@ -270,8 +249,10 @@ export default function App() {
     if (!assistantOpen) return;
     const stateKey = 'nvalope-chat-open';
     window.history.pushState({ [stateKey]: true }, '');
-    const onPopState = () => {
-      setAssistantOpen(false);
+    const onPopState = (e: PopStateEvent) => {
+      if (e.state && typeof e.state === 'object' && (e.state as Record<string, unknown>)[stateKey] === true) {
+        setAssistantOpen(false);
+      }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -290,11 +271,7 @@ export default function App() {
     getAppData().then((data) => {
       appDataRef.current = data;
       setInitialAssistantMessages(data.assistantMessages);
-      useAppStore.getState().setBudgetPeriodMode(data.budgetPeriodMode ?? 'monthly');
-      useAppStore.getState().setBudgetPeriodModeSwitchDate(data.budgetPeriodModeSwitchDate ?? null);
-      useAppStore.getState().setBiweeklyPeriod1StartDay(data.biweeklyPeriod1StartDay ?? 1);
-      useAppStore.getState().setBiweeklyPeriod1EndDay(data.biweeklyPeriod1EndDay ?? 14);
-      useAppStore.getState().setWeekStartDay(data.weekStartDay ?? 0);
+      syncAppDataToStore(data);
     });
   }, []);
 
@@ -325,11 +302,7 @@ export default function App() {
     const onAppDataWritten = (data: Awaited<ReturnType<typeof getAppData>>) => {
       scheduleBackup();
       appDataRef.current = data;
-      useAppStore.getState().setBudgetPeriodMode(data.budgetPeriodMode ?? 'monthly');
-      useAppStore.getState().setBudgetPeriodModeSwitchDate(data.budgetPeriodModeSwitchDate ?? null);
-      useAppStore.getState().setBiweeklyPeriod1StartDay(data.biweeklyPeriod1StartDay ?? 1);
-      useAppStore.getState().setBiweeklyPeriod1EndDay(data.biweeklyPeriod1EndDay ?? 14);
-      useAppStore.getState().setWeekStartDay(data.weekStartDay ?? 0);
+      syncAppDataToStore(data);
     };
     setAppDataAfterWriteCallback(onAppDataWritten);
     return () => setAppDataAfterWriteCallback(null);
@@ -453,7 +426,6 @@ export default function App() {
     highContrast,
     screenReaderMode,
     selectedMode,
-    uiMode,
     accessibilityStandardOptionsOpen,
     accessibilityPresetModesOpen,
     settingsCoreFeaturesOpen,
@@ -544,7 +516,17 @@ export default function App() {
     setBackupPassword,
     onCheckForUpdates: handleCheckForUpdates,
     checkingForUpdate,
-    onApplySettingsFromBackup: ({ layoutScale: ls, wheelScale: ws, cardBarRows: cbr, cardBarColumns: cbc, cardBarPosition: cbp, cardBarSectionOrder: cbo, showCardBarRowSelector: scbr, cardsSectionWidthPercent: csw }) => {
+    onApplySettingsFromBackup: ({
+      layoutScale: ls,
+      wheelScale: ws,
+      cardBarRows: cbr,
+      cardBarColumns: cbc,
+      cardBarPosition: cbp,
+      cardBarSectionOrder: cbo,
+      showCardBarRowSelector: scbr,
+      cardsSectionWidthPercent: csw,
+      colorblindMode: cbm,
+    }) => {
       if (ls !== undefined) setLayoutScale(ls);
       if (ws !== undefined) setWheelScale(ws);
       if (cbr !== undefined) useAppStore.getState().setCardBarRows(cbr);
@@ -553,10 +535,8 @@ export default function App() {
       if (cbo !== undefined) useAppStore.getState().setCardBarSectionOrder(cbo);
       if (scbr !== undefined) useAppStore.getState().setShowCardBarRowSelector(scbr);
       if (csw !== undefined) useAppStore.getState().setCardsSectionWidthPercent(csw);
-      useAppStore.getState().setUiMode('normal');
+      if (cbm !== undefined) useAppStore.getState().setColorblindMode(cbm);
     },
-    uiMode,
-    setUiMode: wrapWithScrollSave(setUiMode),
     isPremium,
     saveScrollForRestore,
     restoreScrollAfterLayout,
@@ -566,8 +546,7 @@ export default function App() {
     hasBackupFolder,
     useCardLayout,
     setUseCardLayout,
-    hasPremiumAi,
-    premiumFeaturesConfigured,
+    hasPremiumImport,
   });
 
   const handleWheelSectionChange = useCallback((id: number | null) => {
@@ -588,7 +567,7 @@ export default function App() {
         selectedMode === 'contrast' ? 'accessibility-contrast-mode' :
         selectedMode === 'tactile' ? 'accessibility-tactile-mode' :
         ''
-      } ${reducedMotion ? 'accessibility-reduced-motion' : ''} ${highContrast ? 'accessibility-high-contrast' : ''} ${screenReaderMode ? 'accessibility-screen-reader-mode' : ''}`}
+      } ${colorblindMode === 'deuteranopia' ? 'accessibility-colorblind-deuteranopia' : ''} ${colorblindMode === 'tritanopia' ? 'accessibility-colorblind-tritanopia' : ''} ${colorblindMode === 'monochromacy' ? 'accessibility-colorblind-monochromacy' : ''} ${reducedMotion ? 'accessibility-reduced-motion' : ''} ${highContrast ? 'accessibility-high-contrast' : ''} ${screenReaderMode ? 'accessibility-screen-reader-mode' : ''}`}
       role="application"
       aria-label="Nvalope budget app"
     >
@@ -644,7 +623,6 @@ export default function App() {
           fallbackReason={assistantFallbackToBasic ? 'You switched to Basic AI. You can turn Advanced AI back on in Settings.' : undefined}
           initialMessages={initialAssistantMessages ?? undefined}
           onMessagesChange={onAssistantMessagesChange}
-          hasPremiumAi={hasPremiumAi}
         />
         <AppErrorBoundary>
           <MainContent
@@ -652,7 +630,6 @@ export default function App() {
             sectionContentRef={sectionContentRef}
             allSections={allSections}
             selectedMode={selectedMode}
-            setSelectedMode={(mode) => setSelectedMode(mode as AccessibilityMode)}
             selectedWheelSection={selectedWheelSection}
             setSelectedWheelSection={handleWheelSectionChange}
             onCloseSection={() => setSelectedWheelSection(null)}
@@ -661,7 +638,6 @@ export default function App() {
             enabledModules={effectiveEnabledModules}
             showCacheAnimation={showCacheAnimation}
             setAssistantOpen={setAssistantOpen}
-            isMobile={isMobile}
             useCardLayout={useCardLayout}
             setUseCardLayout={setUseCardLayout}
           />

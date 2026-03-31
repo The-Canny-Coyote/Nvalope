@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, memo } from 'react';
+import { useState, useMemo, useEffect, memo, useCallback, useRef } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { formatMoney, formatDate } from '@/app/utils/format';
 import { useTransactionFilter } from '@/app/contexts/TransactionFilterContext';
 import { TransactionEditForm } from '@/app/components/TransactionEditForm';
 import { delayedToast } from '@/app/services/delayedToast';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 
 function TransactionsContentInner() {
   const { state, api } = useBudget();
@@ -11,6 +12,20 @@ function TransactionsContentInner() {
   const [search, setSearch] = useState('');
   const [filterEnvelopeId, setFilterEnvelopeId] = useState<string>('');
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [showDeleteTransactionDialogEdit, setShowDeleteTransactionDialogEdit] = useState(false);
+  const [deleteTransactionEditTargetId, setDeleteTransactionEditTargetId] = useState<string | null>(null);
+  const [showDeleteTransactionDialogList, setShowDeleteTransactionDialogList] = useState(false);
+  const [deleteTransactionListTargetId, setDeleteTransactionListTargetId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const pendingDeleteRef = useRef<string | null>(null);
+  pendingDeleteRef.current = pendingDeleteId;
+
+  useEffect(() => {
+    return () => {
+      const id = pendingDeleteRef.current;
+      if (id) api.deleteTransaction(id);
+    };
+  }, [api]);
 
   useEffect(() => {
     const initial = filterContext?.initialFilter;
@@ -56,6 +71,24 @@ function TransactionsContentInner() {
     }
     return list;
   }, [transactions, envelopeNameById, filterEnvelopeId, search]);
+
+  const visibleFiltered = useMemo(
+    () => filtered.filter((t) => t.id !== pendingDeleteId),
+    [filtered, pendingDeleteId]
+  );
+
+  const handleDeleteTransaction = useCallback((id: string) => {
+    setPendingDeleteId(id);
+    setEditingTransactionId((eid) => (eid === id ? null : eid));
+    delayedToast.successWithUndo(
+      'Transaction deleted',
+      () => {
+        api.deleteTransaction(id);
+        setPendingDeleteId(null);
+      },
+      () => setPendingDeleteId(null),
+    );
+  }, [api]);
 
   const getEnvelopeName = (id: string | undefined) =>
     id ? (envelopeNameById.get(id) ?? id) : 'Uncategorized';
@@ -139,7 +172,7 @@ function TransactionsContentInner() {
       )}
 
       <div className="space-y-2">
-        {filtered.length === 0 ? (
+        {visibleFiltered.length === 0 ? (
           <div className="p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 text-center">
             {transactions.length === 0 ? (
               <>
@@ -148,12 +181,12 @@ function TransactionsContentInner() {
                   Add expenses from Envelopes &amp; Expenses to see them here.
                 </p>
               </>
-            ) : (
+            ) : filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground">No transactions match your search or filter.</p>
-            )}
+            ) : null}
           </div>
         ) : (
-          filtered.map((tx) => (
+          visibleFiltered.map((tx) => (
             <div
               key={tx.id}
               className="p-3 bg-card border border-border rounded-lg transition-colors hover:border-primary/30 hover:bg-primary/[0.03]"
@@ -172,10 +205,8 @@ function TransactionsContentInner() {
                   }}
                   onCancel={() => setEditingTransactionId(null)}
                   onDelete={() => {
-                    if (window.confirm('Delete this transaction? This cannot be undone.')) {
-                      api.deleteTransaction(tx.id);
-                      setEditingTransactionId(null);
-                    }
+                    setDeleteTransactionEditTargetId(tx.id);
+                    setShowDeleteTransactionDialogEdit(true);
                   }}
                 />
               ) : (
@@ -190,7 +221,7 @@ function TransactionsContentInner() {
                     <p className="text-xs text-muted-foreground">{formatDate(tx.date)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-foreground" style={{ fontFamily: 'Courier New, monospace' }}>
+                    <p className="text-sm font-bold text-foreground font-mono">
                       {tx.amount < 0 ? `Refund ${formatMoney(Math.abs(tx.amount))}` : formatMoney(-tx.amount)}
                     </p>
                     <div className="flex gap-1 mt-1">
@@ -205,9 +236,8 @@ function TransactionsContentInner() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm('Delete this transaction? This cannot be undone.')) {
-                            api.deleteTransaction(tx.id);
-                          }
+                          setDeleteTransactionListTargetId(tx.id);
+                          setShowDeleteTransactionDialogList(true);
                         }}
                         className="text-xs text-destructive hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label="Delete transaction"
@@ -225,9 +255,39 @@ function TransactionsContentInner() {
 
       <div className="pt-3 border-t border-border flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted-foreground">
-          Showing {filtered.length} of {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+          Showing {visibleFiltered.length} of {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
         </p>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteTransactionDialogEdit}
+        onOpenChange={(open) => {
+          setShowDeleteTransactionDialogEdit(open);
+          if (!open) setDeleteTransactionEditTargetId(null);
+        }}
+        title="Delete transaction?"
+        description="The transaction will disappear immediately. You'll have a moment to undo."
+        confirmLabel="Delete transaction"
+        onConfirm={() => {
+          const id = deleteTransactionEditTargetId;
+          if (id) handleDeleteTransaction(id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showDeleteTransactionDialogList}
+        onOpenChange={(open) => {
+          setShowDeleteTransactionDialogList(open);
+          if (!open) setDeleteTransactionListTargetId(null);
+        }}
+        title="Delete transaction?"
+        description="The transaction will disappear immediately. You'll have a moment to undo."
+        confirmLabel="Delete transaction"
+        onConfirm={() => {
+          const id = deleteTransactionListTargetId;
+          if (id) handleDeleteTransaction(id);
+        }}
+      />
     </div>
   );
 }

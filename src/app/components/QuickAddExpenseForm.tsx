@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Button } from '@/app/components/ui/button';
 
 export interface QuickAddExpenseFormProps {
   date: string;
@@ -40,7 +41,7 @@ export function QuickAddExpenseForm({
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         placeholder="Amount"
-        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         required
         aria-label="Amount"
       />
@@ -65,12 +66,12 @@ export function QuickAddExpenseForm({
         aria-label="Description"
       />
       <div className="flex gap-2">
-        <button type="submit" className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm">
+        <Button type="submit" className="min-h-[44px]">
           Add
-        </button>
-        <button type="button" onClick={onCancel} className="px-3 py-1 rounded border text-sm">
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="min-h-[44px]">
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

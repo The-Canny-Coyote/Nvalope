@@ -16,6 +16,7 @@ import type { AccessibilityMode } from '@/app/components/accessibilityMode';
 import { AccessibilityTypographySliders, AccessibilityCardsAndBarSliders } from '@/app/components/AccessibilitySliders';
 import { AccessibilityToggles } from '@/app/components/AccessibilityToggles';
 import { AccessibilityPresets } from '@/app/components/AccessibilityPresets';
+import { useAppStore } from '@/app/store/appStore';
 
 export type { AccessibilityMode } from '@/app/components/accessibilityMode';
 
@@ -170,6 +171,8 @@ export function AccessibilityContent({
     setTtsSpeaking(true);
   }, [ttsSpeaking]);
 
+  const colorblindMode = useAppStore((s) => s.colorblindMode);
+
   const handleTtsToggle = useCallback((on: boolean) => {
     setTtsEnabled(on);
     if (!on && typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -194,7 +197,8 @@ export function AccessibilityContent({
     cardsSectionWidthPercent !== CARDS_SECTION_WIDTH_DEFAULT ||
     reducedMotion ||
     highContrast ||
-    screenReaderMode;
+    screenReaderMode ||
+    colorblindMode !== 'none';
 
   return (
     <div className="min-w-0 space-y-4">

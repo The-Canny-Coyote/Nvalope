@@ -24,6 +24,24 @@ import {
 import { CORE_MODULE_IDS } from '@/app/constants/modules';
 
 const PERSIST_KEY = 'nvalope-app-persist';
+const COLORBLIND_MODE_KEY = 'nvalope-colorblind-mode';
+
+export type ColorblindMode = 'none' | 'deuteranopia' | 'tritanopia' | 'monochromacy';
+
+function isColorblindMode(v: unknown): v is ColorblindMode {
+  return v === 'none' || v === 'deuteranopia' || v === 'tritanopia' || v === 'monochromacy';
+}
+
+function readColorblindModeFromStorage(): ColorblindMode {
+  try {
+    if (typeof window === 'undefined') return 'none';
+    const raw = localStorage.getItem(COLORBLIND_MODE_KEY);
+    if (isColorblindMode(raw)) return raw;
+  } catch {
+    /* ignore */
+  }
+  return 'none';
+}
 
 function getInitialPersisted(): {
   layoutScale: number;
@@ -31,6 +49,7 @@ function getInitialPersisted(): {
   isPremiumLocal: boolean;
   webLLMEnabled: boolean;
   useCardLayout: boolean;
+  colorblindMode: ColorblindMode;
 } {
   try {
     if (typeof window === 'undefined') {
@@ -40,6 +59,7 @@ function getInitialPersisted(): {
         isPremiumLocal: false,
         webLLMEnabled: false,
         useCardLayout: true,
+        colorblindMode: 'none',
       };
     }
     const layout = localStorage.getItem('nvalope-layout-scale');
@@ -55,6 +75,7 @@ function getInitialPersisted(): {
       isPremiumLocal: premium === 'true',
       webLLMEnabled: false,
       useCardLayout: true,
+      colorblindMode: readColorblindModeFromStorage(),
     };
   } catch {
     return {
@@ -63,6 +84,7 @@ function getInitialPersisted(): {
       isPremiumLocal: false,
       webLLMEnabled: false,
       useCardLayout: true,
+      colorblindMode: 'none',
     };
   }
 }
@@ -103,8 +125,8 @@ export interface AppState {
   cardsSectionWidthPercent: number;
   /** Show grid background on main screen (persisted). Turn off to reduce distraction for focus/accessibility. */
   showGridBackground: boolean;
-  /** UI mode. Persisted (always normal). */
-  uiMode: 'normal';
+  /** Color vision adjustment (persisted; separate from preset accessibility modes). */
+  colorblindMode: 'none' | 'deuteranopia' | 'tritanopia' | 'monochromacy';
   /** When true, title card shows only "Nvalope™" and a chevron to expand. Persisted. */
   titleAreaMinimized: boolean;
   /** When true, Support / Buy me a coffee block is minimized to a single row with chevron to expand. Persisted. */
@@ -113,8 +135,6 @@ export interface AppState {
   storageBarMinimized: boolean;
   /** When true, section wheel is minimized to a single row with chevron to expand. Persisted. */
   wheelMinimized: boolean;
-  /** When true, receipt category suggestion uses keyword matching only (no WebLLM/Transformers). Persisted. */
-  receiptCategoryPreferRegex: boolean;
   /** When true, full backups (folder and download) are encrypted with the session password. Persisted. */
   encryptBackups: boolean;
   /** Budget period: monthly, biweekly, or weekly. Synced from app data (set in Envelopes tab). */
@@ -152,12 +172,11 @@ export interface AppState {
   setShowCardBarRowSelector: (v: boolean) => void;
   setCardsSectionWidthPercent: (v: number) => void;
   setShowGridBackground: (v: boolean) => void;
-  setUiMode: (v: 'normal') => void;
+  setColorblindMode: (v: 'none' | 'deuteranopia' | 'tritanopia' | 'monochromacy') => void;
   setTitleAreaMinimized: (v: boolean) => void;
   setSupportBlockMinimized: (v: boolean) => void;
   setStorageBarMinimized: (v: boolean) => void;
   setWheelMinimized: (v: boolean) => void;
-  setReceiptCategoryPreferRegex: (v: boolean) => void;
   setEncryptBackups: (v: boolean) => void;
   setBudgetPeriodMode: (mode: 'monthly' | 'biweekly' | 'weekly') => void;
   setBudgetPeriodModeSwitchDate: (date: string | null) => void;
@@ -195,12 +214,11 @@ export const useAppStore = create<AppState>()(
       showCardBarRowSelector: true,
       cardsSectionWidthPercent: CARDS_SECTION_WIDTH_DEFAULT,
       showGridBackground: true,
-      uiMode: 'normal',
+      colorblindMode: 'none',
       titleAreaMinimized: false,
       supportBlockMinimized: false,
       storageBarMinimized: false,
       wheelMinimized: false,
-      receiptCategoryPreferRegex: false,
       encryptBackups: false,
       budgetPeriodMode: 'monthly',
       budgetPeriodModeSwitchDate: null,
@@ -235,12 +253,11 @@ export const useAppStore = create<AppState>()(
       setShowCardBarRowSelector: (v) => set({ showCardBarRowSelector: v === true }),
       setCardsSectionWidthPercent: (v) => set({ cardsSectionWidthPercent: clampCardsSectionWidth(v) }),
       setShowGridBackground: (v) => set({ showGridBackground: v }),
-      setUiMode: (v) => set({ uiMode: v }),
+      setColorblindMode: (v) => set({ colorblindMode: v }),
       setTitleAreaMinimized: (v) => set({ titleAreaMinimized: v }),
       setSupportBlockMinimized: (v) => set({ supportBlockMinimized: v }),
       setStorageBarMinimized: (v) => set({ storageBarMinimized: v }),
       setWheelMinimized: (v) => set({ wheelMinimized: v }),
-      setReceiptCategoryPreferRegex: (v) => set({ receiptCategoryPreferRegex: v }),
       setEncryptBackups: (v) => set({ encryptBackups: v }),
       setBudgetPeriodMode: (mode) => set({ budgetPeriodMode: mode }),
       setBudgetPeriodModeSwitchDate: (date) => set({ budgetPeriodModeSwitchDate: date }),
@@ -267,12 +284,11 @@ export const useAppStore = create<AppState>()(
         showCardBarRowSelector: s.showCardBarRowSelector,
         cardsSectionWidthPercent: s.cardsSectionWidthPercent,
         showGridBackground: s.showGridBackground,
-        uiMode: s.uiMode,
+        colorblindMode: s.colorblindMode,
         titleAreaMinimized: s.titleAreaMinimized,
         supportBlockMinimized: s.supportBlockMinimized,
         storageBarMinimized: s.storageBarMinimized,
         wheelMinimized: s.wheelMinimized,
-        receiptCategoryPreferRegex: s.receiptCategoryPreferRegex,
         encryptBackups: s.encryptBackups,
       }),
       // Merge persisted enabledModules with core IDs so core features are always on by default
@@ -282,11 +298,32 @@ export const useAppStore = create<AppState>()(
         const p = 'state' in raw && raw.state && typeof raw.state === 'object' ? raw.state : (raw as Partial<typeof current>);
         const persistedModules: string[] = Array.isArray(p.enabledModules) ? p.enabledModules : [];
         const merged = Array.from(new Set([...CORE_MODULE_IDS, ...persistedModules]));
-        return { ...current, ...p, enabledModules: merged, uiMode: 'normal' };
+        const colorblindMode = isColorblindMode(p.colorblindMode)
+          ? p.colorblindMode
+          : readColorblindModeFromStorage();
+        return { ...current, ...p, enabledModules: merged, colorblindMode };
       },
     }
   )
 );
+
+// Persist colorblind mode to its own localStorage key (alongside other `nvalope-*` persisted values).
+if (typeof window !== 'undefined') {
+  try {
+    useAppStore.subscribe(
+      (s) => s.colorblindMode,
+      (v) => {
+        try {
+          localStorage.setItem(COLORBLIND_MODE_KEY, v);
+        } catch {
+          /* ignore */
+        }
+      }
+    );
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Settings slice for backup snapshot (no actions). */
 export function getAppStoreSettingsSnapshot(): Record<string, unknown> {
@@ -316,12 +353,11 @@ export function getAppStoreSettingsSnapshot(): Record<string, unknown> {
     showCardBarRowSelector: s.showCardBarRowSelector,
     cardsSectionWidthPercent: s.cardsSectionWidthPercent,
     showGridBackground: s.showGridBackground,
-    uiMode: s.uiMode,
+    colorblindMode: s.colorblindMode,
     titleAreaMinimized: s.titleAreaMinimized,
     supportBlockMinimized: s.supportBlockMinimized,
     storageBarMinimized: s.storageBarMinimized,
     wheelMinimized: s.wheelMinimized,
-    receiptCategoryPreferRegex: s.receiptCategoryPreferRegex,
     encryptBackups: s.encryptBackups,
     budgetPeriodMode: s.budgetPeriodMode,
     budgetPeriodModeSwitchDate: s.budgetPeriodModeSwitchDate,

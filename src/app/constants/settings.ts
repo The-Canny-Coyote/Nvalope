@@ -1,3 +1,5 @@
+import type { ColorblindMode } from '@/app/store/appStore';
+
 export type BackupSettingsSnapshot = {
   layoutScale?: number;
   wheelScale?: number;
@@ -7,5 +9,5 @@ export type BackupSettingsSnapshot = {
   cardBarSectionOrder?: number[] | null;
   showCardBarRowSelector?: boolean;
   cardsSectionWidthPercent?: number;
-  uiMode?: 'normal';
+  colorblindMode?: ColorblindMode;
 };

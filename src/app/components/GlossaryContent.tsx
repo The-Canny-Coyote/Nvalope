@@ -3,130 +3,71 @@
  * Shown as an optional section and openable from the footer link.
  */
 
-import { useState, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { BookOpen, ExternalLink } from 'lucide-react';
 import { BrandCoyoteMark } from '@/app/components/BrandCoyoteMark';
 
-type GlossaryTerm = { term: string; def: string | ReactNode };
+type GlossaryTerm = {
+  term: string;
+  def: string | ReactNode;
+  category: 'financial' | 'privacy' | 'tech' | 'design' | 'security';
+};
 
-const CATEGORIES: { id: string; title: string; icon: string; terms: GlossaryTerm[] }[] = [
-  {
-    id: 'financial',
-    title: 'Financial terms',
-    icon: '💰',
-    terms: [
-      { term: 'Envelope', def: 'A category in your budget with a set amount (e.g. Groceries, Transport). You track spending against that amount.' },
-      { term: 'Budget', def: 'Your plan for how to use income: how much goes to each envelope and what\'s left unallocated.' },
-      { term: 'Income', def: 'Money coming in (paychecks, side gigs, etc.). You record it here and can allocate it to envelopes.' },
-      { term: 'Expense', def: 'Money going out. Each expense is assigned to an envelope and a date.' },
-      { term: 'Transaction', def: 'A single income or expense entry in your history (amount, date, envelope, optional note).' },
-      { term: 'Allocation', def: 'Assigning a portion of your income to an envelope—setting how much that envelope can spend.' },
-      { term: 'Balance', def: 'For an envelope: how much is left (allocation minus spending). For the whole budget: income minus total spending.' },
-      { term: 'Over budget', def: 'When spending in an envelope exceeds the amount you allocated for it.' },
-    ],
-  },
-  {
-    id: 'privacy',
-    title: 'Privacy & data terms',
-    icon: '🔒',
-    terms: [
-      { term: 'On-device / Local', def: 'Data is stored only on your device (browser storage) and is not sent to our servers or third parties.' },
-      { term: 'IndexedDB', def: 'A browser storage technology we use to keep your budget, transactions, receipts, and app data. It allows larger amounts of data than local storage and works offline; everything stays on your device. If you clear "cookies and other site data" in your browser for this site, IndexedDB (and the local backup copy) may be deleted. You can use a backup folder or download a full backup in Settings → Data Management if you want a copy that survives.' },
-      { term: 'Local storage', def: 'Browser storage used for small settings (e.g. theme, layout scale). Also stays on your device.' },
-      { term: 'Backup', def: 'A copy of your data you can download or save to a folder. Used to restore or move your data.' },
-      { term: 'PWA', def: 'Progressive Web App. You can install Nvalope on your device so it runs like an app; data still stays local.' },
-      { term: 'No tracking', def: 'Nvalope does not collect analytics, track your behavior, or send your data to advertisers or other services.' },
-      { term: 'Opt-in', def: 'Optional features (e.g. AI assistant, receipt scanner) are off by default. You choose what to enable.' },
-    ],
-  },
-  {
-    id: 'data-tech',
-    title: 'Data & tech in Nvalope',
-    icon: '📦',
-    terms: [
-      { term: 'JSON', def: 'JavaScript Object Notation. A standard text format for data (e.g. your backup file). Nvalope exports and imports budget data as JSON so you can open it in a text editor, move it between devices, or use it with other tools. Backup files are named like nvalope-backup-2025-02-26.json.' },
-      { term: 'WebLLM', def: 'A way to run an AI language model entirely in your browser using WebGPU. In Nvalope, when you turn on “Use local AI model” in Settings, the app can download a small model (e.g. Llama) to your device. All chat and receipt categorization then runs on your device—nothing is sent to the cloud. The model is stored in browser cache/IndexedDB. It only runs when your device supports it (e.g. WebGPU) and you have enabled it.' },
-      { term: 'Autobackup', def: 'After about three changes you make (budget, settings, or app data), Nvalope saves a backup copy on this device (IndexedDB). Automatic saves run at most once per minute. Clearing "cookies and other site data" deletes that on-device copy. Chrome, Edge, and Chromium browsers can ask you to choose a folder on disk (one file updated when autobackup runs); Safari and Firefox do not let sites pick an arbitrary folder, so use Download full backup for a file you control. Files in a chosen folder stay on disk if you clear site data—you only re-pick the folder in Settings. You see “Backup saved.” when a save succeeds. If saving to a folder fails, you may see an error; the on-device copy may still have been saved.' },
-      { term: 'Export vs backup', def: 'Budget-only export = envelopes, transactions, and income (no settings or app data). Full backup = budget, settings, optional upgrade flag, and app data (e.g. assistant messages, receipt scans). Use budget-only export for sharing or other tools; use full backup for restore or moving to another device.' },
-      { term: 'Encrypted backup', def: 'When "Encrypt backups" is on in Settings → Data Management, full backups (saved to a folder or downloaded) are encrypted with a password. Only someone with that password can open the file. The password is not stored; set it each session or when exporting. If you forget the password, encrypted backups cannot be opened—there is no recovery. Store backup files on an external storage device (e.g. USB drive or external disk) and keep your password in a safe place.' },
-      { term: 'Receipt categorization', def: 'After you scan a receipt, the app suggests an envelope (e.g. Groceries, Gas) from the receipt text. It uses, in order: WebLLM (if enabled and model loaded), then Transformers.js (browser-based AI), then keyword patterns. All run on your device; no receipt text is sent elsewhere.' },
-    ],
-  },
-  {
-    id: 'design',
-    title: 'Our design principles',
-    icon: '✨',
-    terms: [
-      { term: 'Clarity and consent', def: 'We use neutral, clear wording for every choice so you can decide yes or no without pressure.' },
-      { term: 'Honest presentation', def: 'We aim to show you accurate information and real options, and to avoid artificial scarcity, countdowns, or misleading urgency.' },
-      { term: 'Explicit options', def: 'Optional features and how we use data are clearly described and easy to find. We aim not to add anything without your awareness.' },
-      { term: 'Your control', def: "You can turn off any feature in Settings at any time. Your data stays yours, and you retain full control over it." },
-      { term: 'Conservative defaults', def: 'Sensitive or optional actions are opt-in. We choose defaults that aim to protect your privacy and your control over spending.' },
-      { term: 'Social engineering', def: 'Using psychology, trust, or authority to influence someone to act in a way that benefits the influencer—e.g. fake urgency, emotional pressure, or hiding the real choice. In design, similar tactics can nudge users without their full awareness; we aim to avoid these practices.' },
-    ],
-  },
-  {
-    id: 'ethos',
-    title: 'Our philosophy',
-    icon: '🐺',
-    terms: [
-      { term: 'Privacy-first', def: 'Data stays on your device unless you choose to export it. Your data is not extracted or used for surveillance.' },
-      { term: 'Surveillance capitalism', def: 'A business model where user data is used for tracking and advertising. Nvalope is designed as an alternative that keeps your data on your device.' },
-      {
-        term: 'Ethical capitalism',
-        def: (
-          <>
-            An alternative approach: ethics over extraction, service over surveillance, sustainability over waste. The Canny Coyote{' '}
-            <BrandCoyoteMark decorativeOnly className="inline" /> aims to uphold these ideals and a high standard of ethics.
-          </>
-        ),
-      },
-      { term: 'User-owned data', def: 'Your budget and transactions belong to you. You can export, import, or delete your data at any time; we do not retain or sell it.' },
-      { term: 'Voluntary support', def: 'Core features remain free. Donations (e.g. Buy Me a Coffee) are optional, with no pressure to contribute.' },
-      { term: 'Ethical design', def: 'Design that prioritizes your well-being and control. We aim to avoid dark patterns and forced interactions.' },
-    ],
-  },
+const TERMS: GlossaryTerm[] = [
+  // Financial Terms
+  { term: 'Allocation', category: 'financial', def: 'Assigning a portion of your income to an envelope—setting how much that envelope can spend.' },
+  { term: 'Balance', category: 'financial', def: 'For an envelope: how much is left (allocation minus spending). For the whole budget: income minus total spending.' },
+  { term: 'Budget', category: 'financial', def: 'Your plan for how to use income: how much goes to each envelope and what\'s left unallocated.' },
+  { term: 'Envelope', category: 'financial', def: 'A category in your budget with a set amount (e.g. Groceries, Transport). You track spending against that amount.' },
+  { term: 'Expense', category: 'financial', def: 'Money going out. Each expense is assigned to an envelope and a date.' },
+  { term: 'Income', category: 'financial', def: 'Money coming in (paychecks, side gigs, etc.). You record it here and can allocate it to envelopes.' },
+  { term: 'Over budget', category: 'financial', def: 'When spending in an envelope exceeds the amount you allocated for it.' },
+  { term: 'Transaction', category: 'financial', def: 'A single income or expense entry in your history (amount, date, envelope, optional note).' },
+
+  // Privacy & data terms
+  { term: 'Backup', category: 'privacy', def: 'A copy of your data you can download or save to a folder. Used to restore or move your data.' },
+  { term: 'IndexedDB', category: 'privacy', def: 'A browser storage technology that stores your budget, transactions, receipts, and app data locally on your device. It works offline and supports more data than localStorage. Clearing "cookies and other site data" in your browser will delete this data — use a backup to protect against accidental loss.' },
+  { term: 'Local storage', category: 'privacy', def: 'Browser storage used for small settings (e.g. theme, layout scale). Also stays on your device.' },
+  { term: 'No tracking', category: 'privacy', def: 'Nvalope does not collect analytics, track your behavior, or send your data to advertisers or other services.' },
+  { term: 'On-device / Local', category: 'privacy', def: 'Data is stored only on your device (browser storage) and is not sent to our servers or third parties.' },
+  { term: 'Opt-in', category: 'privacy', def: 'Optional features (e.g. AI assistant, receipt scanner) are off by default. You choose what to enable.' },
+  { term: 'PWA', category: 'privacy', def: 'Progressive Web App. You can install Nvalope on your device so it runs like an app; data still stays local.' },
+
+  // Data & tech in Nvalope
+  { term: 'Autobackup', category: 'tech', def: 'After roughly three changes, Nvalope automatically saves a copy of your data on this device. Chrome and Edge also support saving to a folder you choose — see Settings → Data Management. Downloads a full backup file from Settings at any time.' },
+  { term: 'CSV', category: 'tech', def: 'Comma-Separated Values — a plain text file format used by most banks for statement exports. Each row is a transaction; columns are separated by commas. Supported for bank statement import in Settings → Data Management.' },
+  { term: 'Encrypted backup', category: 'tech', def: 'A backup file protected with a password using AES-256-GCM encryption. Only someone with the password can open the file. The password is never stored — there is no recovery if lost. Set in Settings → Data Management.' },
+  { term: 'Export vs backup', category: 'tech', def: 'Budget-only export = envelopes, transactions, and income (no settings or app data). Full backup = budget, settings, optional upgrade flag, and app data (e.g. assistant messages, receipt scans). Use budget-only export for sharing or other tools; use full backup for restore or moving to another device.' },
+  { term: 'JSON', category: 'tech', def: 'JavaScript Object Notation. A standard text format for data (e.g. your backup file). Nvalope exports and imports budget data as JSON so you can open it in a text editor, move it between devices, or use it with other tools. Backup files are named like nvalope-backup-2025-02-26.json.' },
+  { term: 'OFX / QFX', category: 'tech', def: 'Open Financial Exchange format — a structured file format used by banks and financial software (QuickBooks, Quicken). More reliable than CSV for financial data because it includes explicit field labels. Supported for bank statement import.' },
+  { term: 'QIF', category: 'tech', def: 'Quicken Interchange Format — an older format used by some banks and financial apps. Supported for bank statement import but less reliable than OFX for transaction classification.' },
+  { term: 'Receipt categorization', category: 'tech', def: 'After you scan a receipt, the app suggests an envelope (e.g. Groceries, Gas). Receipt text is extracted with on-device OCR, and the envelope suggestion uses keyword pattern matching (regex-only). No receipt text is sent elsewhere.' },
+  { term: 'WebLLM', category: 'tech', def: 'A way to run an AI language model entirely in your browser using WebGPU. In Nvalope, when you turn on "Use local AI model" in Settings, the app can download a small model (e.g. Llama) to your device. All AI Assistant chat then runs on your device — nothing is sent to the cloud. Receipt scanning always uses on-device OCR and keyword matching, regardless of whether WebLLM is enabled. The model is stored in browser cache/IndexedDB and only runs when your device supports WebGPU.' },
+
+  // Design
+  { term: 'Dark patterns', category: 'design', def: 'Design tactics that manipulate users into actions they did not intend — for example, hiding the cancel option, making unsubscribe difficult, or using guilt-based button labels ("No thanks, I hate saving money"). Nvalope is designed to avoid these.' },
+
+  // Security
+  { term: 'Encryption', category: 'security', def: 'A process that scrambles data so only someone with the correct key (password) can read it. Nvalope uses AES-256-GCM with PBKDF2 key derivation — industry-standard algorithms. Encrypted backups cannot be opened without the password; there is no recovery if the password is lost.' },
 ];
 
 type ResourceItem = { label: string; href: string; description: string };
 
-/** Shown by default (before "Show more"). */
-const RESOURCES_TOP: ResourceItem[] = [
+const RESOURCES: ResourceItem[] = [
   { label: 'CFPB — Budgeting', href: 'https://www.consumerfinance.gov/consumer-tools/budgeting/', description: 'Consumer Financial Protection Bureau: budgeting basics' },
+  { label: 'CFPB — Managing your money', href: 'https://www.consumerfinance.gov/consumer-tools/managing-your-money/', description: 'Practical guides to spending, saving, and planning' },
+  { label: 'Envelope budgeting (Wikipedia)', href: 'https://en.wikipedia.org/wiki/Envelope_system', description: 'Overview of the envelope method Nvalope is based on' },
   { label: 'FTC — Consumer Information', href: 'https://consumer.ftc.gov/', description: 'Federal Trade Commission consumer tips' },
   { label: 'FTC — Report fraud or dark patterns', href: 'https://reportfraud.ftc.gov/', description: 'Report deceptive practices, scams, or dark patterns to the FTC' },
   { label: 'Dark Patterns (darkpatterns.org)', href: 'https://www.darkpatterns.org/', description: 'Examples and definitions of dark patterns in design' },
   { label: 'NN/G — Deceptive patterns in UX', href: 'https://www.nngroup.com/articles/deceptive-patterns/', description: 'How design manipulates users: same psychology as social engineering; how it spreads even when unintentional' },
-  { label: 'GDPR & Privacy (EDPB)', href: 'https://edpb.europa.eu/our-work-tools/general-guidance/gdpr-guidelines-recommendations-best-practices_en', description: 'Guidance on privacy and data protection' },
-];
-
-/** Shown after "Show more". */
-const RESOURCES_MORE: ResourceItem[] = [
   { label: 'EFF — Electronic Frontier Foundation', href: 'https://www.eff.org/', description: 'Defending civil liberties and privacy in the digital world' },
   { label: 'Mozilla Foundation', href: 'https://foundation.mozilla.org/', description: 'Open internet, privacy, and ethical tech advocacy' },
-  { label: 'Signal Foundation', href: 'https://signal.org/about/', description: 'Private messaging; privacy-first communication' },
-  { label: 'DuckDuckGo — Privacy', href: 'https://duckduckgo.com/privacy', description: 'Privacy-focused search and browser; no tracking' },
-  { label: 'Privacy International', href: 'https://privacyinternational.org/', description: 'Challenges data exploitation and surveillance' },
-];
-
-/** Related links (budgeting, envelope method, financial literacy) shown only when expanded. */
-const RESOURCES_RELATED: ResourceItem[] = [
-  { label: 'CFPB — Managing your money', href: 'https://www.consumerfinance.gov/consumer-tools/managing-your-money/', description: 'Practical guides to spending, saving, and planning' },
-  { label: 'Envelope budgeting (Wikipedia)', href: 'https://en.wikipedia.org/wiki/Envelope_system', description: 'Overview of the envelope method Nvalope is based on' },
-  { label: 'MyMoney.gov', href: 'https://www.mymoney.gov/', description: 'U.S. financial literacy and education resources' },
-];
-
-/** Privacy and open source links shown only when expanded. */
-const RESOURCES_PRIVACY_OPEN: ResourceItem[] = [
-  { label: 'FSF — Free Software Foundation', href: 'https://www.fsf.org/', description: 'Advocacy for free software and user freedom; steward of the GNU Project' },
-  { label: 'Tor Project', href: 'https://www.torproject.org/', description: 'Free software for anonymity and resisting surveillance' },
   { label: 'Proton', href: 'https://proton.me/', description: 'Privacy-focused email, VPN, and drive; open source' },
   { label: 'Tuta', href: 'https://tuta.com', description: 'Encrypted email, calendar, and contacts; open source; privacy-first' },
-  { label: 'FSFE — Free Software Foundation Europe', href: 'https://fsfe.org/', description: 'Advocacy for free software and open standards in Europe' },
-  { label: 'Framasoft', href: 'https://framasoft.org/en/', description: 'Free software, decentralization, and digital sovereignty' },
-  { label: 'Open Source Initiative', href: 'https://opensource.org/', description: 'Defines and promotes open source; maintains the OSI definition' },
   { label: 'Tactical Tech', href: 'https://tacticaltech.org/', description: 'Tools and guides for privacy, security, and digital wellbeing' },
-  { label: 'F-Droid', href: 'https://f-droid.org/', description: 'Catalog of free and open source Android apps' },
+  { label: 'GDPR & Privacy (EDPB)', href: 'https://edpb.europa.eu/our-work-tools/general-guidance/gdpr-guidelines-recommendations-best-practices_en', description: 'Guidance on privacy and data protection' },
+  { label: 'Open Source Initiative', href: 'https://opensource.org/', description: 'Defines and promotes open source; maintains the OSI definition' },
 ];
 
 function ResourceLink({ label, href, description }: ResourceItem) {
@@ -147,7 +88,22 @@ function ResourceLink({ label, href, description }: ResourceItem) {
 }
 
 export function GlossaryContent() {
-  const [resourcesExpanded, setResourcesExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'financial' | 'privacy' | 'tech' | 'design' | 'security'>('all');
+
+  const filteredTerms = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesQuery = (t: GlossaryTerm) => {
+      if (q === '') return true;
+      const defText = typeof t.def === 'string' ? t.def : '';
+      return t.term.toLowerCase().includes(q) || defText.toLowerCase().includes(q);
+    };
+    return TERMS
+      .filter((t) => (activeCategory === 'all' ? true : t.category === activeCategory))
+      .filter(matchesQuery)
+      .slice()
+      .sort((a, b) => a.term.localeCompare(b.term));
+  }, [activeCategory, searchQuery]);
 
   return (
     <section className="space-y-8" role="region" aria-label="Glossary">
@@ -156,25 +112,61 @@ export function GlossaryContent() {
         <h2 className="text-lg font-semibold text-primary">Glossary</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Definitions of terms we use in Nvalope, how we handle your data, and how we design the app to be fair and transparent.
+        Definitions of terms used in Nvalope. Search or filter by category to find what you're looking for.
       </p>
 
-      {CATEGORIES.map((cat) => (
-        <div key={cat.id} className="space-y-3">
-          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-            <span aria-hidden>{cat.icon}</span>
-            {cat.title}
-          </h3>
+      <div className="space-y-3">
+        <input
+          type="search"
+          placeholder="Search terms…"
+          aria-label="Search glossary terms"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        />
+
+        <div role="group" aria-label="Filter by category" className="flex flex-wrap items-center gap-2">
+          {([
+            { id: 'all', label: 'All' },
+            { id: 'financial', label: 'Financial' },
+            { id: 'privacy', label: 'Privacy' },
+            { id: 'tech', label: 'Tech' },
+            { id: 'design', label: 'Design' },
+            { id: 'security', label: 'Security' },
+          ] as const).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setActiveCategory(c.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border-2 ${
+                activeCategory === c.id
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+              }`}
+              aria-pressed={activeCategory === c.id}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          {filteredTerms.length} term{filteredTerms.length !== 1 ? 's' : ''}
+        </div>
+
+        {filteredTerms.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No terms match your search.</p>
+        ) : (
           <dl className="space-y-2">
-            {cat.terms.map(({ term, def }) => (
+            {filteredTerms.map(({ term, def }) => (
               <div key={term} className="pl-2 border-l-2 border-primary/30">
                 <dt className="font-medium text-foreground text-sm">{term}</dt>
                 <dd className="text-sm text-muted-foreground mt-0.5">{def}</dd>
               </div>
             ))}
           </dl>
-        </div>
-      ))}
+        )}
+      </div>
 
       <div className="space-y-3 pt-2">
         <h3 className="text-base font-semibold text-foreground">Helpful resources</h3>
@@ -182,55 +174,10 @@ export function GlossaryContent() {
           External links to learn more about budgeting, consumer rights, and ethical design. We don’t control these sites; their privacy policies apply.
         </p>
         <ul className="space-y-2">
-          {RESOURCES_TOP.map((r) => (
+          {RESOURCES.map((r) => (
             <ResourceLink key={r.href} {...r} />
           ))}
-          {resourcesExpanded && (
-            <>
-              {RESOURCES_MORE.map((r) => (
-                <ResourceLink key={r.href} {...r} />
-              ))}
-              {RESOURCES_RELATED.length > 0 && (
-                <>
-                  <li className="pt-2 mt-2 border-t border-border">
-                    <span className="text-xs font-medium text-muted-foreground">Related — budgeting & financial literacy</span>
-                  </li>
-                  {RESOURCES_RELATED.map((r) => (
-                    <ResourceLink key={r.href} {...r} />
-                  ))}
-                </>
-              )}
-              {RESOURCES_PRIVACY_OPEN.length > 0 && (
-                <>
-                  <li className="pt-2 mt-2 border-t border-border">
-                    <span className="text-xs font-medium text-muted-foreground">Privacy & open source</span>
-                  </li>
-                  {RESOURCES_PRIVACY_OPEN.map((r) => (
-                    <ResourceLink key={r.href} {...r} />
-                  ))}
-                </>
-              )}
-            </>
-          )}
         </ul>
-        <button
-          type="button"
-          onClick={() => setResourcesExpanded((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          aria-expanded={resourcesExpanded}
-        >
-          {resourcesExpanded ? (
-            <>
-              <ChevronUp className="w-4 h-4 shrink-0" aria-hidden />
-              Show fewer resources
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
-              Show more resources
-            </>
-          )}
-        </button>
       </div>
 
     </section>

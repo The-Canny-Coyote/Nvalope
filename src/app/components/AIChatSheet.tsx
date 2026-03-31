@@ -52,7 +52,7 @@ const QUICK_QUESTIONS = [
 ];
 
 const BASIC_WELCOME =
-  "Hi! I'm Cache the AI Assistant, your budget assistant. Ask me how much you've spent, what's left, or how to add an expense. All answers use your data from this app—nothing leaves your device.";
+  "Hi, I'm Cache. Ask me about your spending, what's left in an envelope, your income, or how to add an expense. Everything runs on your device — your data never leaves.";
 
 const ADVANCED_WELCOME =
   "Hi! I'm Cache the AI Assistant with Advanced AI—predictive insights and smarter suggestions. Ask me about your budget, spending patterns, or how to add expenses. All data stays on your device.";
@@ -72,8 +72,6 @@ interface AIChatSheetProps {
   initialMessages?: ChatMessage[];
   /** Called when messages change (for backup persistence) */
   onMessagesChange?: (messages: ChatMessage[]) => void;
-  /** When false, WebLLM is not used even if enabled in settings (premium_ai gate). */
-  hasPremiumAi?: boolean;
 }
 
 const getDefaultMessages = (aiMode: "basic" | "advanced"): ChatMessage[] => [
@@ -88,7 +86,6 @@ export function AIChatSheet({
   fallbackReason,
   initialMessages,
   onMessagesChange,
-  hasPremiumAi = false,
 }: AIChatSheetProps) {
   const { state, getBudgetSummaryForCurrentPeriod } = useBudget();
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -212,10 +209,9 @@ export function AIChatSheet({
       const appendRuleBasedReply = () => {
         try {
           const lastAssistantContent = [...baseMessages].reverse().find((m) => m.role === "assistant")?.content;
-          const lastUserContent = [...baseMessages].reverse().find((m) => m.role === "user")?.content;
           const reply =
             aiMode === "advanced"
-              ? getAdvancedAssistantReply(baseMessages, trimmed, getSummary, { lastAssistantContent, lastUserContent })
+              ? getAdvancedAssistantReply(baseMessages, trimmed, getSummary, { lastAssistantContent })
               : getAssistantReply(trimmed, getSummary, performanceTier);
           const safeReply = typeof reply === "string" && reply.trim() ? reply : "I'm not sure how to answer that. Try asking about your budget, spending, or how to add an expense.";
           appendAssistantMessage(safeReply);
@@ -224,7 +220,7 @@ export function AIChatSheet({
         }
       };
 
-      if (!webLLMEnabled || !hasPremiumAi || !assistantUseLLM || !webLLMAvailable || webLLMStatus === 'unavailable') {
+      if (!webLLMEnabled || !assistantUseLLM || !webLLMAvailable || webLLMStatus === 'unavailable') {
         appendRuleBasedReply();
         setIsSending(false);
         return;
@@ -308,7 +304,6 @@ export function AIChatSheet({
               aiMode === "advanced"
                 ? getAdvancedAssistantReply(baseMessages, trimmed, getSummary, {
                     lastAssistantContent: [...baseMessages].reverse().find((m) => m.role === "assistant")?.content,
-                    lastUserContent: [...baseMessages].reverse().find((m) => m.role === "user")?.content,
                   })
                 : getAssistantReply(trimmed, getSummary, performanceTier);
             const safeReply = typeof fallbackReply === "string" && fallbackReply.trim() ? fallbackReply : "I'm not sure how to answer that. Try asking about your budget or spending.";
@@ -339,7 +334,6 @@ export function AIChatSheet({
               aiMode === "advanced"
                 ? getAdvancedAssistantReply(baseMessages, trimmed, getSummary, {
                     lastAssistantContent: [...baseMessages].reverse().find((m) => m.role === "assistant")?.content,
-                    lastUserContent: [...baseMessages].reverse().find((m) => m.role === "user")?.content,
                   })
                 : getAssistantReply(trimmed, getSummary, performanceTier);
             const safeReply = typeof fallbackReply === "string" && fallbackReply.trim() ? fallbackReply : "I'm not sure how to answer that. Try asking about your budget or spending.";
@@ -360,7 +354,6 @@ export function AIChatSheet({
       performanceTier,
       state,
       webLLMEnabled,
-      hasPremiumAi,
       assistantUseLLM,
       webLLMAvailable,
       webLLMStatus,

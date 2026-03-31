@@ -30,7 +30,7 @@ export const paymentLinks = {
   team: get('VITE_STRIPE_PAYMENT_LINK_TEAM'),
   bulkReceipt: get('VITE_STRIPE_PAYMENT_LINK_BULK_RECEIPT'),
   premiumAi: get('VITE_STRIPE_PAYMENT_LINK_PREMIUM_AI'),
-  bankPull: get('VITE_STRIPE_PAYMENT_LINK_BANK_PULL'),
+  premiumImport: get('VITE_STRIPE_PAYMENT_LINK_PREMIUM_IMPORT'),
 } as const;
 
 export function isPlaceholder(url: string): boolean {

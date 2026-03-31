@@ -3,7 +3,14 @@ import { delayedToast, setToastBlocking } from './delayedToast';
 
 describe('delayedToast', () => {
   beforeEach(() => {
-    vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+    vi.mock('sonner', () => ({
+      toast: {
+        success: vi.fn(() => 'toast-id'),
+        error: vi.fn(),
+        info: vi.fn(),
+        dismiss: vi.fn(),
+      },
+    }));
     setToastBlocking(true);
   });
 
@@ -26,5 +33,14 @@ describe('delayedToast', () => {
   it('delayedToast.info is a function', () => {
     expect(typeof delayedToast.info).toBe('function');
     delayedToast.info('test');
+  });
+
+  it('delayedToast.successWithUndo is a function', () => {
+    expect(typeof delayedToast.successWithUndo).toBe('function');
+    const onCommit = vi.fn();
+    const onUndo = vi.fn();
+    delayedToast.successWithUndo('Transaction deleted', onCommit, onUndo);
+    setToastBlocking(false);
+    expect(onCommit).not.toHaveBeenCalled();
   });
 });

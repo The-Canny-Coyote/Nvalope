@@ -1,0 +1,33 @@
+---
+description: Nvalope development follows the Canny Coyote Ethos. Use this rule for all code, docs, and architecture decisions.
+globs: 
+alwaysApply: true
+---
+
+# Canny Coyote — Nvalope Project Rules
+
+This project is developed under the **Canny Coyote Ethos**. When making any change (code, docs, dependencies, or architecture), align with the ethos. If the user has a separate **Canny Coyote Ethos Alignment Guide** (e.g. `CannyCoyoteEthos-AI-Guidance-Doc.txt`), treat it as the source of truth for principles; this file makes them concrete for Nvalope.
+
+## Core principles (summary)
+
+1. **Privacy-first** — No data collection, tracking, or phone-home unless the user explicitly asks. All budget and preference data stays on-device (localStorage/IndexedDB) unless the user opts in to sync.
+2. **Offline-first** — Core experience works without network. Prefer local storage and caching; design failure modes when network or external APIs are unavailable.
+3. **Accessibility & inclusion** — Keyboard navigation, ARIA where relevant, contrast, plain language. No essential information by color alone. Document accessibility features in `docs/accessibility.md`.
+4. **Transparency** — Explain *why* you propose a solution. State trade-offs. Document non-trivial decisions in `docs/` or ADRs.
+5. **Documentation-as-code** — README, `docs/architecture.md`, `docs/troubleshooting.md`, and `docs/accessibility.md` are part of the deliverable. Significant changes must update relevant docs.
+6. **Minimalism & maintainability** — Prefer simple, boring solutions. Challenge new dependencies (privacy? lock-in?). Optimize for a solo or small team maintaining the code later.
+7. **User autonomy** — No dark patterns. Easy opt-out, clear choices. No deceptive defaults or nudges toward data sharing or upgrades.
+8. **Ethical data/AI** — If adding AI or data-heavy features: minimize data, clear boundaries, user consent. (e.g. WebLLM local-first; cloud API only if user opts in.)
+
+## Nvalope-specific rules
+
+- **Data flow:** Budget data (envelopes, transactions, income) is stored locally only. Nothing is sent off-device unless the user explicitly enables a feature (e.g. future cloud backup or AI API).
+- **Error handling:** User-facing errors must be in plain language and suggest at least one concrete next step. Do not log raw user input, full error objects, or sensitive payloads; use generic messages (e.g. "Magnifier capture failed").
+- **Third-party code:** Before adding a dependency, consider: what data does it see? Where does it store data? How easy is it to remove? Prefer adapters/interfaces so third-party integration is reversible.
+- **Accessibility:** All new UI must be keyboard-accessible and have appropriate labels/ARIA. When adding or changing accessibility features, update `docs/accessibility.md`.
+
+## When in doubt
+
+- Ask before adding a new dependency, external API, or data flow that leaves the device.
+- If a request conflicts with the ethos, say so and offer an alternative that honors the user's goal without violating privacy, resilience, or accessibility.
+- After significant changes: summarize what was done, note remaining risks/TODOs, and list where docs were updated.

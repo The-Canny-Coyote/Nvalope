@@ -14,6 +14,8 @@ const BACKUP_DOWNLOAD_SUGGESTED_KEY = 'nvalope-backup-download-suggested';
 
 export interface SettingsState {
   enabledModules?: string[];
+  /** Separate from preset accessibility modes; see AppState.colorblindMode. */
+  colorblindMode?: string;
   selectedMode?: string;
   textSize?: number;
   reducedMotion?: boolean;

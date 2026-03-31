@@ -91,5 +91,5 @@ export function getAssistantReply(
   const didYouMean = suggested.length > 0
     ? `Did you mean something about ${suggested.join(', ')}? `
     : '';
-  return `${didYouMean}Try asking about spending, what's left, income, envelopes, or how to add an expense. I can only answer questions about your budget using the data in this app.`;
+  return `${didYouMean}I work with the budget data you've added to this app — nothing is sent anywhere. Try asking about your spending, what's left in an envelope, your income, or how to add an expense.`;
 }

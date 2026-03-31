@@ -131,36 +131,3 @@ test.describe('AI Assistant', () => {
     await expect(replyArea.getByText(/Groceries|Dining|Transport/i).first()).toBeVisible({ timeout: 10000 });
   });
 });
-
-test.describe('WebLLM premium gate', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 });
-    // String init script avoids function-serialization edge cases; must run before storage prep + goto.
-    await page.addInitScript({
-      content: `window.__NVALOPE_TEST_PREMIUM_CONFIGURED = true;
-window.__NVALOPE_TEST_HAS_PREMIUM_AI = false;
-window.__NVALOPE_TEST_FORCE_WEBLLM_ELIGIBLE = true;`,
-    });
-    await prepareE2EStorageBeforeLoad(page);
-    await page.goto('/');
-    await waitForApp(page);
-    await dismissDialogs(page);
-  });
-
-  test('WebLLM toggle shows locked state for non-premium user when premium is configured', async ({ page }) => {
-    const wheelBtn = page.getByRole('button', { name: 'Wheel layout' });
-    if (await wheelBtn.isVisible()) {
-      await wheelBtn.click();
-      await page.waitForTimeout(200);
-    }
-
-    await page.getByRole('button', { name: 'Settings' }).click({ timeout: 5000 });
-    await expect(page.getByRole('heading', { name: /Settings & Features|^Settings$/i }).first()).toBeVisible({ timeout: 5000 });
-    await dismissDialogs(page);
-    await page.getByRole('button', { name: 'Optional features', exact: true }).click();
-    await page.waitForTimeout(300);
-
-    await expect(page.getByTestId('webllm-premium-locked')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('checkbox', { name: /Use local AI model \(WebLLM\)/i })).not.toBeVisible();
-  });
-});

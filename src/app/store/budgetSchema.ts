@@ -6,37 +6,37 @@
 import { z } from 'zod';
 
 export const envelopeSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
   limit: z.number(),
   spent: z.number(),
 });
 
 export const transactionSchema = z.object({
-  id: z.string(),
+  id: z.string().max(100),
   amount: z.number(),
-  envelopeId: z.string().optional(),
-  description: z.string(),
-  date: z.string(),
-  createdAt: z.string(),
-  importHash: z.string().optional(),
-  importSourceFile: z.string().optional(),
+  envelopeId: z.string().max(100).optional(),
+  description: z.string().max(1000),
+  date: z.string().max(20),
+  createdAt: z.string().max(40),
+  importHash: z.string().max(100).optional(),
+  importSourceFile: z.string().max(500).optional(),
   importConfidence: z.number().optional(),
-  payeeNormalized: z.string().optional(),
-  matchedReceiptId: z.string().optional(),
+  payeeNormalized: z.string().max(500).optional(),
+  matchedReceiptId: z.string().max(100).optional(),
 });
 
 export const incomeEntrySchema = z.object({
-  id: z.string(),
+  id: z.string().max(100),
   amount: z.number(),
-  source: z.string(),
-  date: z.string(),
-  createdAt: z.string(),
+  source: z.string().max(500),
+  date: z.string().max(20),
+  createdAt: z.string().max(40),
 });
 
 export const savingsGoalSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
   targetAmount: z.number(),
   targetDate: z.string(),
   monthlyContribution: z.number(),
@@ -45,20 +45,20 @@ export const savingsGoalSchema = z.object({
 });
 
 export const billDueDateSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  dueDate: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
+  dueDate: z.string().max(20),
   amount: z.number().optional(),
   repeatMonthly: z.boolean().optional(),
   envelopeId: z.string().optional(),
 });
 
 export const budgetStateSchema = z.object({
-  envelopes: z.array(envelopeSchema),
-  transactions: z.array(transactionSchema),
-  income: z.array(incomeEntrySchema),
-  savingsGoals: z.array(savingsGoalSchema),
-  bills: z.array(billDueDateSchema).optional(),
+  envelopes: z.array(envelopeSchema).max(500),
+  transactions: z.array(transactionSchema).max(50000),
+  income: z.array(incomeEntrySchema).max(5000),
+  savingsGoals: z.array(savingsGoalSchema).max(200),
+  bills: z.array(billDueDateSchema).max(500).optional(),
 });
 
 /** Map Zod error to a single user-facing message (no raw payload). */

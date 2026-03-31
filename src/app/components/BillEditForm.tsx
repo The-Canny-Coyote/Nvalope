@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { BillDueDate } from '@/app/store/budgetTypes';
+import { Button } from '@/app/components/ui/button';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 
 export interface BillEditFormProps {
   bill: BillDueDate;
@@ -12,6 +14,7 @@ export function BillEditForm({ bill, onSave, onCancel, onDelete }: BillEditFormP
   const [dueDate, setDueDate] = useState(bill.dueDate);
   const [name, setName] = useState(bill.name);
   const [amount, setAmount] = useState(bill.amount != null ? String(bill.amount) : '');
+  const [showDeleteBillDialog, setShowDeleteBillDialog] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +23,7 @@ export function BillEditForm({ bill, onSave, onCancel, onDelete }: BillEditFormP
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full">
       <input
         type="text"
@@ -43,27 +47,40 @@ export function BillEditForm({ bill, onSave, onCancel, onDelete }: BillEditFormP
         min="0"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         placeholder="Amount (optional)"
         aria-label="Amount optional"
       />
       <div className="flex gap-2 flex-wrap">
-        <button type="submit" className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm">
+        <Button type="submit" className="min-h-[44px]">
           Save
-        </button>
-        <button type="button" onClick={onCancel} className="px-3 py-1 rounded border text-sm">
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="min-h-[44px]">
           Cancel
-        </button>
+        </Button>
         {onDelete && (
-          <button
+          <Button
             type="button"
-            onClick={() => { if (window.confirm('Delete this bill?')) onDelete(); }}
-            className="px-3 py-1 rounded border border-destructive/50 text-destructive text-sm"
+            variant="destructive"
+            onClick={() => setShowDeleteBillDialog(true)}
+            className="min-h-[44px]"
           >
             Delete
-          </button>
+          </Button>
         )}
       </div>
     </form>
+
+    <ConfirmDialog
+      open={showDeleteBillDialog}
+      onOpenChange={setShowDeleteBillDialog}
+      title="Delete bill?"
+      description=""
+      confirmLabel="Delete bill"
+      onConfirm={() => {
+        onDelete?.();
+      }}
+    />
+    </>
   );
 }

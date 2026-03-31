@@ -21,6 +21,17 @@ import type { ChartId, ChartDisplayType, SpendingOverTimeMonths, DailySpendingDa
 
 export type { ChartId, ChartDisplayType, SpendingOverTimeMonths, DailySpendingDays } from '@/app/components/analyticsChartTypes';
 
+function csvEscape(value: unknown): string {
+  const str = String(value ?? '');
+  // Prefix formula-triggering characters to prevent CSV injection in Excel/Sheets
+  const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  // Wrap in quotes if the value contains commas, quotes, or newlines
+  if (/[",\n\r]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
+  }
+  return safe;
+}
+
 /** For each data category, which chart display types the user can choose. */
 const CHART_DISPLAY_OPTIONS: Record<ChartId, ChartDisplayType[]> = {
   'spending-by-envelope': ['pie', 'bar'],
@@ -113,29 +124,24 @@ function AnalyticsContentInner({ selectedMode = 'standard' }: AnalyticsContentPr
   }, [selectedChart]);
 
   const csvContent = useMemo(() => {
-    const escape = (v: string | number) => {
-      const s = String(v);
-      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
     switch (selectedChart) {
       case 'spending-by-envelope':
-        return ['Envelope,Spent,Remaining', ...spendingByEnvelope.map((d) => `${escape(d.name)},${escape(d.value)},${escape(typeof d.remaining === 'number' ? d.remaining : '')}`)].join('\n');
+        return ['Envelope,Spent,Remaining', ...spendingByEnvelope.map((d) => `${csvEscape(d.name)},${csvEscape(d.value)},${csvEscape(typeof d.remaining === 'number' ? d.remaining : '')}`)].join('\n');
       case 'spending-over-time':
-        return ['Month,Spent,Income', ...spendingOverTime.map((d) => `${escape(d.month)},${escape(d.spent)},${escape(d.income)}`)].join('\n');
+        return ['Month,Spent,Income', ...spendingOverTime.map((d) => `${csvEscape(d.month)},${csvEscape(d.spent)},${csvEscape(d.income)}`)].join('\n');
       case 'daily-spending':
-        return ['Date,Spent', ...dailySpending.map((d) => `${escape(d.date)},${escape(d.spent)}`)].join('\n');
+        return ['Date,Spent', ...dailySpending.map((d) => `${csvEscape(d.date)},${csvEscape(d.spent)}`)].join('\n');
       case 'income-vs-expenses':
-        return ['Category,Amount', ...incomeVsExpenses.map((d) => `${escape(d.name)},${escape(d.amount)}`)].join('\n');
+        return ['Category,Amount', ...incomeVsExpenses.map((d) => `${csvEscape(d.name)},${csvEscape(d.amount)}`)].join('\n');
       case 'envelope-usage':
-        return ['Envelope,Spent,Limit,Remaining,Usage %', ...envelopeUsage.map((d) => `${escape(d.name)},${escape(d.spent)},${escape(d.limit)},${escape(d.remaining)},${escape(d.usage.toFixed(0))}`)].join('\n');
+        return ['Envelope,Spent,Limit,Remaining,Usage %', ...envelopeUsage.map((d) => `${csvEscape(d.name)},${csvEscape(d.spent)},${csvEscape(d.limit)},${csvEscape(d.remaining)},${csvEscape(d.usage.toFixed(0))}`)].join('\n');
       case 'top-envelopes': {
-        return ['Envelope,Spent,Remaining', ...topEnvelopes.map((e) => `${escape(e.name)},${escape(e.spent)},${escape((e.limit ?? 0) - e.spent)}`)].join('\n');
+        return ['Envelope,Spent,Remaining', ...topEnvelopes.map((e) => `${csvEscape(e.name)},${csvEscape(e.spent)},${csvEscape((e.limit ?? 0) - e.spent)}`)].join('\n');
       }
       case 'income-by-source':
-        return ['Source,Income', ...incomeBySource.map((d) => `${escape(d.name)},${escape(d.value)}`)].join('\n');
+        return ['Source,Income', ...incomeBySource.map((d) => `${csvEscape(d.name)},${csvEscape(d.value)}`)].join('\n');
       case 'savings-progress':
-        return ['Goal,Current,Target,Progress %', ...savingsProgress.map((d) => `${escape(d.name)},${escape(d.current)},${escape(d.target)},${escape(d.pct.toFixed(0))}`)].join('\n');
+        return ['Goal,Current,Target,Progress %', ...savingsProgress.map((d) => `${csvEscape(d.name)},${csvEscape(d.current)},${csvEscape(d.target)},${csvEscape(d.pct.toFixed(0))}`)].join('\n');
       default:
         return '';
     }

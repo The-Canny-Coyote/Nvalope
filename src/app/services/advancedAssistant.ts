@@ -28,7 +28,6 @@ export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export interface AdvancedAssistantContext {
   lastAssistantContent?: string;
-  lastUserContent?: string;
 }
 
 /** Extract last mentioned envelope name from assistant message (e.g. "**Groceries**: $50" or "• **Name**"). */
@@ -117,7 +116,6 @@ export function getAdvancedAssistantReply(
   const trimmed = currentMessage.trim();
   const q = trimmed.toLowerCase();
   const lastAssistantContent = context?.lastAssistantContent ?? [...messages].reverse().find((m) => m.role === "assistant")?.content;
-  const _lastUserContent = context?.lastUserContent;
 
   // Multi-step: "what next?" after a how-to
   const nextStep = getHowToNextStep(lastAssistantContent, trimmed);
@@ -234,5 +232,5 @@ export function getAdvancedAssistantReply(
   }
 
   // ——— Fallback: friendly, suggest context ———
-  return "I'm not sure how to answer that. Try asking about spending (\"How much have I spent?\" or \"What's left in Groceries?\"), your envelopes (\"What envelopes do I have?\"), or how to add expenses or income. All answers use your data from this app—nothing leaves your device.";
+  return "I work with the budget data you've added to this app — nothing is sent anywhere. Try asking about a specific envelope (\"What's left in Groceries?\"), your total spending, or how to add an expense or income.";
 }

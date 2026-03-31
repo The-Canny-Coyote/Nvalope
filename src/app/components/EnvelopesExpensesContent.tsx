@@ -4,6 +4,8 @@ import { useBudget } from '@/app/store/BudgetContext';
 import { useAppStore } from '@/app/store/appStore';
 import { formatMoney } from '@/app/utils/format';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { Button } from '@/app/components/ui/button';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { getAppData, setAppData } from '@/app/services/appDataIdb';
 import { delayedToast } from '@/app/services/delayedToast';
 import type { Envelope } from '@/app/store/budgetTypes';
@@ -22,6 +24,7 @@ function EnvelopeEditForm({
   const [name, setName] = useState(envelope.name);
   const [limit, setLimit] = useState(String(envelope.limit));
   const [showZeroLimitConfirm, setShowZeroLimitConfirm] = useState(false);
+  const [showDeleteEnvelopeDialog, setShowDeleteEnvelopeDialog] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,29 +64,40 @@ function EnvelopeEditForm({
         min="0"
         value={limit}
         onChange={(e) => setLimit(e.target.value)}
-        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 w-full"
-        style={{ fontFamily: 'Courier New, monospace' }}
+        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 w-full"
         placeholder="Limit"
         aria-label="Envelope limit"
       />
       <div className="flex gap-2 flex-wrap">
-        <button type="submit" className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm">
+        <Button type="submit" className="min-h-[44px]">
           Save
-        </button>
-        <button type="button" onClick={onCancel} className="px-3 py-1 rounded border text-sm">
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="min-h-[44px]">
           Cancel
-        </button>
+        </Button>
         {onDelete && (
-          <button
+          <Button
             type="button"
-            onClick={() => { if (window.confirm('Delete this envelope? Transactions in it will become uncategorized.')) onDelete(); }}
-            className="px-3 py-1 rounded border border-destructive/50 text-destructive text-sm"
+            variant="destructive"
+            onClick={() => setShowDeleteEnvelopeDialog(true)}
+            className="min-h-[44px]"
           >
             Delete
-          </button>
+          </Button>
         )}
       </div>
     </form>
+
+      <ConfirmDialog
+        open={showDeleteEnvelopeDialog}
+        onOpenChange={setShowDeleteEnvelopeDialog}
+        title="Delete envelope?"
+        description="Transactions in it will become uncategorized."
+        confirmLabel="Delete envelope"
+        onConfirm={() => {
+          onDelete?.();
+        }}
+      />
 
       <Dialog open={showZeroLimitConfirm} onOpenChange={(open) => !open && setShowZeroLimitConfirm(false)}>
         <DialogContent className="max-w-sm" aria-describedby="zero-limit-desc">
@@ -95,28 +109,31 @@ function EnvelopeEditForm({
           </p>
           <div className="flex flex-col gap-2">
             {onDelete && (
-              <button
+              <Button
                 type="button"
+                variant="destructive"
                 onClick={() => handleZeroLimitChoice('delete')}
-                className="px-4 py-2 rounded-lg border border-destructive/50 text-destructive bg-destructive/10 hover:bg-destructive/20 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[44px] w-full justify-center"
               >
                 Delete envelope
-              </button>
+              </Button>
             )}
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => handleZeroLimitChoice('keep')}
-              className="px-4 py-2 rounded-lg border border-border bg-card hover:bg-muted/50 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[44px] w-full justify-center"
             >
               Keep envelope with 0 limit
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={() => handleZeroLimitChoice('cancel')}
-              className="px-4 py-2 rounded-lg border border-border bg-card hover:bg-muted/50 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[44px] w-full justify-center"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -175,6 +192,8 @@ function EnvelopesExpensesContentInner() {
   const [newEnvLimit, setNewEnvLimit] = useState('');
   const [showSwitchToMonthlyDialog, setShowSwitchToMonthlyDialog] = useState(false);
   const [editingEnvelopeId, setEditingEnvelopeId] = useState<string | null>(null);
+  const [showDeleteEnvelopeFromListDialog, setShowDeleteEnvelopeFromListDialog] = useState(false);
+  const [deleteEnvelopeFromListTargetId, setDeleteEnvelopeFromListTargetId] = useState<string | null>(null);
 
   // Keep expense envelope selection valid when envelopes are deleted
   useEffect(() => {
@@ -281,30 +300,36 @@ function EnvelopesExpensesContentInner() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-foreground">Budget period</span>
           <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-muted/30" role="group" aria-label="Budget period">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => handlePeriodModeClick('monthly')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${budgetPeriodMode === 'monthly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`${budgetPeriodMode === 'monthly' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-muted-foreground hover:text-foreground'}`}
               aria-pressed={budgetPeriodMode === 'monthly'}
             >
               Monthly
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => handlePeriodModeClick('biweekly')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${budgetPeriodMode === 'biweekly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`${budgetPeriodMode === 'biweekly' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-muted-foreground hover:text-foreground'}`}
               aria-pressed={budgetPeriodMode === 'biweekly'}
             >
               Biweekly
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => handlePeriodModeClick('weekly')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${budgetPeriodMode === 'weekly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`${budgetPeriodMode === 'weekly' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-muted-foreground hover:text-foreground'}`}
               aria-pressed={budgetPeriodMode === 'weekly'}
             >
               Weekly
-            </button>
+            </Button>
           </div>
         </div>
         {budgetPeriodMode === 'biweekly' && (
@@ -353,22 +378,26 @@ function EnvelopesExpensesContentInner() {
               Choose which day starts your budget week.
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => handleWeekStartDayChange(0)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${weekStartDay === 0 ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background hover:bg-muted/50'}`}
+                className={`${weekStartDay === 0 ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' : ''}`}
                 aria-pressed={weekStartDay === 0}
               >
                 Sunday
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => handleWeekStartDayChange(1)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${weekStartDay === 1 ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background hover:bg-muted/50'}`}
+                className={`${weekStartDay === 1 ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' : ''}`}
                 aria-pressed={weekStartDay === 1}
               >
                 Monday
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -383,22 +412,24 @@ function EnvelopesExpensesContentInner() {
             You were using {budgetPeriodMode === 'weekly' ? 'weekly' : 'biweekly'} periods. How do you want to handle the change?
           </p>
           <div className="flex flex-col gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={handleSwitchToMonthlyForAll}
-              className="px-4 py-3 text-left rounded-lg border border-border bg-card hover:bg-muted/50 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-auto px-4 py-3 text-left justify-start whitespace-normal"
             >
               <span className="block font-medium text-foreground">Use monthly for all dates</span>
               <span className="block text-xs text-muted-foreground mt-0.5">Spent and remaining will be shown per month everywhere, including the past.</span>
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={handleSwitchToMonthlyFromNow}
-              className="px-4 py-3 text-left rounded-lg border border-border bg-card hover:bg-muted/50 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-auto px-4 py-3 text-left justify-start whitespace-normal"
             >
               <span className="block font-medium text-foreground">Use monthly from now on</span>
               <span className="block text-xs text-muted-foreground mt-0.5">Past data stays in {budgetPeriodMode === 'weekly' ? 'weekly' : 'biweekly'} periods when you look back; going forward everything is monthly.</span>
-            </button>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -454,30 +485,32 @@ function EnvelopesExpensesContentInner() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-primary">{e.name}</span>
                       <span className="flex items-center gap-1">
-                        <span className="text-sm text-muted-foreground" style={{ fontFamily: 'Courier New, monospace' }}>
+                        <span className="text-sm text-muted-foreground font-mono">
                           {formatMoney(-spent)} / {formatMoney(e.limit)}
                         </span>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => setEditingEnvelopeId(e.id)}
-                          className="p-1 rounded hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label={`Edit envelope ${e.name}`}
+                          className="hover:bg-muted"
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => {
-                            if (window.confirm('Delete this envelope? Transactions in it will become uncategorized.')) {
-                              api.deleteEnvelope(e.id);
-                              setEditingEnvelopeId(null);
-                            }
+                            setDeleteEnvelopeFromListTargetId(e.id);
+                            setShowDeleteEnvelopeFromListDialog(true);
                           }}
-                          className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label={`Delete envelope ${e.name}`}
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -511,16 +544,16 @@ function EnvelopesExpensesContentInner() {
               placeholder="Limit"
               value={newEnvLimit}
               onChange={(e) => setNewEnvLimit(e.target.value)}
-              className="w-24 min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-              style={{ fontFamily: 'Courier New, monospace' }}
+              className="w-24 min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Envelope limit (amount)"
             />
-            <button
+            <Button
               type="submit"
-              className="min-h-[44px] py-2 px-4 bg-card border-2 border-dashed border-primary/30 text-primary rounded-lg text-sm hover:bg-primary/5 hover:border-primary/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+              variant="outline"
+              className="min-h-[44px] py-2 px-4 border-2 border-dashed border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
             >
               + Create
-            </button>
+            </Button>
           </form>
         </div>
       </div>
@@ -541,8 +574,7 @@ function EnvelopesExpensesContentInner() {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                style={{ fontFamily: 'Courier New, monospace' }}
+                className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 aria-describedby={!hasEnvelopes ? 'exp-no-env' : undefined}
               />
             </div>
@@ -586,15 +618,32 @@ function EnvelopesExpensesContentInner() {
               className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
-          <button
+          <Button
             type="submit"
-            className="w-full min-h-[44px] py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full min-h-[44px]"
             disabled={!hasEnvelopes}
           >
             Add Expense
-          </button>
+          </Button>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteEnvelopeFromListDialog}
+        onOpenChange={(open) => {
+          setShowDeleteEnvelopeFromListDialog(open);
+          if (!open) setDeleteEnvelopeFromListTargetId(null);
+        }}
+        title="Delete envelope?"
+        description="Transactions in it will become uncategorized."
+        confirmLabel="Delete envelope"
+        onConfirm={() => {
+          if (deleteEnvelopeFromListTargetId) {
+            api.deleteEnvelope(deleteEnvelopeFromListTargetId);
+            setEditingEnvelopeId(null);
+          }
+        }}
+      />
     </div>
   );
 }

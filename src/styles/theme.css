@@ -332,7 +332,7 @@ button:hover {
 
 /* JetBrains Mono-style numeric font stack (offline-safe) */
 .font-nums {
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }

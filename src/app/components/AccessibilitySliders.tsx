@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Checkbox } from '@/app/components/ui/checkbox';
 import {
   TEXT_SIZE_MIN,
@@ -56,6 +57,17 @@ export function AccessibilityTypographySliders({
   setScrollbarSize,
   isMobile = false,
 }: AccessibilityTypographySlidersProps) {
+  const [localLayoutScale, setLocalLayoutScale] = useState(layoutScale);
+  const [localWheelScale, setLocalWheelScale] = useState(wheelScale);
+
+  useEffect(() => {
+    setLocalLayoutScale(layoutScale);
+  }, [layoutScale]);
+
+  useEffect(() => {
+    setLocalWheelScale(wheelScale);
+  }, [wheelScale]);
+
   return (
     <>
           <div className="min-w-0 rounded-lg border border-primary/20 bg-card p-3">
@@ -72,8 +84,7 @@ export function AccessibilityTypographySliders({
               </div>
               <div className="flex min-w-0 shrink-0 items-center gap-3">
                 <span
-                  className="text-xs font-medium text-primary"
-                  style={{ fontFamily: 'Courier New, monospace' }}
+                  className="text-xs font-medium text-primary font-mono"
                   aria-live="polite"
                   aria-atomic="true"
                 >
@@ -84,6 +95,7 @@ export function AccessibilityTypographySliders({
                   type="range"
                   min={TEXT_SIZE_MIN}
                   max={TEXT_SIZE_MAX}
+                  step={5}
                   value={Math.min(TEXT_SIZE_MAX, Math.max(TEXT_SIZE_MIN, textSize))}
                   onChange={(e) =>
                     setTextSize(
@@ -99,6 +111,13 @@ export function AccessibilityTypographySliders({
                 />
               </div>
             </label>
+            <p
+              className="text-muted-foreground mt-2 rounded px-2 py-1 bg-muted/50 text-sm leading-normal select-none"
+              aria-hidden="true"
+              style={{ fontSize: `calc(${textSize / 100} * 1rem)` }}
+            >
+              The quick brown fox — sample text at {textSize}%
+            </p>
             <p id="text-size-desc" className="sr-only">
               Current text size is {textSize} percent. Use arrow keys to adjust.
             </p>
@@ -113,13 +132,12 @@ export function AccessibilityTypographySliders({
               <div className="min-w-0">
                 <span className="text-sm font-medium text-foreground">Line Height</span>
                 <p className="text-xs text-muted-foreground">
-                  Adjust line spacing ({LINE_HEIGHT_MIN}% to {LINE_HEIGHT_MAX}%)
+                  Adjust line spacing — tighter to looser
                 </p>
               </div>
               <div className="flex min-w-0 shrink-0 items-center gap-3">
                 <span
-                  className="text-xs font-medium text-primary"
-                  style={{ fontFamily: 'Courier New, monospace' }}
+                  className="text-xs font-medium text-primary font-mono"
                   aria-live="polite"
                   aria-atomic="true"
                 >
@@ -130,6 +148,7 @@ export function AccessibilityTypographySliders({
                   type="range"
                   min={LINE_HEIGHT_MIN}
                   max={LINE_HEIGHT_MAX}
+                  step={5}
                   value={Math.min(LINE_HEIGHT_MAX, Math.max(LINE_HEIGHT_MIN, lineHeight))}
                   onChange={(e) =>
                     setLineHeight(
@@ -144,6 +163,13 @@ export function AccessibilityTypographySliders({
                 />
               </div>
             </label>
+            <p
+              className="text-muted-foreground mt-2 rounded px-2 py-1 bg-muted/50 text-xs select-none"
+              aria-hidden="true"
+              style={{ lineHeight: lineHeight / 100 }}
+            >
+              First line of sample text.<br />Second line — line spacing shown here.
+            </p>
           </div>
 
           <div className="min-w-0 rounded-lg border border-primary/20 bg-card p-3">
@@ -155,13 +181,12 @@ export function AccessibilityTypographySliders({
               <div className="min-w-0">
                 <span className="text-sm font-medium text-foreground">Letter Spacing</span>
                 <p className="text-xs text-muted-foreground">
-                  Adjust letter spacing ({LETTER_SPACING_MIN} to {LETTER_SPACING_MAX} px)
+                  Adjust letter spacing (0 to 4px — higher values space letters further apart)
                 </p>
               </div>
               <div className="flex min-w-0 shrink-0 items-center gap-3">
                 <span
-                  className="text-xs font-medium text-primary"
-                  style={{ fontFamily: 'Courier New, monospace' }}
+                  className="text-xs font-medium text-primary font-mono"
                   aria-live="polite"
                   aria-atomic="true"
                 >
@@ -172,6 +197,7 @@ export function AccessibilityTypographySliders({
                   type="range"
                   min={LETTER_SPACING_MIN}
                   max={LETTER_SPACING_MAX}
+                  step={1}
                   value={Math.min(LETTER_SPACING_MAX, Math.max(LETTER_SPACING_MIN, letterSpacing))}
                   onChange={(e) =>
                     setLetterSpacing(
@@ -189,6 +215,13 @@ export function AccessibilityTypographySliders({
                 />
               </div>
             </label>
+            <p
+              className="text-muted-foreground mt-2 rounded px-2 py-1 bg-muted/50 text-xs leading-normal select-none"
+              aria-hidden="true"
+              style={{ letterSpacing: `${letterSpacing}px` }}
+            >
+              Sample letters — spacing at {letterSpacing}px
+            </p>
           </div>
 
           <div className="min-w-0 rounded-lg border border-primary/20 bg-card p-3">
@@ -198,20 +231,26 @@ export function AccessibilityTypographySliders({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground w-8">{LAYOUT_SCALE_MIN}%</span>
               <span
-                className="text-xs font-medium text-primary min-w-[2.5rem] text-right"
-                style={{ fontFamily: 'Courier New, monospace' }}
+                className="text-xs font-medium text-primary min-w-[2.5rem] text-right font-mono"
                 aria-live="polite"
                 aria-atomic="true"
               >
-                {layoutScale}%
+                {localLayoutScale}%
               </span>
               <input
                 id="accessibility-layout-scale"
                 type="range"
                 min={LAYOUT_SCALE_MIN}
                 max={LAYOUT_SCALE_MAX}
-                value={clampLayoutScale(layoutScale)}
-                onChange={(e) => setLayoutScale(clampLayoutScale(parseInt(e.target.value, 10)))}
+                step={5}
+                value={clampLayoutScale(localLayoutScale)}
+                onChange={(e) => setLocalLayoutScale(clampLayoutScale(parseInt(e.target.value, 10)))}
+                onPointerUp={(e) =>
+                  setLayoutScale(clampLayoutScale(parseInt((e.target as HTMLInputElement).value, 10)))
+                }
+                onTouchEnd={(e) =>
+                  setLayoutScale(clampLayoutScale(parseInt((e.target as HTMLInputElement).value, 10)))
+                }
                 className="min-w-[4rem] flex-1 max-w-[12rem]"
                 aria-valuenow={layoutScale}
                 aria-valuemin={LAYOUT_SCALE_MIN}
@@ -221,7 +260,7 @@ export function AccessibilityTypographySliders({
               <span className="text-xs text-muted-foreground w-8">{LAYOUT_SCALE_MAX}%</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Shrink the whole screen to fit small displays (e.g. mobile). Persists in backup.
+              Shrink the app to fit smaller screens. 100% is normal size. Persists in backup.
             </p>
           </div>
 
@@ -234,26 +273,28 @@ export function AccessibilityTypographySliders({
                 {isMobile ? CARD_BAR_SCALE_MIN : WHEEL_SCALE_MIN}%
               </span>
               <span
-                className="text-xs font-medium text-primary min-w-[2.5rem] text-right"
-                style={{ fontFamily: 'Courier New, monospace' }}
+                className="text-xs font-medium text-primary min-w-[2.5rem] text-right font-mono"
                 aria-live="polite"
                 aria-atomic="true"
               >
-                {wheelScale}%
+                {localWheelScale}%
               </span>
               <input
                 id="accessibility-wheel-scale"
                 type="range"
                 min={isMobile ? CARD_BAR_SCALE_MIN : WHEEL_SCALE_MIN}
                 max={isMobile ? CARD_BAR_SCALE_MAX : WHEEL_SCALE_MAX}
-                value={isMobile ? clampCardBarScale(wheelScale) : clampWheelScale(wheelScale)}
-                onChange={(e) =>
-                  setWheelScale(
-                    isMobile
-                      ? clampCardBarScale(parseInt(e.target.value, 10))
-                      : clampWheelScale(parseInt(e.target.value, 10))
-                  )
-                }
+                step={5}
+                value={isMobile ? clampCardBarScale(localWheelScale) : clampWheelScale(localWheelScale)}
+                onChange={(e) => setLocalWheelScale(parseInt(e.target.value, 10))}
+                onPointerUp={(e) =>
+                  setWheelScale(isMobile
+                    ? clampCardBarScale(parseInt((e.target as HTMLInputElement).value, 10))
+                    : clampWheelScale(parseInt((e.target as HTMLInputElement).value, 10)))}
+                onTouchEnd={(e) =>
+                  setWheelScale(isMobile
+                    ? clampCardBarScale(parseInt((e.target as HTMLInputElement).value, 10))
+                    : clampWheelScale(parseInt((e.target as HTMLInputElement).value, 10)))}
                 className="min-w-[4rem] flex-1 max-w-[12rem]"
                 aria-valuenow={wheelScale}
                 aria-valuemin={isMobile ? CARD_BAR_SCALE_MIN : WHEEL_SCALE_MIN}
@@ -280,8 +321,7 @@ export function AccessibilityTypographySliders({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground w-8">{SCROLLBAR_SIZE_MIN}</span>
               <span
-                className="text-xs font-medium text-primary min-w-[2.5rem] text-right"
-                style={{ fontFamily: 'Courier New, monospace' }}
+                className="text-xs font-medium text-primary min-w-[2.5rem] text-right font-mono"
                 aria-live="polite"
                 aria-atomic="true"
               >
@@ -292,6 +332,7 @@ export function AccessibilityTypographySliders({
                 type="range"
                 min={SCROLLBAR_SIZE_MIN}
                 max={SCROLLBAR_SIZE_MAX}
+                step={2}
                 value={clampScrollbarSize(scrollbarSize)}
                 onChange={(e) =>
                   setScrollbarSize(clampScrollbarSize(parseInt(e.target.value, 10)))
@@ -305,7 +346,7 @@ export function AccessibilityTypographySliders({
               <span className="text-xs text-muted-foreground w-8">{SCROLLBAR_SIZE_MAX}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Affects scrollbars, wheel outline, borders, and button/touch target size for visibility and easier tapping.
+              Makes scrollbars, borders, and tap targets larger and easier to hit. Higher = chunkier.
             </p>
           </div>
     </>
@@ -347,8 +388,7 @@ export function AccessibilityCardsAndBarSliders({
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="text-xs text-muted-foreground w-8">{CARDS_SECTION_WIDTH_MIN}%</span>
                 <span
-                  className="text-xs font-medium text-primary min-w-[2.5rem] text-right"
-                  style={{ fontFamily: 'Courier New, monospace' }}
+                  className="text-xs font-medium text-primary min-w-[2.5rem] text-right font-mono"
                   aria-live="polite"
                   aria-atomic="true"
                 >

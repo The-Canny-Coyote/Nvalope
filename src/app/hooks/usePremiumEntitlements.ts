@@ -15,9 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchEntitlements, getApiBase, hasEntitlement, isPremiumFeatureEnabled } from '@/app/premium/entitlements';
 import { getModuleConfig } from '@/app/constants/modules';
 
-const PREMIUM_MODULE_ENTITLEMENTS: Record<string, 'premium_full' | 'premium_ai'> = {
-  advancedAICache: 'premium_ai',
-};
+const PREMIUM_MODULE_ENTITLEMENTS: Record<string, 'premium_full' | 'premium_ai'> = {};
 
 export function usePremiumEntitlements(enabledModules: string[]) {
   const [entitlementsFromApi, setEntitlementsFromApi] = useState<Awaited<ReturnType<typeof fetchEntitlements>>>(null);

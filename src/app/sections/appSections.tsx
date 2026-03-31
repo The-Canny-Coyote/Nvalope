@@ -78,6 +78,9 @@ const receiptScannerFallback = (
 /** Section id for Cache the AI Assistant when shown as a card/slice (excluded from wheel; wheel uses center button). */
 export const CACHE_ASSISTANT_SECTION_ID = 106;
 
+/** Settings section id (always shown). */
+export const SETTINGS_SECTION_ID = 6;
+
 export interface AppSection {
   id: number;
   icon: LucideIcon;
@@ -125,8 +128,6 @@ export interface UseAppSectionsParams {
   onCheckForUpdates: () => void;
   checkingForUpdate: boolean;
   onApplySettingsFromBackup: (settings: BackupSettingsSnapshot) => void;
-  uiMode?: 'normal';
-  setUiMode?: (v: 'normal') => void;
   isPremium?: boolean;
   /** Call before layout-changing updates (e.g. Chonkiness) so scroll can be restored. */
   saveScrollForRestore?: () => void;
@@ -173,10 +174,8 @@ export interface UseAppSectionsParams {
   useCardLayout?: boolean;
   /** Switch from card layout back to section wheel. */
   setUseCardLayout?: (v: boolean) => void;
-  /** Premium AI entitlement (passed to Settings → FeatureToggles WebLLM gate). */
-  hasPremiumAi?: boolean;
-  /** When API base is configured, premium gating can apply. */
-  premiumFeaturesConfigured?: boolean;
+  /** Premium import entitlement (PDF/bulk CSV statement import in Data Management). */
+  hasPremiumImport?: boolean;
 }
 
 export function useAppSections(params: UseAppSectionsParams): AppSection[] {
@@ -214,8 +213,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   onCheckForUpdates,
   checkingForUpdate,
   onApplySettingsFromBackup,
-  uiMode,
-  setUiMode,
   isPremium = false,
   saveScrollForRestore,
   restoreScrollAfterLayout,
@@ -245,8 +242,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
   onCloseSection,
   useCardLayout = false,
   setUseCardLayout,
-  hasPremiumAi = false,
-  premiumFeaturesConfigured = false,
+  hasPremiumImport = false,
 } = params;
 
   return useMemo(() => {
@@ -355,7 +351,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
 
   // Settings is always visible (it's how you re-enable things)
   const settingsSection: AppSection = {
-    id: 6,
+    id: SETTINGS_SECTION_ID,
     icon: Settings,
     title: 'Settings',
     description: 'Configure the app, manage data, and discover additional features you can enable.',
@@ -375,8 +371,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           onCheckForUpdates={onCheckForUpdates}
           checkingForUpdate={checkingForUpdate}
           onApplySettingsFromBackup={onApplySettingsFromBackup}
-          uiMode={uiMode}
-          setUiMode={setUiMode}
           isPremium={isPremium}
           hasBackupFolder={hasBackupFolder}
           onBeforeOpenFeatureCollapsibles={onBeforeOpenFeatureCollapsibles}
@@ -388,8 +382,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           onCoreFeaturesOpenChange={setSettingsCoreFeaturesOpen}
           optionalFeaturesOpen={settingsOptionalFeaturesOpen}
           onOptionalFeaturesOpenChange={setSettingsOptionalFeaturesOpen}
-          hasPremiumAi={hasPremiumAi}
-          premiumFeaturesConfigured={premiumFeaturesConfigured}
+          hasPremiumImport={hasPremiumImport}
         />
       </SectionWithBoundary>
     ),
@@ -550,8 +543,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     onCheckForUpdates,
     checkingForUpdate,
     onApplySettingsFromBackup,
-    uiMode,
-    setUiMode,
     isPremium,
     saveScrollForRestore,
     isMobile,
@@ -567,7 +558,6 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
     settingsOptionalFeaturesOpen,
     setSettingsOptionalFeaturesOpen,
     hasBackupFolder,
-    hasPremiumAi,
-    premiumFeaturesConfigured,
+    hasPremiumImport,
   ]);
 }

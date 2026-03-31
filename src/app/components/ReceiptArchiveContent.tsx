@@ -5,12 +5,15 @@ import { getCurrencySymbol } from '@/app/utils/format';
 import { formatDate } from '@/app/utils/format';
 import { delayedToast } from '@/app/services/delayedToast';
 import { Dialog, DialogContent, DialogTitle } from '@/app/components/ui/dialog';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { Archive, Trash2, ImageOff } from 'lucide-react';
 
 function ReceiptArchiveContentInner() {
   const [archives, setArchives] = useState<ReceiptArchiveItem[]>([]);
   const [viewing, setViewing] = useState<ReceiptArchiveItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showRemoveReceiptArchiveDialog, setShowRemoveReceiptArchiveDialog] = useState(false);
+  const [removeReceiptArchiveTargetId, setRemoveReceiptArchiveTargetId] = useState<string | null>(null);
 
   const loadArchives = useCallback(() => {
     getAppData()
@@ -133,9 +136,8 @@ function ReceiptArchiveContentInner() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm('Remove this receipt from the archive? The receipt will be deleted from the archive. Any transaction already added to your budget will remain in Transactions.')) {
-                        removeArchive(item.id);
-                      }
+                      setRemoveReceiptArchiveTargetId(item.id);
+                      setShowRemoveReceiptArchiveDialog(true);
                     }}
                     className="text-sm py-1 px-2 rounded border border-destructive/50 hover:bg-destructive/10 text-destructive flex items-center gap-1"
                     aria-label="Delete receipt from archive"
@@ -201,6 +203,21 @@ function ReceiptArchiveContentInner() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={showRemoveReceiptArchiveDialog}
+        onOpenChange={(open) => {
+          setShowRemoveReceiptArchiveDialog(open);
+          if (!open) setRemoveReceiptArchiveTargetId(null);
+        }}
+        title="Remove from archive?"
+        description="Any transaction already added to your budget will remain in Transactions."
+        confirmLabel="Remove receipt"
+        onConfirm={() => {
+          if (removeReceiptArchiveTargetId) removeArchive(removeReceiptArchiveTargetId);
+          setRemoveReceiptArchiveTargetId(null);
+        }}
+      />
     </div>
   );
 }

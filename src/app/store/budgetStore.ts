@@ -24,7 +24,10 @@ function validateTransactionParams(params: { amount: number; description: string
   if (typeof params.description !== 'string' || params.description.length > MAX_DESCRIPTION_LENGTH) {
     throw new Error('Description is too long. Shorten it and try again.');
   }
-  if (typeof params.date !== 'string' || parseYYYYMMDD(params.date) === null) {
+  if (typeof params.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
+    throw new Error('Please enter a valid date (YYYY-MM-DD format).');
+  }
+  if (parseYYYYMMDD(params.date) === null) {
     throw new Error('Please enter a date (e.g. 2025-01-15).');
   }
 }
@@ -32,6 +35,9 @@ function validateTransactionParams(params: { amount: number; description: string
 function validateEnvelopeParams(name: string, limit: number): void {
   if (typeof name !== 'string' || name.trim().length === 0) {
     throw new Error('Please enter a name for the envelope.');
+  }
+  if (name.trim().length > 200) {
+    throw new Error('Envelope name must be 200 characters or fewer.');
   }
   if (!Number.isFinite(limit) || limit < 0 || limit > MAX_AMOUNT_ABS) {
     throw new Error('Please enter a valid amount for the envelope limit.');
@@ -44,6 +50,9 @@ function validateIncomeParams(params: { amount: number; source: string; date: st
   }
   if (typeof params.source !== 'string' || params.source.trim().length === 0) {
     throw new Error('Please enter a source for the income.');
+  }
+  if (params.source.trim().length > 200) {
+    throw new Error('Income source must be 200 characters or fewer.');
   }
   if (typeof params.date !== 'string' || parseYYYYMMDD(params.date) === null) {
     throw new Error('Please enter a date (e.g. 2025-01-15).');

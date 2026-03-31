@@ -15,13 +15,13 @@ export const LINE_HEIGHT_MIN = 120;
 export const LINE_HEIGHT_MAX = 200;
 export const LINE_HEIGHT_DEFAULT = 150;
 
-/** Letter spacing: 0–6px; enough for readability without excessive spread. */
+/** Letter spacing: 0–4px; enough for readability without excessive spread. */
 export const LETTER_SPACING_MIN = 0;
-export const LETTER_SPACING_MAX = 6;
+export const LETTER_SPACING_MAX = 4;
 export const LETTER_SPACING_DEFAULT = 0;
 
-/** Layout scale: whole screen fit (e.g. mobile). 100 = no scaling. */
-export const LAYOUT_SCALE_MIN = 60;
+/** Layout scale: 75–100%. 100 = no scaling; below 75% creates usability problems. */
+export const LAYOUT_SCALE_MIN = 75;
 export const LAYOUT_SCALE_MAX = 100;
 export const LAYOUT_SCALE_DEFAULT = 100;
 

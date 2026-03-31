@@ -59,8 +59,6 @@ export interface MainContentProps {
   sectionContentRef: React.RefObject<HTMLDivElement | null>;
   allSections: AppSection[];
   selectedMode: string;
-  /** When switching to Wheel/Cards from list view, call to exit list so the chosen layout shows. */
-  setSelectedMode?: (mode: string) => void;
   selectedWheelSection: number | null;
   setSelectedWheelSection: (id: number | null) => void;
   /** Called when the user clicks Close on a section card; closes the section without scrolling. */
@@ -70,8 +68,6 @@ export interface MainContentProps {
   enabledModules: string[];
   showCacheAnimation: boolean;
   setAssistantOpen: (open: boolean) => void;
-  /** Reserved for future use; mobile now uses same wheel/cards layout as desktop. */
-  isMobile?: boolean;
   useCardLayout: boolean;
   setUseCardLayout: (v: boolean) => void;
 }
@@ -81,7 +77,6 @@ export function MainContent({
   sectionContentRef,
   allSections,
   selectedMode,
-  setSelectedMode: _setSelectedMode,
   selectedWheelSection,
   setSelectedWheelSection,
   onCloseSection,
@@ -90,7 +85,6 @@ export function MainContent({
   enabledModules,
   showCacheAnimation,
   setAssistantOpen,
-  isMobile: _isMobile = false,
   useCardLayout,
   setUseCardLayout: _setUseCardLayout,
 }: MainContentProps) {
@@ -291,7 +285,6 @@ export function MainContent({
                   <h1
                     className="break-words text-4xl font-bold tracking-tight sm:text-5xl"
                     style={{
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
                       letterSpacing: '-0.02em',
                       lineHeight: 1.1,
                       textShadow: '0 1px 2px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06), 0 0 24px -4px color-mix(in srgb, var(--primary) 18%, transparent)',

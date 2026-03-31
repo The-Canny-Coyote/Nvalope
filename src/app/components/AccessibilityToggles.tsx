@@ -1,6 +1,47 @@
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { useAppStore } from '@/app/store/appStore';
 
+function ColorblindModeToggle() {
+  const colorblindMode = useAppStore((s) => s.colorblindMode);
+  const setColorblindMode = useAppStore((s) => s.setColorblindMode);
+
+  const options = [
+    { value: 'none' as const, label: 'None' },
+    { value: 'deuteranopia' as const, label: 'Deuteranopia / Protanopia', note: 'Most common — affects red-green distinction' },
+    { value: 'tritanopia' as const, label: 'Tritanopia', note: 'Affects blue-yellow distinction' },
+    { value: 'monochromacy' as const, label: 'Monochromacy', note: 'Full grayscale vision' },
+  ] as const;
+
+  return (
+    <div className="min-w-0 rounded-lg border border-primary/20 bg-card p-3">
+      <span className="text-sm font-medium text-foreground block">Color vision</span>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+        Replaces the app color scheme for common types of color vision deficiency.
+      </p>
+      <div className="flex flex-col gap-2" role="group" aria-label="Color vision mode">
+        {options.map(({ value, label, note }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setColorblindMode(value)}
+            className={`px-3 py-2 rounded-md text-xs font-medium transition-colors border-2 text-left ${
+              colorblindMode === value
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+            }`}
+            aria-pressed={colorblindMode === value}
+          >
+            {label}
+            {'note' in { value, label, note } && note && (
+              <span className="block font-normal opacity-75 mt-0.5">{note}</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DisplayGridToggle() {
   const showGridBackground = useAppStore((s) => s.showGridBackground);
   const setShowGridBackground = useAppStore((s) => s.setShowGridBackground);
@@ -118,6 +159,7 @@ export function AccessibilityToggles({
       </div>
 
       <DisplayGridToggle />
+      <ColorblindModeToggle />
     </>
   );
 }

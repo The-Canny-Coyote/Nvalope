@@ -3,6 +3,7 @@ import { useBudget } from '@/app/store/BudgetContext';
 import { formatMoney } from '@/app/utils/format';
 import { delayedToast } from '@/app/services/delayedToast';
 import { IncomeEditForm } from '@/app/components/IncomeEditForm';
+import { Button } from '@/app/components/ui/button';
 import { Pencil } from 'lucide-react';
 
 function todayISO() {
@@ -59,8 +60,7 @@ function IncomeContentInner() {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            style={{ fontFamily: 'Courier New, monospace' }}
+            className="w-full min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 font-mono"
             aria-label="Income amount"
           />
         </div>
@@ -88,12 +88,9 @@ function IncomeContentInner() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="submit"
-            className="flex-1 min-h-[44px] py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
-          >
+          <Button type="submit" className="min-h-[44px] flex-1">
             Add Income
-          </button>
+          </Button>
         </div>
       </form>
       <div className="pt-4 border-t border-border">
@@ -128,7 +125,7 @@ function IncomeContentInner() {
                       <p className="text-xs text-muted-foreground">{entry.date}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <p className="text-sm font-bold text-primary tabular-nums" style={{ fontFamily: 'Courier New, monospace' }}>
+                      <p className="text-sm font-bold text-primary tabular-nums font-mono">
                         {formatMoney(entry.amount)}
                       </p>
                       <button

@@ -14,6 +14,8 @@ import { AppErrorBoundary } from '@/app/components/AppErrorBoundary';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/app/components/ui/tooltip';
 import { Popover, PopoverTrigger, PopoverContent } from '@/app/components/ui/popover';
 import { Dialog, DialogContent, DialogTitle } from '@/app/components/ui/dialog';
+import { delayedToast } from '@/app/services/delayedToast';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { useAppStore } from '@/app/store/appStore';
 
 function toISO(date: Date): string {
@@ -67,6 +69,21 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [addExpenseForDate, setAddExpenseForDate] = useState<string | null>(null);
   const [addIncomeForDate, setAddIncomeForDate] = useState<string | null>(null);
+  const [showDeleteTransactionDialogEdit, setShowDeleteTransactionDialogEdit] = useState(false);
+  const [deleteTransactionEditTargetId, setDeleteTransactionEditTargetId] = useState<string | null>(null);
+  const [showDeleteTransactionDialogList, setShowDeleteTransactionDialogList] = useState(false);
+  const [deleteTransactionListTargetId, setDeleteTransactionListTargetId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const pendingDeleteRef = useRef<string | null>(null);
+  pendingDeleteRef.current = pendingDeleteId;
+
+  useEffect(() => {
+    return () => {
+      const id = pendingDeleteRef.current;
+      if (id) api.deleteTransaction(id);
+    };
+  }, [api]);
+
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dayButtonRefsMap = useRef<Map<number, HTMLButtonElement>>(new Map());
 
@@ -266,8 +283,28 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
     setMonthPopoverOpen(false);
   };
 
-  const selectedEvents = selectedDate ? (eventsByDate.get(selectedDate) ?? []) : [];
+  const visibleSelectedEvents = useMemo(() => {
+    const se = selectedDate ? (eventsByDate.get(selectedDate) ?? []) : [];
+    return se.filter((e) => !(e.type === 'transaction' && e.id === pendingDeleteId));
+  }, [selectedDate, eventsByDate, pendingDeleteId]);
   const hasEnvelopes = envelopes.length > 0;
+
+  const handleDeleteTransaction = useCallback(
+    (id: string) => {
+      setPendingDeleteId(id);
+      setEditingTransactionId((eid) => (eid === id ? null : eid));
+      delayedToast.successWithUndo(
+        'Transaction deleted',
+        () => {
+          api.deleteTransaction(id);
+          setPendingDeleteId(null);
+          setSelectedDate(null);
+        },
+        () => setPendingDeleteId(null),
+      );
+    },
+    [api]
+  );
 
   const handleCalendarKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -456,9 +493,9 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                           `}
                         >
                           <span className="text-xs sm:text-sm text-foreground font-medium">{dayNum}</span>
-                          {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>{formatMoney(-expense)}</span>}
-                          {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>+{formatMoney(incomeTotal)}</span>}
-                          {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} style={{ fontFamily: 'Courier New, monospace' }}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
+                          {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">{formatMoney(-expense)}</span>}
+                          {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">+{formatMoney(incomeTotal)}</span>}
+                          {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
                           {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto">{events.length} items</span>}
                         </button>
                       </TooltipTrigger>
@@ -523,17 +560,17 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                   >
                     <span className="text-xs sm:text-sm text-foreground font-medium">{day}</span>
                     {expense > 0 && (
-                      <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>
+                      <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">
                         {formatMoney(-expense)}
                       </span>
                     )}
                     {incomeTotal > 0 && (
-                      <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>
+                      <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">
                         +{formatMoney(incomeTotal)}
                       </span>
                     )}
                     {net !== 0 && (
-                      <span className={`text-[10px] sm:text-xs font-medium mt-0.5 ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} style={{ fontFamily: 'Courier New, monospace' }}>
+                      <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         Net {net > 0 ? '+' : ''}{formatMoney(net)}
                       </span>
                     )}
@@ -600,9 +637,9 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                     `}
                   >
                     <span className="text-xs sm:text-sm text-foreground font-medium">{day}</span>
-                    {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>{formatMoney(-expense)}</span>}
-                    {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>+{formatMoney(incomeTotal)}</span>}
-                    {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} style={{ fontFamily: 'Courier New, monospace' }}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
+                    {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">{formatMoney(-expense)}</span>}
+                    {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">+{formatMoney(incomeTotal)}</span>}
+                    {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
                     {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto">{events.length} items</span>}
                   </button>
                 </TooltipTrigger>
@@ -669,12 +706,12 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
             >
               <div className="flex items-center gap-1.5 flex-wrap">
                 <DialogTitle className="text-base">
-                  {selectedDate} — {selectedEvents.length} {selectedEvents.length === 1 ? 'event' : 'events'}
+                  {selectedDate} — {visibleSelectedEvents.length} {visibleSelectedEvents.length === 1 ? 'event' : 'events'}
                 </DialogTitle>
               </div>
               <div className="space-y-3">
             <ul className="space-y-2">
-            {selectedEvents.map((e) => {
+            {visibleSelectedEvents.map((e) => {
               if (e.type === 'transaction') {
                 const tx = state.transactions.find((t) => t.id === e.id) as Transaction | undefined;
                 const isEditing = editingTransactionId === e.id;
@@ -690,11 +727,8 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                         }}
                         onCancel={() => setEditingTransactionId(null)}
                         onDelete={() => {
-                          if (window.confirm('Delete this transaction? This cannot be undone.')) {
-                            api.deleteTransaction(tx.id);
-                            setEditingTransactionId(null);
-                            setSelectedDate(null);
-                          }
+                          setDeleteTransactionEditTargetId(tx.id);
+                          setShowDeleteTransactionDialogEdit(true);
                         }}
                       />
                     ) : (
@@ -710,11 +744,9 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                         <button
                           type="button"
                           onClick={() => {
-                          if (window.confirm('Delete this transaction? This cannot be undone.')) {
-                            api.deleteTransaction(e.id);
-                            setSelectedDate(null);
-                          }
-                        }}
+                            setDeleteTransactionListTargetId(e.id);
+                            setShowDeleteTransactionDialogList(true);
+                          }}
                           className="p-1 rounded hover:bg-destructive/20 text-destructive"
                           aria-label="Delete"
                         >
@@ -831,6 +863,36 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={showDeleteTransactionDialogEdit}
+        onOpenChange={(open) => {
+          setShowDeleteTransactionDialogEdit(open);
+          if (!open) setDeleteTransactionEditTargetId(null);
+        }}
+        title="Delete transaction?"
+        description="The transaction will disappear immediately. You'll have a moment to undo."
+        confirmLabel="Delete transaction"
+        onConfirm={() => {
+          const id = deleteTransactionEditTargetId;
+          if (id) handleDeleteTransaction(id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showDeleteTransactionDialogList}
+        onOpenChange={(open) => {
+          setShowDeleteTransactionDialogList(open);
+          if (!open) setDeleteTransactionListTargetId(null);
+        }}
+        title="Delete transaction?"
+        description="The transaction will disappear immediately. You'll have a moment to undo."
+        confirmLabel="Delete transaction"
+        onConfirm={() => {
+          const id = deleteTransactionListTargetId;
+          if (id) handleDeleteTransaction(id);
+        }}
+      />
 
       {debouncedSearchQuery.trim() && (
         <p className="text-xs text-muted-foreground">

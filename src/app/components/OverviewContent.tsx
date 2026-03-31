@@ -118,9 +118,9 @@ function OverviewContentInner() {
           transition={noMotion ? { duration: 0 } : undefined}
           className="p-4 rounded-2xl border border-dashed border-primary/30 bg-primary/5 text-center"
         >
-          <p className="text-sm text-muted-foreground mb-1">Get started</p>
+          <p className="text-sm text-muted-foreground mb-1">Your budget is empty</p>
           <p className="text-xs text-muted-foreground">
-            Add income and create envelopes in the sections below to see your budget here.
+            Add your income first, then create envelopes for spending categories like Groceries or Rent. Your overview will appear here.
           </p>
         </motion.div>
       )}

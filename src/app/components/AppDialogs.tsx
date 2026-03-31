@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
+import { Button } from '@/app/components/ui/button';
 import { BackupFolderPrompt } from '@/app/components/BackupFolderPrompt';
 
 export interface AppDialogsProps {
@@ -64,10 +65,10 @@ export function AppDialogs({
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-left">
                 <p>
-                  A new version is ready. After about three changes, a backup copy is saved on this device (at most once per minute). For an extra copy elsewhere, use <strong>Download full backup</strong> or (Chrome/Edge) set a backup folder in Settings → Data Management.
+                  A new version of Nvalope is ready.
                 </p>
                 <p>
-                  You can <strong>Reload now</strong> to update. Your data and settings in this browser will remain after the reload. You can also close this and update later when you’re ready.
+                  Your data and settings will remain after the reload.
                 </p>
                 {hasBackupFolder === true && (
                   <p className="text-muted-foreground">
@@ -84,44 +85,35 @@ export function AppDialogs({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={onUpdateReload}>Reload now</AlertDialogAction>
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="sm"
               onClick={() => onUpdateAvailableOpenChange(false)}
             >
               Close and update later
-            </button>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={showAdvancedAIDownloadNotice} onOpenChange={(open) => { if (!open) onAdvancedAIDownloadNoticeOpenChange(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Advanced AI — one-time download</AlertDialogTitle>
+            <AlertDialogTitle>Local AI model — one-time download</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-left">
                 <p>
-                  You will need to allow the app to download files for the new AI model. The app only reaches out to the server for this one task; after that, everything runs offline.
+                  The app will download a small AI model to your device. This is a one-time download of several hundred MB. After that, the assistant runs entirely offline.
                 </p>
                 <p>
-                  Please do not clear your browser cache or site data for this app, or the AI model and your data may be lost.
+                  Note: clearing browser site data will remove the downloaded model and your app data. Use Settings → Data Management to keep an external backup.
                 </p>
-                {hasBackupFolder === true && (
-                  <p>
-                    You have a backup folder set. One file there is updated when autobackup runs (after about three changes, at most once per minute). The files in that folder are on your disk and are not deleted if you clear &quot;cookies and other site data&quot;—you would only need to choose the folder again in Settings after clearing.
-                  </p>
-                )}
-                {hasBackupFolder === false && (
-                  <p>
-                    After about three changes, a backup copy is saved on this device (at most once per minute). If you clear &quot;cookies and other site data&quot; in your browser, that copy and all app data are removed. To keep a copy outside the app (e.g. on a USB drive), download a full backup from Settings → Data Management or set a backup folder (Chrome/Edge).
-                  </p>
-                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={onAdvancedAIDownloadNoticeAck}>
-              I understand
+              Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

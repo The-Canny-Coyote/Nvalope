@@ -20,8 +20,6 @@ export interface SettingsContentProps {
   checkingForUpdate: boolean;
   /** Called after a successful backup import with layout/wheel scale from the backup (if present). */
   onApplySettingsFromBackup?: (settings: BackupSettingsSnapshot) => void;
-  uiMode?: 'normal';
-  setUiMode?: (v: 'normal') => void;
   /** When true, optional-upgrade modules (e.g. Advanced AI) can be enabled. */
   isPremium?: boolean;
   /** When true, user has chosen a backup folder; show status in Data Management. */
@@ -42,8 +40,7 @@ export interface SettingsContentProps {
   /** Lifted from App: Optional features collapsible open state. */
   optionalFeaturesOpen?: boolean;
   onOptionalFeaturesOpenChange?: (open: boolean) => void;
-  hasPremiumAi?: boolean;
-  premiumFeaturesConfigured?: boolean;
+  hasPremiumImport?: boolean;
 }
 
 export function SettingsContent({
@@ -59,8 +56,6 @@ export function SettingsContent({
   onCheckForUpdates,
   checkingForUpdate,
   onApplySettingsFromBackup,
-  uiMode: _uiMode,
-  setUiMode: _setUiMode,
   isPremium: _isPremium = false,
   hasBackupFolder = null,
   onBeforeOpenFeatureCollapsibles,
@@ -72,8 +67,7 @@ export function SettingsContent({
   onCoreFeaturesOpenChange,
   optionalFeaturesOpen,
   onOptionalFeaturesOpenChange,
-  hasPremiumAi = false,
-  premiumFeaturesConfigured = false,
+  hasPremiumImport = false,
 }: SettingsContentProps) {
   const jumpToDataRef = useRef<(() => void) | null>(null);
 
@@ -92,8 +86,6 @@ export function SettingsContent({
         onCoreFeaturesOpenChange={onCoreFeaturesOpenChange}
         optionalFeaturesOpen={optionalFeaturesOpen}
         onOptionalFeaturesOpenChange={onOptionalFeaturesOpenChange}
-        hasPremiumAi={hasPremiumAi}
-        premiumFeaturesConfigured={premiumFeaturesConfigured}
       />
       <BackupSettings
         enabledModules={enabledModules}
@@ -104,6 +96,7 @@ export function SettingsContent({
         onCheckForUpdates={onCheckForUpdates}
         checkingForUpdate={checkingForUpdate}
         onApplySettingsFromBackup={onApplySettingsFromBackup}
+        hasPremiumImport={hasPremiumImport}
         hasBackupFolder={hasBackupFolder}
         onBeforeOpen={onBeforeOpenDataMgmt}
         restoreScrollAfterLayout={restoreScrollAfterLayout}

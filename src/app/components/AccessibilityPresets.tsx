@@ -1,5 +1,8 @@
 import type { AccessibilityMode } from '@/app/components/accessibilityMode';
 
+/* Color vision presets (deuteranopia, tritanopia, monochromacy) are not listed here: they are separate from
+   AccessibilityMode and live on AppState.colorblindMode, controlled by ColorblindModeToggle in AccessibilityToggles. */
+
 export type AccessibilityPresetsProps = {
   selectedMode: AccessibilityMode;
   setSelectedMode: (mode: AccessibilityMode) => void;

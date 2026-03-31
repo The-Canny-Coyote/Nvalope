@@ -13,6 +13,21 @@
 /index.html
   Cache-Control: no-cache
   Content-Security-Policy: frame-ancestors 'none'
+/install-pwa.html
+  Cache-Control: no-cache
+  Content-Security-Policy: frame-ancestors 'none'
+/license.html
+  Cache-Control: public, max-age=86400
+  Content-Security-Policy: frame-ancestors 'none'
+/privacy.html
+  Cache-Control: public, max-age=86400
+  Content-Security-Policy: frame-ancestors 'none'
+/terms.html
+  Cache-Control: public, max-age=86400
+  Content-Security-Policy: frame-ancestors 'none'
+/user-guide.html
+  Cache-Control: public, max-age=86400
+  Content-Security-Policy: frame-ancestors 'none'
 
 # Hashed assets: safe to cache forever; avoids stale HTML pointing at old 404ing assets
 /assets/*

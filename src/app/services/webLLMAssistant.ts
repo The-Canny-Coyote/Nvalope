@@ -2,6 +2,17 @@ import { getDevicePerformanceTier, type PerformanceTier } from '@/app/utils/devi
 import { formatMoney } from '@/app/utils/format';
 import { truncate } from '@/app/utils/truncate';
 
+/** Strip newlines, carriage returns, and control characters from user-supplied
+ *  strings before they are interpolated into the WebLLM system prompt.
+ *  Prevents prompt injection via crafted envelope names or transaction descriptions. */
+function sanitizeForPrompt(value: string, maxLength = 120): string {
+  return value
+    .replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
 /** Minimal transaction shape for the WebLLM system prompt (envelope name resolved by caller). */
 export type WebLLMRecentTransaction = { amount: number; description: string; envelopeName?: string };
 
@@ -71,7 +82,7 @@ export function getWebLLMEnvironmentSnapshot(): WebLLMRuntimeSnapshot {
 }
 
 const DEFAULT_MODEL_ID = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
-const MAX_CONTEXT_MESSAGES = 10;
+const MAX_CONTEXT_MESSAGES = 6;
 /** Max length for the latest user message sent to WebLLM (prompt-injection / token limit). */
 export const MAX_USER_MESSAGE_LENGTH = 2000;
 /** Max length for each prior chat message in WebLLM context. */
@@ -102,11 +113,11 @@ export function buildSystemPrompt(
     "",
     "Envelopes (name, limit, spent, remaining):",
     ...summary.envelopes.map(
-      (e) => `- ${e.name}: limit ${formatMoney(e.limit)}, spent ${formatMoney(e.spent)}, remaining ${formatMoney(e.remaining)}`
+      (e) => `- ${sanitizeForPrompt(e.name)}: limit ${formatMoney(e.limit)}, spent ${formatMoney(e.spent)}, remaining ${formatMoney(e.remaining)}`
     ),
   ];
   if (summary.analyticsInsight) {
-    lines.push("", "Analytics insight: " + summary.analyticsInsight);
+    lines.push("", "Analytics insight: " + sanitizeForPrompt(summary.analyticsInsight ?? '', 200));
   }
   const maxRecentTx = 20;
   const maxRecentTxChars = 2000;
@@ -115,7 +126,7 @@ export function buildSystemPrompt(
     let txText = txs
       .map(
         (t) =>
-          `- ${formatMoney(t.amount)}: ${(t.description || '').trim() || 'No description'}${t.envelopeName ? ` (${t.envelopeName})` : ''}`
+          `- ${formatMoney(t.amount)}: ${sanitizeForPrompt((t.description || '').trim() || 'No description', 80)}${t.envelopeName ? ` (${sanitizeForPrompt(t.envelopeName)})` : ''}`
       )
       .join("\n");
     if (txText.length > maxRecentTxChars) {
@@ -259,7 +270,12 @@ export async function getReceiptCategoryFromWebLLM(receiptText: string): Promise
   if (!engine) {
     return { category: 'other', confidence: 0.5 };
   }
-  const truncated = receiptText.slice(0, 1500).replace(/"/g, "'");
+  const truncated = receiptText
+    .slice(0, 1500)
+    .replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/"/g, "'")
+    .trim();
   const userContent = `Receipt text:\n${truncated}\n\nRespond with only a single JSON object, no other text: {"category": "one of ${RECEIPT_CATEGORIES}", "confidence": number 0-1}`;
   const response = await engine.chat.completions.create({
     messages: [{ role: 'user', content: userContent }],

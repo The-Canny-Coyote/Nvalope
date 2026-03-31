@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { IncomeEntry } from '@/app/store/budgetTypes';
+import { Button } from '@/app/components/ui/button';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 
 export interface IncomeEditFormProps {
   income: IncomeEntry;
@@ -12,6 +14,7 @@ export function IncomeEditForm({ income, onSave, onCancel, onDelete }: IncomeEdi
   const [amount, setAmount] = useState(String(income.amount));
   const [source, setSource] = useState(income.source);
   const [date, setDate] = useState(income.date);
+  const [showDeleteIncomeEntryDialog, setShowDeleteIncomeEntryDialog] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +24,7 @@ export function IncomeEditForm({ income, onSave, onCancel, onDelete }: IncomeEdi
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full">
       <input
         type="number"
@@ -28,7 +32,7 @@ export function IncomeEditForm({ income, onSave, onCancel, onDelete }: IncomeEdi
         min="0"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         placeholder="Amount"
         required
         aria-label="Income amount"
@@ -50,22 +54,35 @@ export function IncomeEditForm({ income, onSave, onCancel, onDelete }: IncomeEdi
         aria-label="Date"
       />
       <div className="flex gap-2 flex-wrap">
-        <button type="submit" className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm">
+        <Button type="submit" className="min-h-[44px]">
           Save
-        </button>
-        <button type="button" onClick={onCancel} className="px-3 py-1 rounded border text-sm">
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="min-h-[44px]">
           Cancel
-        </button>
+        </Button>
         {onDelete && (
-          <button
+          <Button
             type="button"
-            onClick={() => { if (window.confirm('Delete this income entry?')) onDelete?.(); }}
-            className="px-3 py-1 rounded border border-destructive/50 text-destructive text-sm"
+            variant="destructive"
+            onClick={() => setShowDeleteIncomeEntryDialog(true)}
+            className="min-h-[44px]"
           >
             Delete
-          </button>
+          </Button>
         )}
       </div>
     </form>
+
+    <ConfirmDialog
+      open={showDeleteIncomeEntryDialog}
+      onOpenChange={setShowDeleteIncomeEntryDialog}
+      title="Delete income entry?"
+      description=""
+      confirmLabel="Delete entry"
+      onConfirm={() => {
+        onDelete?.();
+      }}
+    />
+    </>
   );
 }

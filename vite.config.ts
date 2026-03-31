@@ -70,6 +70,8 @@ export default defineConfig(({ mode }) => ({
           'https://hf.co',
           'https://*.hf.co',
           'https://*.huggingfaceusercontent.com',
+          'https://cas-bridge.xethub.hf.co',
+          'https://*.xethub.hf.co',
           'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',

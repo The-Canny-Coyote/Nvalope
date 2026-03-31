@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => ({
           "'self'",
           'https://*.workers.dev',
           'https://cdn.jsdelivr.net',
+          'https://huggingface.co',
           'https://raw.githubusercontent.com',
           'https://cloudflareinsights.com',
           'https://static.cloudflareinsights.com',

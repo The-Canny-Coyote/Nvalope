@@ -60,22 +60,9 @@ export default defineConfig(({ mode }) => ({
         // - cdn.jsdelivr.net: WebLLM model assets (jsdelivr CDN)
         // - raw.githubusercontent.com: WebLLM (@mlc-ai) WASM/runtime from mlc-ai/binary-mlc-llm-libs
         // - cloudflareinsights.*: analytics beacons
-        'connect-src': [
-          "'self'",
-          'https://*.workers.dev',
-          'https://cdn.jsdelivr.net',
-          // WebLLM model/config downloads (avoid per-host CSP whack-a-mole)
-          'https://huggingface.co',
-          'https://*.huggingface.co',
-          'https://hf.co',
-          'https://*.hf.co',
-          'https://*.huggingfaceusercontent.com',
-          'https://cas-bridge.xethub.hf.co',
-          'https://*.xethub.hf.co',
-          'https://raw.githubusercontent.com',
-          'https://cloudflareinsights.com',
-          'https://static.cloudflareinsights.com',
-        ],
+        // connect-src is intentionally permissive to avoid WebLLM CDN host churn.
+        // Keep other directives tight to limit what can execute.
+        'connect-src': ["'self'", 'https:', 'wss:'],
         'manifest-src': ["'self'"],
         'base-uri': ["'self'"],
         'form-action': ["'self'"],

@@ -82,6 +82,13 @@ export function getWebLLMEnvironmentSnapshot(): WebLLMRuntimeSnapshot {
 }
 
 const DEFAULT_MODEL_ID = 'Llama-3.2-1B-Instruct-q4f32_1-MLC';
+const FALLBACK_MODEL_IDS: string[] = [
+  DEFAULT_MODEL_ID,
+  // Smaller/alternate models to reduce reliance on a single upstream host path.
+  'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+  'TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC',
+  'phi-1_5-q4f16_1-MLC',
+];
 const MAX_CONTEXT_MESSAGES = 6;
 /** Max length for the latest user message sent to WebLLM (prompt-injection / token limit). */
 export const MAX_USER_MESSAGE_LENGTH = 2000;
@@ -158,17 +165,32 @@ export async function loadWebLLMEngine(
     const initProgressCallback = (report: { text?: string; progress?: number }) => {
       onProgress?.({ text: report.text ?? '', progress: report.progress });
     };
-    const engine = await webllm.CreateMLCEngine(
-      DEFAULT_MODEL_ID,
-      {
-        initProgressCallback,
-        logLevel: 'WARN',
-      },
-      { context_window_size: 2048 }
-    );
-    engineInstance = engine;
-    loadPromise = null;
-    return engine;
+    let lastErr: unknown;
+    for (let idx = 0; idx < FALLBACK_MODEL_IDS.length; idx++) {
+      const modelId = FALLBACK_MODEL_IDS[idx];
+      if (idx > 0) {
+        onProgress?.({
+          text: 'Retrying local AI model download with a smaller fallback…',
+          progress: undefined,
+        });
+      }
+      try {
+        const engine = await webllm.CreateMLCEngine(
+          modelId,
+          {
+            initProgressCallback,
+            logLevel: 'WARN',
+          },
+          { context_window_size: 2048 }
+        );
+        engineInstance = engine;
+        loadPromise = null;
+        return engine;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr ?? new Error('WebLLM model load failed');
   })();
   try {
     return await loadPromise;

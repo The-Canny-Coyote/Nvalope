@@ -191,7 +191,7 @@ export function getDaysLeftInPeriod(period: PeriodBounds, referenceDate: Date = 
   const refD = referenceDate.getDate();
   const refNum = refY * 10000 + refM * 100 + refD;
   const endNum = end.y * 10000 + end.m * 100 + end.d;
-  return Math.max(0, endNum - refNum);
+  return Math.max(0, endNum - refNum + 1);
 }
 
 /**

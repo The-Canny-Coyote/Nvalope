@@ -256,8 +256,15 @@ export function useAnalyticsData(
         .map(([date, spent]) => ({ date: date.slice(5), spent }));
     }
 
+    // incomeVsExpenses should use the same scope as totalSpent —
+    // period-filtered for biweekly/weekly, all-time for monthly.
+    const totalIncomeForChart =
+      (budgetPeriodMode === 'biweekly' || budgetPeriodMode === 'weekly')
+        ? periodSummary.totalIncome
+        : income.reduce((s, i) => s + i.amount, 0);
+
     const incomeVsExpensesData = [
-      { name: 'Income', amount: totalIncome },
+      { name: 'Income', amount: totalIncomeForChart },
       { name: 'Expenses', amount: totalSpent },
     ];
 

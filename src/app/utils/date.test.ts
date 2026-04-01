@@ -110,8 +110,8 @@ describe('getPeriodLabel', () => {
 describe('getDaysLeftInPeriod', () => {
   it('returns days from reference to end', () => {
     const period = { start: '2025-01-01', end: '2025-01-14' };
-    expect(getDaysLeftInPeriod(period, new Date(2025, 0, 10))).toBe(4); // 10->14 = 4 days
-    expect(getDaysLeftInPeriod(period, new Date(2025, 0, 14))).toBe(0);
+    expect(getDaysLeftInPeriod(period, new Date(2025, 0, 10))).toBe(5); // inclusive: 10..14 = 5 days
+    expect(getDaysLeftInPeriod(period, new Date(2025, 0, 14))).toBe(1);
     expect(getDaysLeftInPeriod(period, new Date(2025, 0, 15))).toBe(0);
   });
 });

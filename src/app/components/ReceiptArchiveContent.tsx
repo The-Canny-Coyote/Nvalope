@@ -189,6 +189,11 @@ function ReceiptArchiveContentInner() {
                             {(li as { isTax?: boolean }).isTax === true && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0" title="Tax line">Tax</span>
                             )}
+                            {(li as { excludeFromBudget?: boolean }).excludeFromBudget === true && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0" title="Not added to budget">
+                                Excluded
+                              </span>
+                            )}
                           </span>
                           <span className="tabular-nums shrink-0">
                             {getCurrencySymbol(viewing.scan.currency)}{li.amount.toFixed(2)}

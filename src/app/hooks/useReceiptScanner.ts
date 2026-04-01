@@ -241,6 +241,9 @@ export function useReceiptScanner() {
             Number.isFinite(li.amount) &&
             (li.isTax !== true || li.envelopeId != null)
         );
+        const skippedNoCategoryCount = hasEnvelopes
+          ? budgetable.filter((li) => !li.envelopeId).length
+          : 0;
         const hasTaxInBudgetable = budgetable.some((li) => li.isTax === true);
         // When the parser found tax but no subtotal label, derive subtotal from
         // the non-tax budgetable line items so tax isn't baked into their allocations.
@@ -373,7 +376,11 @@ export function useReceiptScanner() {
         setScans(nextScansForPersist);
 
         if (anyAdded) {
-          if (anyUncategorized || !hasEnvelopes) {
+          if (skippedNoCategoryCount > 0) {
+            delayedToast.success(
+              `Receipt saved. ${skippedNoCategoryCount} line${skippedNoCategoryCount === 1 ? '' : 's'} without a category ${skippedNoCategoryCount === 1 ? 'was' : 'were'} not added to your budget. You can edit those transactions in Transaction history to assign them.`
+            );
+          } else if (anyUncategorized || !hasEnvelopes) {
             delayedToast.success(
               'Receipt saved. Create envelopes in Envelopes & Expenses to assign categories; you can edit transactions in Transaction history to assign them later.'
             );

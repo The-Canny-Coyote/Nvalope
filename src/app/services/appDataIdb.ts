@@ -21,7 +21,14 @@ export interface StoredReceiptScan {
   description: string;
   rawText: string;
   date: string;
-  lineItems?: Array<{ description: string; amount: number; quantity?: number; envelopeId?: string; isTax?: boolean }>;
+  lineItems?: Array<{
+    description: string;
+    amount: number;
+    quantity?: number;
+    envelopeId?: string;
+    isTax?: boolean;
+    excludeFromBudget?: boolean;
+  }>;
   addedToEnvelope?: boolean;
   time?: string;
   currency?: string;
@@ -156,12 +163,13 @@ function normalizeAppData(raw: unknown): AppData {
           rawText: String(s.rawText),
           date: String(s.date),
           amount: typeof s.amount === 'number' ? s.amount : s.amount === null ? null : null,
-          lineItems: Array.isArray(s.lineItems) ? (s.lineItems as Array<{ description?: string; amount?: number; quantity?: number; envelopeId?: string; isTax?: boolean }>).map((li) => ({
+          lineItems: Array.isArray(s.lineItems) ? (s.lineItems as Array<{ description?: string; amount?: number; quantity?: number; envelopeId?: string; isTax?: boolean; excludeFromBudget?: boolean }>).map((li) => ({
             description: typeof li?.description === 'string' ? li.description : '',
             amount: typeof li?.amount === 'number' ? li.amount : 0,
             quantity: typeof li?.quantity === 'number' ? li.quantity : undefined,
             envelopeId: typeof li?.envelopeId === 'string' ? li.envelopeId : undefined,
             isTax: li?.isTax === true,
+            excludeFromBudget: li?.excludeFromBudget === true,
           })).filter((li) => li.description !== '' || li.amount !== 0) : undefined,
           addedToEnvelope: s.addedToEnvelope === true,
           time: typeof s.time === 'string' ? s.time : undefined,
@@ -192,12 +200,13 @@ function normalizeAppData(raw: unknown): AppData {
           rawText: String(scan.rawText ?? ''),
           date: String(scan.date ?? ''),
           amount: typeof scan.amount === 'number' ? scan.amount : scan.amount === null ? null : null,
-          lineItems: Array.isArray(scan.lineItems) ? (scan.lineItems as Array<{ description?: string; amount?: number; quantity?: number; envelopeId?: string; isTax?: boolean }>).map((li) => ({
+          lineItems: Array.isArray(scan.lineItems) ? (scan.lineItems as Array<{ description?: string; amount?: number; quantity?: number; envelopeId?: string; isTax?: boolean; excludeFromBudget?: boolean }>).map((li) => ({
             description: typeof li?.description === 'string' ? li.description : '',
             amount: typeof li?.amount === 'number' ? li.amount : 0,
             quantity: typeof li?.quantity === 'number' ? li.quantity : undefined,
             envelopeId: typeof li?.envelopeId === 'string' ? li.envelopeId : undefined,
             isTax: li?.isTax === true,
+            excludeFromBudget: li?.excludeFromBudget === true,
           })).filter((li) => li.description !== '' || li.amount !== 0) : undefined,
           addedToEnvelope: scan.addedToEnvelope === true,
           time: typeof scan.time === 'string' ? scan.time : undefined,

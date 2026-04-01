@@ -288,7 +288,12 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                         className="rounded border-border"
                         aria-label={`Exclude item ${i + 1} from budget`}
                       />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">Exclude</span>
+                      <span
+                        className="text-xs text-muted-foreground whitespace-nowrap"
+                        title="Skip this line when adding to your budget. The receipt is still saved to Archive."
+                      >
+                        Exclude
+                      </span>
                     </label>
                   )}
                   <select
@@ -455,7 +460,7 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
             )}
             <p className="text-muted-foreground">
               {excludedCount > 0
-                ? `${excludedCount} line ${excludedCount === 1 ? 'is' : 'lines are'} excluded from budget.`
+                ? `${excludedCount} line ${excludedCount === 1 ? 'is' : 'lines are'} excluded from budget — ${excludedCount === 1 ? 'it' : 'they'} will still be saved to Receipt Archive.`
                 : 'All included lines will be allocated proportionally so envelope totals match what you paid.'}
             </p>
             {budgetableLines.length > 0 && (

@@ -163,6 +163,10 @@ describe('getEffectivePeriodMode', () => {
   it('returns biweekly for dates before switch when mode is monthly', () => {
     expect(getEffectivePeriodMode('2025-01-10', 'monthly', '2025-02-01')).toBe('biweekly');
   });
+  it('returns previous mode for dates before switch when provided', () => {
+    expect(getEffectivePeriodMode('2025-01-10', 'monthly', '2025-02-01', 'weekly')).toBe('weekly');
+    expect(getEffectivePeriodMode('2025-01-10', 'monthly', '2025-02-01', null)).toBe('biweekly');
+  });
   it('returns monthly for dates on or after switch when mode is monthly', () => {
     expect(getEffectivePeriodMode('2025-02-01', 'monthly', '2025-02-01')).toBe('monthly');
     expect(getEffectivePeriodMode('2025-02-15', 'monthly', '2025-02-01')).toBe('monthly');

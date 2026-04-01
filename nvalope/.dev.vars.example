@@ -1,2 +1,14 @@
 # Copy to .dev.vars and set a secret (min 32 chars). Do not commit .dev.vars.
 JWT_SECRET=your-dev-secret-at-least-32-characters-long
+
+# Frontend Vite env vars (Cloudflare Pages / local dev)
+# Note: In Vite, only variables prefixed with VITE_ are exposed to the client bundle.
+VITE_PREMIUM_AVAILABLE=
+VITE_API_BASE=http://127.0.0.1:8787
+
+# WebLLM (local AI) - optional overrides for development
+# Leave blank to use app defaults.
+VITE_WEBLLM_MODEL_ID=
+VITE_WEBLLM_FALLBACK_MODEL_IDS=
+VITE_WEBLLM_TEMPERATURE=
+VITE_WEBLLM_MAX_TOKENS=

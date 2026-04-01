@@ -236,7 +236,8 @@ export function weeklyPeriodKeyFromYYYYMMDD(s: string, weekStartDay: number = DE
 export function getEffectivePeriodMode(
   dateStr: string,
   mode: 'monthly' | 'biweekly' | 'weekly',
-  switchDate: string | null
+  switchDate: string | null,
+  previousMode: 'biweekly' | 'weekly' | null = 'biweekly'
 ): 'monthly' | 'biweekly' | 'weekly' {
   if (mode !== 'monthly' || !switchDate) return mode;
   const p = parseYYYYMMDD(dateStr);
@@ -244,5 +245,5 @@ export function getEffectivePeriodMode(
   if (!p || !s) return mode;
   const d = p.y * 10000 + p.m * 100 + p.d;
   const sw = s.y * 10000 + s.m * 100 + s.d;
-  return d < sw ? 'biweekly' : 'monthly';
+  return d < sw ? (previousMode ?? 'biweekly') : 'monthly';
 }

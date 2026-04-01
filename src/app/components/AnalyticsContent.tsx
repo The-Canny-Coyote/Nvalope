@@ -445,6 +445,19 @@ function AnalyticsContentInner({ selectedMode = 'standard' }: AnalyticsContentPr
                     ))}
                   </ul>
                 )}
+                {filterContext && envelopeOverview && envelopeOverviewTransactions.length > 0 && (
+                  <button
+                    type="button"
+                    className="mt-3 text-sm text-primary hover:underline"
+                    onClick={() => {
+                      filterContext.requestViewTransactions({ envelopeId: envelopeOverview.id });
+                      setEnvelopeOverview(null);
+                      // navigation to Transactions section is handled by the section wheel
+                    }}
+                  >
+                    View all in {envelopeOverview.name} →
+                  </button>
+                )}
               </>
             )}
           </div>

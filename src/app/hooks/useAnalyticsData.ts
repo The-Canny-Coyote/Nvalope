@@ -33,6 +33,7 @@ export function useAnalyticsData(
   const { state, getBudgetSummaryForCurrentPeriod } = useBudget();
   const budgetPeriodMode = useAppStore((s) => s.budgetPeriodMode);
   const budgetPeriodModeSwitchDate = useAppStore((s) => s.budgetPeriodModeSwitchDate);
+  const previousBudgetPeriodMode = useAppStore((s) => s.previousBudgetPeriodMode);
   const biweeklyPeriod1StartDay = useAppStore((s) => s.biweeklyPeriod1StartDay) ?? 1;
   const biweeklyPeriod1EndDay = useAppStore((s) => s.biweeklyPeriod1EndDay) ?? 14;
   const weekStartDay = useAppStore((s) => s.weekStartDay) ?? 0;
@@ -128,36 +129,87 @@ export function useAnalyticsData(
       if (switchDate && monthKeyFromYYYYMMDD(switchDate) != null) {
         const switchMonthKey = monthKeyFromYYYYMMDD(switchDate)!;
         const byPeriod: Record<number, { spent: number; income: number }> = {};
+        const byWeek: Record<number, { spent: number; income: number }> = {};
         const byMonth: Record<number, { spent: number; income: number }> = {};
         for (let i = 0; i < monthCount; i++) {
           const mk = thisMonth - i;
           if (mk < switchMonthKey) {
-            byPeriod[mk * 2] = { spent: 0, income: 0 };
-            byPeriod[mk * 2 + 1] = { spent: 0, income: 0 };
+            if (previousBudgetPeriodMode === 'weekly') {
+              // Weeks will be initialized after we compute the key window for pre-switch dates.
+            } else {
+              byPeriod[mk * 2] = { spent: 0, income: 0 };
+              byPeriod[mk * 2 + 1] = { spent: 0, income: 0 };
+            }
           } else {
             byMonth[mk] = { spent: 0, income: 0 };
           }
         }
+
+        const useWeeklyForPreSwitch = previousBudgetPeriodMode === 'weekly';
+        const switchDateNum = Number((switchDate ?? '').replace(/-/g, ''));
+        const windowStartISO = `${Math.floor(monthWindowStart / 12)}-${String((monthWindowStart % 12) + 1).padStart(2, '0')}-01`;
+
+        let minWeekKey: number | null = null;
+        let maxWeekKey: number | null = null;
+        if (useWeeklyForPreSwitch) {
+          for (const t of transactions) {
+            const txMonthKey = monthKeyFromYYYYMMDD(t.date);
+            if (txMonthKey == null || txMonthKey < monthWindowStart || txMonthKey > thisMonth) continue;
+            if (Number(t.date.replace(/-/g, '')) >= switchDateNum) continue;
+            const wk = weeklyPeriodKeyFromYYYYMMDD(t.date, weekStartDay);
+            if (wk == null) continue;
+            minWeekKey = minWeekKey == null ? wk : Math.min(minWeekKey, wk);
+            maxWeekKey = maxWeekKey == null ? wk : Math.max(maxWeekKey, wk);
+          }
+          for (const inc of income) {
+            const incMonthKey = monthKeyFromYYYYMMDD(inc.date);
+            if (incMonthKey == null || incMonthKey < monthWindowStart || incMonthKey > thisMonth) continue;
+            if (Number(inc.date.replace(/-/g, '')) >= switchDateNum) continue;
+            const wk = weeklyPeriodKeyFromYYYYMMDD(inc.date, weekStartDay);
+            if (wk == null) continue;
+            minWeekKey = minWeekKey == null ? wk : Math.min(minWeekKey, wk);
+            maxWeekKey = maxWeekKey == null ? wk : Math.max(maxWeekKey, wk);
+          }
+          if (minWeekKey != null && maxWeekKey != null) {
+            for (let k = minWeekKey; k <= maxWeekKey; k++) byWeek[k] = { spent: 0, income: 0 };
+          }
+        }
+
         for (const t of transactions) {
           const txMonthKey = monthKeyFromYYYYMMDD(t.date);
           if (txMonthKey == null || txMonthKey < monthWindowStart || txMonthKey > thisMonth) continue;
           if (txMonthKey < switchMonthKey) {
-            const key = biweeklyPeriodKeyFromYYYYMMDD(t.date, biweeklyOptions);
-            if (key != null && byPeriod[key] != null) byPeriod[key].spent += t.amount;
+            if (useWeeklyForPreSwitch) {
+              if (Number(t.date.replace(/-/g, '')) >= switchDateNum) continue;
+              if (Number(t.date.replace(/-/g, '')) < Number(windowStartISO.replace(/-/g, ''))) continue;
+              const key = weeklyPeriodKeyFromYYYYMMDD(t.date, weekStartDay);
+              if (key != null && byWeek[key] != null) byWeek[key].spent += t.amount;
+            } else {
+              const key = biweeklyPeriodKeyFromYYYYMMDD(t.date, biweeklyOptions);
+              if (key != null && byPeriod[key] != null) byPeriod[key].spent += t.amount;
+            }
           } else if (byMonth[txMonthKey] != null) {
             byMonth[txMonthKey].spent += t.amount;
           }
         }
-        for (const i of income) {
-          const incMonthKey = monthKeyFromYYYYMMDD(i.date);
+        for (const inc of income) {
+          const incMonthKey = monthKeyFromYYYYMMDD(inc.date);
           if (incMonthKey == null || incMonthKey < monthWindowStart || incMonthKey > thisMonth) continue;
           if (incMonthKey < switchMonthKey) {
-            const key = biweeklyPeriodKeyFromYYYYMMDD(i.date, biweeklyOptions);
-            if (key != null && byPeriod[key] != null) byPeriod[key].income += i.amount;
+            if (useWeeklyForPreSwitch) {
+              if (Number(inc.date.replace(/-/g, '')) >= switchDateNum) continue;
+              if (Number(inc.date.replace(/-/g, '')) < Number(windowStartISO.replace(/-/g, ''))) continue;
+              const key = weeklyPeriodKeyFromYYYYMMDD(inc.date, weekStartDay);
+              if (key != null && byWeek[key] != null) byWeek[key].income += inc.amount;
+            } else {
+              const key = biweeklyPeriodKeyFromYYYYMMDD(inc.date, biweeklyOptions);
+              if (key != null && byPeriod[key] != null) byPeriod[key].income += inc.amount;
+            }
           } else if (byMonth[incMonthKey] != null) {
-            byMonth[incMonthKey].income += i.amount;
+            byMonth[incMonthKey].income += inc.amount;
           }
         }
+
         const periodEntries = Object.entries(byPeriod).map(([key]) => {
           const k = Number(key);
           const m = Math.floor((k % 24) / 2);
@@ -170,6 +222,18 @@ export function useAnalyticsData(
             income: byPeriod[k].income,
           };
         });
+
+        const weekEntries = Object.entries(byWeek)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([key]) => {
+            const k = Number(key);
+            const weekMs = k * 7 * 24 * 60 * 60 * 1000;
+            const weekStart = new Date(weekMs);
+            const label = `Wk ${MONTH_NAMES_SHORT[weekStart.getMonth()]} ${weekStart.getDate()}`;
+            const sortKey = weekStart.getFullYear() * 10000 + (weekStart.getMonth() + 1) * 100 + weekStart.getDate();
+            return { sortKey, month: label, spent: byWeek[k].spent, income: byWeek[k].income };
+          });
+
         const monthEntries = Object.entries(byMonth)
           .sort(([a], [b]) => Number(a) - Number(b))
           .map(([key]) => {
@@ -182,7 +246,7 @@ export function useAnalyticsData(
               income: byMonth[Number(key)].income,
             };
           });
-        spendingOverTimeData = [...periodEntries, ...monthEntries]
+        spendingOverTimeData = [...periodEntries, ...weekEntries, ...monthEntries]
           .sort((a, b) => a.sortKey - b.sortKey)
           .map(({ month, spent, income }) => ({ month, spent, income }));
       } else {
@@ -314,6 +378,7 @@ export function useAnalyticsData(
     dailySpendingDays,
     budgetPeriodMode,
     budgetPeriodModeSwitchDate,
+    previousBudgetPeriodMode,
     biweeklyPeriod1StartDay,
     biweeklyPeriod1EndDay,
     weekStartDay,

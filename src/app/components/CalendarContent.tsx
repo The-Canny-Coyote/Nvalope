@@ -69,10 +69,17 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [addExpenseForDate, setAddExpenseForDate] = useState<string | null>(null);
   const [addIncomeForDate, setAddIncomeForDate] = useState<string | null>(null);
+  const [addBillForDate, setAddBillForDate] = useState<string | null>(null);
+  const [billDraftName, setBillDraftName] = useState('');
+  const [billDraftAmount, setBillDraftAmount] = useState('');
+  const [billDraftRepeatMonthly, setBillDraftRepeatMonthly] = useState(false);
+  const [billDraftEnvelopeId, setBillDraftEnvelopeId] = useState('');
   const [showDeleteTransactionDialogEdit, setShowDeleteTransactionDialogEdit] = useState(false);
   const [deleteTransactionEditTargetId, setDeleteTransactionEditTargetId] = useState<string | null>(null);
   const [showDeleteTransactionDialogList, setShowDeleteTransactionDialogList] = useState(false);
   const [deleteTransactionListTargetId, setDeleteTransactionListTargetId] = useState<string | null>(null);
+  const [showDeleteIncomeDialog, setShowDeleteIncomeDialog] = useState(false);
+  const [deleteIncomeTargetId, setDeleteIncomeTargetId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteRef = useRef<string | null>(null);
   pendingDeleteRef.current = pendingDeleteId;
@@ -289,6 +296,58 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
   }, [selectedDate, eventsByDate, pendingDeleteId]);
   const hasEnvelopes = envelopes.length > 0;
 
+  const handleDeleteIncome = useCallback(
+    (incomeEntryId: string) => {
+      const entry = state.income.find((i) => i.id === incomeEntryId);
+      if (!entry) return;
+      delayedToast.successWithUndo(
+        'Income deleted',
+        () => {
+          api.deleteIncome(incomeEntryId);
+          setSelectedDate(null);
+          setEditingIncomeId(null);
+        },
+        () => {
+          api.addIncome({ amount: entry.amount, source: entry.source, date: entry.date });
+        }
+      );
+    },
+    [api, state.income]
+  );
+
+  const handleDeleteBill = useCallback(
+    (billId: string) => {
+      const bill = bills.find((b) => b.id === billId);
+      if (!bill) return;
+      delayedToast.successWithUndo(
+        'Bill deleted',
+        () => {
+          api.deleteBill(billId);
+          setSelectedDate(null);
+          setEditingBillId(null);
+        },
+        () => {
+          api.addBill({
+            name: bill.name,
+            dueDate: bill.dueDate,
+            amount: bill.amount,
+            repeatMonthly: bill.repeatMonthly ?? false,
+            envelopeId: bill.envelopeId,
+          });
+        }
+      );
+    },
+    [api, bills]
+  );
+
+  useEffect(() => {
+    if (!addBillForDate) return;
+    setBillDraftName('');
+    setBillDraftAmount('');
+    setBillDraftRepeatMonthly(false);
+    setBillDraftEnvelopeId('');
+  }, [addBillForDate]);
+
   const handleDeleteTransaction = useCallback(
     (id: string) => {
       setPendingDeleteId(id);
@@ -483,7 +542,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                           aria-selected={isSelected}
                           onClick={() => setSelectedDate(dateStr)}
                           className={`
-                            aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200
+                            aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200 overflow-hidden
                             flex flex-col items-start justify-start min-h-0 w-full
                             ${isSelected ? 'border-primary bg-primary/15 ring-2 ring-primary/50' : 'border-border hover:border-primary/50'}
                             ${net === 0 && (events.length > 0 ? 'bg-primary/10 border-primary/30' : 'bg-card')}
@@ -493,10 +552,10 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                           `}
                         >
                           <span className="text-xs sm:text-sm text-foreground font-medium">{dayNum}</span>
-                          {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">{formatMoney(-expense)}</span>}
-                          {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">+{formatMoney(incomeTotal)}</span>}
-                          {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
-                          {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto">{events.length} items</span>}
+                          {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono truncate w-full block">{formatMoney(-expense)}</span>}
+                          {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono truncate w-full block">+{formatMoney(incomeTotal)}</span>}
+                          {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono truncate w-full block ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
+                          {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto truncate w-full block">{events.length} items</span>}
                         </button>
                       </TooltipTrigger>
                       <TooltipContent sideOffset={4}>{tooltipParts.join('. ')}</TooltipContent>
@@ -549,7 +608,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                     aria-selected={isSelected}
                     onClick={() => setSelectedDate(dateStr)}
                     className={`
-                      aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200
+                      aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200 overflow-hidden
                       flex flex-col items-start justify-start min-h-0 w-full
                       ${isSelected ? 'border-primary bg-primary/15 ring-2 ring-primary/50' : 'border-border hover:border-primary/50'}
                       ${net === 0 && (hasAny ? 'bg-primary/10 border-primary/30' : 'bg-card')}
@@ -560,22 +619,22 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                   >
                     <span className="text-xs sm:text-sm text-foreground font-medium">{day}</span>
                     {expense > 0 && (
-                      <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">
+                      <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono truncate w-full block">
                         {formatMoney(-expense)}
                       </span>
                     )}
                     {incomeTotal > 0 && (
-                      <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">
+                      <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono truncate w-full block">
                         +{formatMoney(incomeTotal)}
                       </span>
                     )}
                     {net !== 0 && (
-                      <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono truncate w-full block ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         Net {net > 0 ? '+' : ''}{formatMoney(net)}
                       </span>
                     )}
                     {events.length > 1 && (
-                      <span className="text-[10px] text-muted-foreground mt-auto">{events.length} items</span>
+                      <span className="text-[10px] text-muted-foreground mt-auto truncate w-full block">{events.length} items</span>
                     )}
                   </button>
                 </TooltipTrigger>
@@ -627,7 +686,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                     aria-selected={isSelected}
                     onClick={() => setSelectedDate(dateStr)}
                     className={`
-                      aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200
+                      aspect-square p-1.5 sm:p-2 border rounded-lg text-left transition-colors duration-200 overflow-hidden
                       flex flex-col items-start justify-start min-h-0 w-full
                       ${isSelected ? 'border-primary bg-primary/15 ring-2 ring-primary/50' : 'border-border hover:border-primary/50'}
                       ${net === 0 && (hasAny ? 'bg-primary/10 border-primary/30' : 'bg-card')}
@@ -637,10 +696,10 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                     `}
                   >
                     <span className="text-xs sm:text-sm text-foreground font-medium">{day}</span>
-                    {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono">{formatMoney(-expense)}</span>}
-                    {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono">+{formatMoney(incomeTotal)}</span>}
-                    {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
-                    {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto">{events.length} items</span>}
+                    {expense > 0 && <span className="text-[10px] sm:text-xs text-primary font-medium mt-0.5 font-mono truncate w-full block">{formatMoney(-expense)}</span>}
+                    {incomeTotal > 0 && <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5 font-mono truncate w-full block">+{formatMoney(incomeTotal)}</span>}
+                    {net !== 0 && <span className={`text-[10px] sm:text-xs font-medium mt-0.5 font-mono truncate w-full block ${net > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>Net {net > 0 ? '+' : ''}{formatMoney(net)}</span>}
+                    {events.length > 1 && <span className="text-[10px] text-muted-foreground mt-auto truncate w-full block">{events.length} items</span>}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>{tooltipText}</TooltipContent>
@@ -685,6 +744,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
             setEditingBillId(null);
             setAddExpenseForDate(null);
             setAddIncomeForDate(null);
+            setAddBillForDate(null);
           }
         }}
       >
@@ -696,7 +756,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                   <p className="text-sm text-foreground">Could not load day details. Close and try another day.</p>
                   <button
                     type="button"
-                    onClick={() => { setSelectedDate(null); setEditingTransactionId(null); setEditingBillId(null); setEditingIncomeId(null); setAddExpenseForDate(null); setAddIncomeForDate(null); }}
+                    onClick={() => { setSelectedDate(null); setEditingTransactionId(null); setEditingBillId(null); setEditingIncomeId(null); setAddExpenseForDate(null); setAddIncomeForDate(null); setAddBillForDate(null); }}
                     className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm"
                   >
                     Close
@@ -771,7 +831,7 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                         }}
                         onCancel={() => setEditingIncomeId(null)}
                         onDelete={() => {
-                          api.deleteIncome(incomeEntry.id);
+                          handleDeleteIncome(incomeEntry.id);
                           setEditingIncomeId(null);
                         }}
                       />
@@ -781,6 +841,17 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                         <span className="text-sm font-medium text-green-600 dark:text-green-400 tabular-nums">+{formatMoney(e.amount)}</span>
                         <button type="button" onClick={() => setEditingIncomeId(e.id)} className="p-1 rounded hover:bg-muted" aria-label="Edit income">
                           <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteIncomeTargetId(incomeEntry.id);
+                            setShowDeleteIncomeDialog(true);
+                          }}
+                          className="p-1 rounded hover:bg-destructive/20 text-destructive"
+                          aria-label="Delete income"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </>
                     )}
@@ -795,14 +866,33 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
                     {isEditing ? (
                       <BillEditForm
                         bill={bill}
+                        envelopes={envelopes}
                         onSave={(updates) => { api.updateBill(bill.id, updates); setEditingBillId(null); }}
                         onCancel={() => setEditingBillId(null)}
-                        onDelete={() => { api.deleteBill(bill.id); setEditingBillId(null); }}
+                        onDelete={() => { handleDeleteBill(bill.id); setEditingBillId(null); }}
                       />
                     ) : (
                       <>
                         <span className="flex-1 text-sm text-foreground">{bill.name}</span>
                         {bill.amount != null && <span className="text-sm tabular-nums">{formatMoney(-bill.amount)}</span>}
+                        {!isEditing && bill.amount != null && bill.envelopeId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              api.addTransaction({
+                                amount: bill.amount!,
+                                envelopeId: bill.envelopeId,
+                                description: bill.name,
+                                date: selectedDate!,
+                              });
+                              delayedToast.success(`${bill.name} marked as paid.`);
+                            }}
+                            className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10"
+                            aria-label={`Mark ${bill.name} as paid`}
+                          >
+                            Pay
+                          </button>
+                        )}
                         <button type="button" onClick={() => setEditingBillId(bill.id)} className="p-1 rounded hover:bg-muted" aria-label="Edit bill">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -858,6 +948,90 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
               <Plus className="w-4 h-4" /> Add income for this day
             </button>
           )}
+
+          {addBillForDate === selectedDate ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const name = billDraftName.trim();
+                if (!name) return;
+                const num = billDraftAmount === '' ? undefined : parseFloat(billDraftAmount);
+                api.addBill({
+                  name,
+                  dueDate: selectedDate,
+                  amount: Number.isNaN(num as number) ? undefined : num,
+                  repeatMonthly: billDraftRepeatMonthly,
+                  envelopeId: billDraftEnvelopeId || undefined,
+                });
+                setAddBillForDate(null);
+              }}
+              className="flex flex-col gap-2 p-2 rounded-lg border border-border bg-card"
+            >
+              <input
+                type="text"
+                value={billDraftName}
+                onChange={(e) => setBillDraftName(e.target.value)}
+                className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                placeholder="Bill name"
+                required
+                aria-label="Bill name"
+              />
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={billDraftAmount}
+                onChange={(e) => setBillDraftAmount(e.target.value)}
+                className="px-2 py-1 border border-primary/30 rounded text-sm bg-card text-foreground font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                placeholder="Amount (optional)"
+                aria-label="Bill amount optional"
+              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="text-sm text-foreground flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={billDraftRepeatMonthly}
+                    onChange={(e) => setBillDraftRepeatMonthly(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  Repeat monthly
+                </label>
+                <select
+                  value={billDraftEnvelopeId}
+                  onChange={(e) => setBillDraftEnvelopeId(e.target.value)}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Envelope for bill (optional)"
+                >
+                  <option value="">No envelope</option>
+                  {envelopes.map((env) => (
+                    <option key={env.id} value={env.id}>
+                      {env.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button type="submit" className="min-h-[44px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+                  Save bill
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddBillForDate(null)}
+                  className="min-h-[44px] px-4 rounded-lg border border-border text-sm font-medium hover:bg-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddBillForDate(selectedDate)}
+              className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              <Plus className="w-4 h-4" /> Add bill due on this day
+            </button>
+          )}
               </div>
             </AppErrorBoundary>
           )}
@@ -891,6 +1065,21 @@ function CalendarContentInner({ highContrast = false, screenReaderMode: _screenR
         onConfirm={() => {
           const id = deleteTransactionListTargetId;
           if (id) handleDeleteTransaction(id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showDeleteIncomeDialog}
+        onOpenChange={(open) => {
+          setShowDeleteIncomeDialog(open);
+          if (!open) setDeleteIncomeTargetId(null);
+        }}
+        title="Delete income?"
+        description="The income entry will be removed."
+        confirmLabel="Delete income"
+        onConfirm={() => {
+          const id = deleteIncomeTargetId;
+          if (id) handleDeleteIncome(id);
         }}
       />
 

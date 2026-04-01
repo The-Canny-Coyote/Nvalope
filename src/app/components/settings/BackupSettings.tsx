@@ -14,6 +14,7 @@ import { clampLayoutScale, clampWheelScale, clampCardBarRows, clampCardBarColumn
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/app/components/ui/collapsible';
 import { Alert, AlertTitle, AlertDescription } from '@/app/components/ui/alert';
+import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import {
   classifyImportedTransactions,
@@ -95,6 +96,9 @@ export function BackupSettings({
   const [pendingImportEncryptedContent, setPendingImportEncryptedContent] = useState<string | null>(null);
   const [showEncryptedNudge, setShowEncryptedNudge] = useState(false);
   const [dataMgmtOpen, setDataMgmtOpen] = useState(false);
+  const [showImportConfirmDialog, setShowImportConfirmDialog] = useState(false);
+  const pendingImportRawRef = useRef<Record<string, unknown> | null>(null);
+  const [showSampleDataConfirmDialog, setShowSampleDataConfirmDialog] = useState(false);
 
   const handleDataMgmtOpenChange = useCallback(
     (open: boolean) => {
@@ -255,7 +259,8 @@ export function BackupSettings({
         return;
       }
       const raw = JSON.parse(text) as Record<string, unknown>;
-      applyImportedRaw(raw, toastId);
+      pendingImportRawRef.current = raw;
+      setShowImportConfirmDialog(true);
     } catch {
       toast.dismiss(toastId);
       delayedToast.error('We couldn\'t read that file. Check that it is a valid backup and try again.');
@@ -410,7 +415,8 @@ export function BackupSettings({
         .then((decrypted) => {
           try {
             const raw = JSON.parse(decrypted) as Record<string, unknown>;
-            applyImportedRaw(raw, toastId);
+            pendingImportRawRef.current = raw;
+            setShowImportConfirmDialog(true);
           } catch (parseErr) {
             toast.dismiss(toastId);
             void parseErr;
@@ -691,6 +697,13 @@ export function BackupSettings({
                 type="button"
                 onClick={() => {
                   if (!api) return;
+                  const existing = api.getState();
+                  const hasData =
+                    (existing.transactions?.length ?? 0) > 0 || (existing.envelopes?.length ?? 0) > 0;
+                  if (hasData) {
+                    setShowSampleDataConfirmDialog(true);
+                    return;
+                  }
                   const state = getSeedBudgetState();
                   api.importData(state);
                   delayedToast.success('Sample data loaded. You can try the assistant and other sections.');
@@ -730,6 +743,46 @@ export function BackupSettings({
         open={showEncryptedNudge}
         onOpenChange={setShowEncryptedNudge}
         onAck={() => setShowEncryptedNudge(false)}
+      />
+
+      <ConfirmDialog
+        open={showImportConfirmDialog}
+        onOpenChange={(open) => {
+          setShowImportConfirmDialog(open);
+          if (!open) {
+            pendingImportRawRef.current = null;
+            toast.dismiss('import-file');
+          }
+        }}
+        title="Replace your budget data?"
+        description="This will replace all your current envelopes, transactions, and income with the data in this file. This cannot be undone. Make sure you have a backup of your current data first."
+        confirmLabel="Yes, replace my data"
+        onConfirm={() => {
+          const raw = pendingImportRawRef.current;
+          if (!raw) {
+            toast.dismiss('import-file');
+            delayedToast.error('Import data was not available. Please try again.');
+            return;
+          }
+          applyImportedRaw(raw, 'import-file');
+          pendingImportRawRef.current = null;
+          setShowImportConfirmDialog(false);
+        }}
+      />
+
+      <ConfirmDialog
+        open={showSampleDataConfirmDialog}
+        onOpenChange={setShowSampleDataConfirmDialog}
+        title="Replace your data with sample data?"
+        description="This will overwrite your current budget. Use this only if you want to start fresh with demo data."
+        confirmLabel="Load sample data"
+        onConfirm={() => {
+          if (!api) return;
+          const state = getSeedBudgetState();
+          api.importData(state);
+          delayedToast.success('Sample data loaded. You can try the assistant and other sections.');
+          setShowSampleDataConfirmDialog(false);
+        }}
       />
     </>
   );

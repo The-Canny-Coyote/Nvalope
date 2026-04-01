@@ -253,6 +253,13 @@ function EnvelopesExpensesContentInner() {
     applyPeriodMode(mode, null);
   }, [budgetPeriodMode, applyPeriodMode]);
 
+  const period2WouldBeEmpty = useMemo(() => {
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].some((m) => {
+      const lastDay = new Date(new Date().getFullYear(), m, 0).getDate();
+      return biweeklyPeriod1EndDay >= lastDay;
+    });
+  }, [biweeklyPeriod1EndDay]);
+
   const handleSwitchToMonthlyForAll = useCallback(() => {
     applyPeriodMode('monthly', null);
     setShowSwitchToMonthlyDialog(false);
@@ -266,7 +273,18 @@ function EnvelopesExpensesContentInner() {
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseFloat(amount);
-    if (Number.isNaN(num) || num <= 0 || !envelopeId || !description.trim()) return;
+    if (Number.isNaN(num) || num <= 0) {
+      delayedToast.error('Enter a valid amount.');
+      return;
+    }
+    if (!envelopeId) {
+      delayedToast.error('Select an envelope.');
+      return;
+    }
+    if (!description.trim()) {
+      delayedToast.error('Enter a description for this expense.');
+      return;
+    }
     try {
       api.addTransaction({ amount: num, envelopeId, description: description.trim(), date });
       setAmount('');
@@ -292,6 +310,352 @@ function EnvelopesExpensesContentInner() {
   };
 
   const hasEnvelopes = envelopes.length > 0;
+
+  function SavingsGoalsSection() {
+    const goals = Array.isArray(state.savingsGoals) ? state.savingsGoals : [];
+    const [open, setOpen] = useState(() => goals.length > 0);
+    const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+    const [showDeleteGoalDialog, setShowDeleteGoalDialog] = useState(false);
+    const [deleteGoalTargetId, setDeleteGoalTargetId] = useState<string | null>(null);
+
+    const [createName, setCreateName] = useState('');
+    const [createTargetAmount, setCreateTargetAmount] = useState('');
+    const [createCurrentAmount, setCreateCurrentAmount] = useState('');
+    const [createTargetDate, setCreateTargetDate] = useState('');
+    const [createMonthlyContribution, setCreateMonthlyContribution] = useState('');
+
+    const [editName, setEditName] = useState('');
+    const [editTargetAmount, setEditTargetAmount] = useState('');
+    const [editCurrentAmount, setEditCurrentAmount] = useState('');
+    const [editTargetDate, setEditTargetDate] = useState('');
+    const [editMonthlyContribution, setEditMonthlyContribution] = useState('');
+
+    const startEdit = (id: string) => {
+      const g = goals.find((x) => x.id === id);
+      if (!g) return;
+      setEditingGoalId(id);
+      setEditName(g.name);
+      setEditTargetAmount(String(g.targetAmount ?? 0));
+      setEditCurrentAmount(String(g.currentAmount ?? 0));
+      setEditTargetDate(g.targetDate ?? '');
+      setEditMonthlyContribution(g.monthlyContribution != null ? String(g.monthlyContribution) : '');
+    };
+
+    const handleCreate = (e: React.FormEvent) => {
+      e.preventDefault();
+      const name = createName.trim();
+      const targetAmount = parseFloat(createTargetAmount);
+      const currentAmount = parseFloat(createCurrentAmount || '0');
+      const monthlyContribution = createMonthlyContribution.trim() === '' ? undefined : parseFloat(createMonthlyContribution);
+      const targetDate = createTargetDate.trim() === '' ? undefined : createTargetDate.trim();
+
+      if (!name) {
+        delayedToast.error('Enter a goal name.');
+        return;
+      }
+      if (Number.isNaN(targetAmount) || targetAmount <= 0) {
+        delayedToast.error('Enter a valid target amount.');
+        return;
+      }
+      if (Number.isNaN(currentAmount) || currentAmount < 0) {
+        delayedToast.error('Enter a valid current amount.');
+        return;
+      }
+      if (monthlyContribution != null && (Number.isNaN(monthlyContribution) || monthlyContribution < 0)) {
+        delayedToast.error('Enter a valid monthly contribution.');
+        return;
+      }
+      try {
+        api.createSavingsGoal({
+          name,
+          targetAmount,
+          targetDate,
+          monthlyContribution,
+          currentAmount,
+        });
+        setCreateName('');
+        setCreateTargetAmount('');
+        setCreateCurrentAmount('');
+        setCreateTargetDate('');
+        setCreateMonthlyContribution('');
+        if (!open) setOpen(true);
+      } catch {
+        delayedToast.error('Could not create savings goal. Please check the values and try again.');
+      }
+    };
+
+    const handleSaveEdit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!editingGoalId) return;
+      const name = editName.trim();
+      const targetAmount = parseFloat(editTargetAmount);
+      const currentAmount = parseFloat(editCurrentAmount || '0');
+      const monthlyContribution = editMonthlyContribution.trim() === '' ? undefined : parseFloat(editMonthlyContribution);
+      const targetDate = editTargetDate.trim() === '' ? undefined : editTargetDate.trim();
+
+      if (!name) {
+        delayedToast.error('Enter a goal name.');
+        return;
+      }
+      if (Number.isNaN(targetAmount) || targetAmount <= 0) {
+        delayedToast.error('Enter a valid target amount.');
+        return;
+      }
+      if (Number.isNaN(currentAmount) || currentAmount < 0) {
+        delayedToast.error('Enter a valid current amount.');
+        return;
+      }
+      if (monthlyContribution != null && (Number.isNaN(monthlyContribution) || monthlyContribution < 0)) {
+        delayedToast.error('Enter a valid monthly contribution.');
+        return;
+      }
+      try {
+        api.updateSavingsGoal(editingGoalId, {
+          name,
+          targetAmount,
+          targetDate,
+          monthlyContribution,
+          currentAmount,
+        });
+        setEditingGoalId(null);
+      } catch {
+        delayedToast.error('Could not update savings goal. Please try again.');
+      }
+    };
+
+    return (
+      <div className="border-t border-border pt-4">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-2 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
+          aria-expanded={open}
+        >
+          <span className="text-sm font-medium text-foreground flex items-center gap-2">
+            🧰💰 Cache Savings Goals
+          </span>
+          <span className="text-xs text-muted-foreground">{open ? 'Hide' : 'Show'}</span>
+        </button>
+
+        {open && (
+          <div className="mt-3 space-y-3">
+            {goals.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No goals yet. Create one below to start tracking progress.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {goals.map((g) => {
+                  const target = g.targetAmount ?? 0;
+                  const current = g.currentAmount ?? 0;
+                  const pct = target > 0 ? Math.min(999, Math.round((current / target) * 100)) : 0;
+                  const isEditing = editingGoalId === g.id;
+                  return (
+                    <div key={g.id} className="p-3 rounded-lg border border-border bg-card">
+                      {isEditing ? (
+                        <form onSubmit={handleSaveEdit} className="space-y-2">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                            placeholder="Goal name"
+                            aria-label="Goal name"
+                            required
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editCurrentAmount}
+                              onChange={(e) => setEditCurrentAmount(e.target.value)}
+                              className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                              placeholder="Current"
+                              aria-label="Current amount"
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editTargetAmount}
+                              onChange={(e) => setEditTargetAmount(e.target.value)}
+                              className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                              placeholder="Target"
+                              aria-label="Target amount"
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="date"
+                              value={editTargetDate}
+                              onChange={(e) => setEditTargetDate(e.target.value)}
+                              className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                              aria-label="Target date (optional)"
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editMonthlyContribution}
+                              onChange={(e) => setEditMonthlyContribution(e.target.value)}
+                              className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                              placeholder="Monthly (optional)"
+                              aria-label="Monthly contribution (optional)"
+                            />
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button type="submit" className="min-h-[44px]">Save</Button>
+                            <Button type="button" variant="outline" onClick={() => setEditingGoalId(null)} className="min-h-[44px]">
+                              Cancel
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">🪙 {g.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {g.targetDate ? `Target date: ${g.targetDate}` : 'No target date.'}
+                              </p>
+                              {g.monthlyContribution != null && g.monthlyContribution > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Monthly contribution: <span className="font-mono">{formatMoney(g.monthlyContribution)}</span>
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => startEdit(g.id)}
+                                aria-label={`Edit savings goal ${g.name}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setDeleteGoalTargetId(g.id);
+                                  setShowDeleteGoalDialog(true);
+                                }}
+                                aria-label={`Delete savings goal ${g.name}`}
+                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span className="font-mono">{formatMoney(current)} / {formatMoney(target)}</span>
+                              <span className="text-primary font-medium">{pct}%</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2 mt-1">
+                              <div className="bg-primary h-2 rounded-full" style={{ width: `${Math.min(100, pct)}%` }} />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+              <p className="text-sm font-medium text-primary mb-2">🗝️ Create goal</p>
+              <form onSubmit={handleCreate} className="space-y-2" encType="application/x-www-form-urlencoded">
+                <input
+                  type="text"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  placeholder="Goal name"
+                  aria-label="Goal name"
+                  required
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={createCurrentAmount}
+                    onChange={(e) => setCreateCurrentAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    placeholder="Current amount"
+                    aria-label="Current amount"
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={createTargetAmount}
+                    onChange={(e) => setCreateTargetAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    placeholder="Target amount"
+                    aria-label="Target amount"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={createTargetDate}
+                    onChange={(e) => setCreateTargetDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    aria-label="Target date (optional)"
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={createMonthlyContribution}
+                    onChange={(e) => setCreateMonthlyContribution(e.target.value)}
+                    className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    placeholder="Monthly contribution (optional)"
+                    aria-label="Monthly contribution (optional)"
+                  />
+                </div>
+                <Button type="submit" variant="outline" className="min-h-[44px] border-2 border-dashed border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
+                  🧿 Create goal
+                </Button>
+              </form>
+            </div>
+
+            <ConfirmDialog
+              open={showDeleteGoalDialog}
+              onOpenChange={(next) => {
+                setShowDeleteGoalDialog(next);
+                if (!next) setDeleteGoalTargetId(null);
+              }}
+              title="Delete savings goal?"
+              description="This goal will be removed. This does not delete any transactions."
+              confirmLabel="Delete goal"
+              onConfirm={() => {
+                if (!deleteGoalTargetId) return;
+                try {
+                  api.deleteSavingsGoal(deleteGoalTargetId);
+                  if (editingGoalId === deleteGoalTargetId) setEditingGoalId(null);
+                } catch {
+                  delayedToast.error('Could not delete savings goal. Please try again.');
+                } finally {
+                  setShowDeleteGoalDialog(false);
+                  setDeleteGoalTargetId(null);
+                }
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -367,6 +731,11 @@ function EnvelopesExpensesContentInner() {
               </select>
               <span className="text-sm text-muted-foreground">of the month</span>
             </div>
+            {period2WouldBeEmpty && (
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                ⚠ Period 1 end day is ≥ the last day of some months (e.g. February). Period 2 will be empty in those months.
+              </p>
+            )}
           </div>
         )}
         {budgetPeriodMode === 'weekly' && (
@@ -457,6 +826,7 @@ function EnvelopesExpensesContentInner() {
             const spent = periodEnv?.spent ?? 0;
             const remaining = periodEnv?.remaining ?? e.limit;
             const pct = e.limit > 0 ? Math.round((spent / e.limit) * 100) : 0;
+            const isOverBudget = e.limit > 0 && pct > 100;
             const isEditing = editingEnvelopeId === e.id;
             return (
               <div
@@ -515,12 +885,14 @@ function EnvelopesExpensesContentInner() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-primary h-2 rounded-full"
+                        className={`${isOverBudget ? 'bg-destructive' : 'bg-primary'} h-2 rounded-full`}
                         style={{ width: `${Math.min(100, pct)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted-foreground">{formatMoney(remaining)} remaining</span>
+                      <span className={`text-xs ${isOverBudget ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                        {isOverBudget ? `Over by ${formatMoney(Math.abs(remaining))}` : `${formatMoney(remaining)} remaining`}
+                      </span>
                       <span className="text-xs text-primary">{pct}%</span>
                     </div>
                   </>
@@ -557,6 +929,8 @@ function EnvelopesExpensesContentInner() {
           </form>
         </div>
       </div>
+
+      <SavingsGoalsSection />
 
       <div className="p-4 bg-primary/10 border-2 border-primary/30 rounded-lg">
         <div className="flex items-center gap-1.5 mb-3">
@@ -598,11 +972,11 @@ function EnvelopesExpensesContentInner() {
             {!hasEnvelopes && 'Create an envelope in Your Envelopes above first.'}
           </div>
           <div>
-            <label htmlFor="exp-desc" className="block text-xs font-medium text-foreground mb-1">Description</label>
+            <label htmlFor="exp-desc" className="block text-xs font-medium text-foreground mb-1">Description *</label>
             <input
               id="exp-desc"
               type="text"
-              placeholder="What was it?"
+              placeholder="e.g. Groceries, Coffee"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -621,7 +995,7 @@ function EnvelopesExpensesContentInner() {
           <Button
             type="submit"
             className="w-full min-h-[44px]"
-            disabled={!hasEnvelopes}
+            disabled={!hasEnvelopes || !amount || parseFloat(amount) <= 0 || !description.trim()}
           >
             Add Expense
           </Button>

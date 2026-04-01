@@ -14,13 +14,7 @@ export default defineConfig(({ mode }) => ({
   worker: {
     format: 'es',
   },
-  define:
-    mode === 'production'
-      ? {
-          'import.meta.env.VITE_PREMIUM_AVAILABLE': JSON.stringify(''),
-          'import.meta.env.VITE_BUILD_EPOCH': JSON.stringify(Date.now()),
-        }
-      : undefined,
+  define: mode === 'production' ? { 'import.meta.env.VITE_BUILD_EPOCH': JSON.stringify(Date.now()) } : undefined,
   build: {
     modulePreload: { polyfill: false },
     outDir: 'dist',

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
 import { cn } from "@/app/components/ui/utils";
-import { Sparkles } from "lucide-react";
+import { Sparkles, RotateCcw } from "lucide-react";
 import { getAdvancedAssistantReply } from "@/app/services/advancedAssistant";
 import { getAssistantReply } from "@/app/services/basicAssistant";
 import {
@@ -383,6 +383,14 @@ export function AIChatSheet({
     void send(input);
   };
 
+  const handleClearConversation = useCallback(() => {
+    const next = getDefaultMessages(aiMode);
+    messagesRef.current = next;
+    setMessages(next);
+    setInput("");
+    onMessagesChange?.([]);
+  }, [aiMode, onMessagesChange]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex flex-col w-full max-w-md p-0">
@@ -409,6 +417,16 @@ export function AIChatSheet({
                     Advanced
                   </span>
                 )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearConversation}
+                  aria-label="Clear conversation"
+                  className="h-8 w-8"
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden />
+                </Button>
               </div>
               <SheetDescription>
                 {aiMode === "advanced"

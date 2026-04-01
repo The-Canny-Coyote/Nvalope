@@ -141,6 +141,8 @@ export interface AppState {
   budgetPeriodMode: 'monthly' | 'biweekly' | 'weekly';
   /** When user chose "monthly from now on" when switching from biweekly/weekly; dates before this still use previous mode for past view. */
   budgetPeriodModeSwitchDate: string | null;
+  /** When switching to monthly "from now on", remember which mode we were using for historical dates. */
+  previousBudgetPeriodMode: 'biweekly' | 'weekly' | null;
   /** Biweekly only: first day of period 1 (1–31). Synced from app data. */
   biweeklyPeriod1StartDay: number;
   /** Biweekly only: last day of period 1 (1–31). Period 2 starts the next day. Synced from app data. */
@@ -180,6 +182,7 @@ export interface AppState {
   setEncryptBackups: (v: boolean) => void;
   setBudgetPeriodMode: (mode: 'monthly' | 'biweekly' | 'weekly') => void;
   setBudgetPeriodModeSwitchDate: (date: string | null) => void;
+  setPreviousBudgetPeriodMode: (mode: 'biweekly' | 'weekly' | null) => void;
   setBiweeklyPeriod1StartDay: (day: number) => void;
   setBiweeklyPeriod1EndDay: (day: number) => void;
   setWeekStartDay: (day: number) => void;
@@ -222,6 +225,7 @@ export const useAppStore = create<AppState>()(
       encryptBackups: false,
       budgetPeriodMode: 'monthly',
       budgetPeriodModeSwitchDate: null,
+      previousBudgetPeriodMode: null,
       biweeklyPeriod1StartDay: 1,
       biweeklyPeriod1EndDay: 14,
       weekStartDay: 0,
@@ -259,8 +263,19 @@ export const useAppStore = create<AppState>()(
       setStorageBarMinimized: (v) => set({ storageBarMinimized: v }),
       setWheelMinimized: (v) => set({ wheelMinimized: v }),
       setEncryptBackups: (v) => set({ encryptBackups: v }),
-      setBudgetPeriodMode: (mode) => set({ budgetPeriodMode: mode }),
+      setBudgetPeriodMode: (mode) =>
+        set((s) => {
+          const currentMode = s.budgetPeriodMode;
+          const next: Partial<AppState> = { budgetPeriodMode: mode };
+          if (mode === 'monthly' && (currentMode === 'biweekly' || currentMode === 'weekly')) {
+            next.previousBudgetPeriodMode = currentMode;
+          } else if (currentMode === 'monthly' && mode !== 'monthly') {
+            next.previousBudgetPeriodMode = null;
+          }
+          return next;
+        }),
       setBudgetPeriodModeSwitchDate: (date) => set({ budgetPeriodModeSwitchDate: date }),
+      setPreviousBudgetPeriodMode: (mode) => set({ previousBudgetPeriodMode: mode }),
       setBiweeklyPeriod1StartDay: (day) => set({ biweeklyPeriod1StartDay: Math.min(31, Math.max(1, day)) }),
       setBiweeklyPeriod1EndDay: (day) => set({ biweeklyPeriod1EndDay: Math.min(31, Math.max(1, day)) }),
       setWeekStartDay: (day) => set({ weekStartDay: day === 1 ? 1 : 0 }),
@@ -290,6 +305,7 @@ export const useAppStore = create<AppState>()(
         storageBarMinimized: s.storageBarMinimized,
         wheelMinimized: s.wheelMinimized,
         encryptBackups: s.encryptBackups,
+        previousBudgetPeriodMode: s.previousBudgetPeriodMode,
       }),
       // Merge persisted enabledModules with core IDs so core features are always on by default
       // even for users who have an older persisted state without the new core module IDs.
@@ -361,6 +377,7 @@ export function getAppStoreSettingsSnapshot(): Record<string, unknown> {
     encryptBackups: s.encryptBackups,
     budgetPeriodMode: s.budgetPeriodMode,
     budgetPeriodModeSwitchDate: s.budgetPeriodModeSwitchDate,
+    previousBudgetPeriodMode: s.previousBudgetPeriodMode,
     biweeklyPeriod1StartDay: s.biweeklyPeriod1StartDay,
     biweeklyPeriod1EndDay: s.biweeklyPeriod1EndDay,
     weekStartDay: s.weekStartDay,

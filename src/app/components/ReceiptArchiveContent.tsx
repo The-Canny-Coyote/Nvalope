@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { getAppData, setAppData } from '@/app/services/appDataIdb';
 import type { ReceiptArchiveItem } from '@/app/services/appDataIdb';
 import { getCurrencySymbol } from '@/app/utils/format';
@@ -14,6 +14,8 @@ function ReceiptArchiveContentInner() {
   const [loading, setLoading] = useState(true);
   const [showRemoveReceiptArchiveDialog, setShowRemoveReceiptArchiveDialog] = useState(false);
   const [removeReceiptArchiveTargetId, setRemoveReceiptArchiveTargetId] = useState<string | null>(null);
+  const [archiveSearch, setArchiveSearch] = useState('');
+  const [archiveSortNewest, setArchiveSortNewest] = useState(true);
 
   const loadArchives = useCallback(() => {
     getAppData()
@@ -69,6 +71,19 @@ function ReceiptArchiveContentInner() {
     );
   }
 
+  const filtered = useMemo(() => {
+    const q = archiveSearch.trim().toLowerCase();
+    if (!q) return archives;
+    return archives.filter((a) => (a.scan.description ?? '').toLowerCase().includes(q));
+  }, [archives, archiveSearch]);
+
+  const filteredSorted = useMemo(() => {
+    const list = [...filtered];
+    return list.sort((a, b) =>
+      archiveSortNewest ? b.savedAt.localeCompare(a.savedAt) : a.savedAt.localeCompare(b.savedAt)
+    );
+  }, [filtered, archiveSortNewest]);
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg text-primary">Receipt Archive</h3>
@@ -78,8 +93,33 @@ function ReceiptArchiveContentInner() {
       {archives.length === 0 ? (
         <p className="text-sm text-muted-foreground">No receipts in the archive yet. Save a receipt from Receipt Scanner to add it here.</p>
       ) : (
-        <ul className="space-y-3">
-          {archives.map((item) => {
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={archiveSearch}
+              onChange={(e) => setArchiveSearch(e.target.value)}
+              placeholder="Search receipts…"
+              aria-label="Search receipt archive"
+              className="flex-1 min-w-[160px] min-h-[44px] px-3 py-2 border border-border rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            />
+            <button
+              type="button"
+              onClick={() => setArchiveSortNewest((v) => !v)}
+              className="min-h-[44px] px-3 py-2 border border-border rounded-lg bg-card text-foreground text-sm hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-label="Toggle receipt sort order"
+            >
+              {archiveSortNewest ? 'Newest first' : 'Oldest first'}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {filtered.length} receipt{filtered.length !== 1 ? 's' : ''}
+          </p>
+          {filteredSorted.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No receipts match your search.</p>
+          ) : (
+            <ul className="space-y-3">
+              {filteredSorted.map((item) => {
             const s = item.scan;
             const currencySymbol = getCurrencySymbol(s.currency);
             const savedDateStr = formatDate(item.savedAt);
@@ -147,8 +187,10 @@ function ReceiptArchiveContentInner() {
                 </div>
               </li>
             );
-          })}
-        </ul>
+              })}
+            </ul>
+          )}
+        </>
       )}
 
       <Dialog open={!!viewing} onOpenChange={(open) => !open && setViewing(null)}>

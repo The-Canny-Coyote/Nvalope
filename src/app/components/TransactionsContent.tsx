@@ -98,10 +98,31 @@ function TransactionsContentInner() {
   const newTransactionDummy = {
     id: ADD_TRANSACTION_ID,
     amount: 0,
+    envelopeId: envelopes[0]?.id ?? '',
     description: '',
     date: todayISO(),
     createdAt: new Date().toISOString(),
   };
+
+  const countLabel = useMemo(() => {
+    const total = transactions.length;
+    const shown = visibleFiltered.length;
+    const hasSearch = search.trim().length > 0;
+    const hasEnvFilter = filterEnvelopeId !== '';
+    if (!hasSearch && !hasEnvFilter) return `${total} transaction${total !== 1 ? 's' : ''}`;
+    const filterDesc = hasEnvFilter
+      ? filterEnvelopeId === '__uncategorized__'
+        ? 'uncategorized'
+        : (envelopeNameById.get(filterEnvelopeId) ?? 'selected envelope')
+      : '';
+    if (hasSearch && hasEnvFilter) return `${shown} matching "${search.trim()}" in ${filterDesc}`;
+    if (hasSearch) return `${shown} matching "${search.trim()}"`;
+    return `${shown} of ${
+      transactions.filter((t) =>
+        filterEnvelopeId === '__uncategorized__' ? !t.envelopeId : t.envelopeId === filterEnvelopeId
+      ).length
+    } in ${filterDesc}`;
+  }, [visibleFiltered.length, transactions, search, filterEnvelopeId, envelopeNameById]);
 
   return (
     <div className="space-y-4">
@@ -154,10 +175,15 @@ function TransactionsContentInner() {
                   delayedToast.error('Enter a valid amount.');
                   return;
                 }
+                const desc = (updates.description ?? '').trim();
+                if (!desc) {
+                  delayedToast.error('Enter a description for this transaction.');
+                  return;
+                }
                 api.addTransaction({
                   amount: num,
                   envelopeId: updates.envelopeId,
-                  description: (updates.description ?? '').trim() || 'Transaction',
+                  description: desc,
                   date: updates.date ?? todayISO(),
                 });
                 setEditingTransactionId(null);
@@ -255,7 +281,7 @@ function TransactionsContentInner() {
 
       <div className="pt-3 border-t border-border flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted-foreground">
-          Showing {visibleFiltered.length} of {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+          {countLabel}
         </p>
       </div>
 

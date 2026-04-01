@@ -1,21 +1,24 @@
-import { useState, useRef, memo } from 'react';
+import { useState, useRef, memo, useMemo } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
-import { formatMoney } from '@/app/utils/format';
+import { formatMoney, formatDate } from '@/app/utils/format';
 import { delayedToast } from '@/app/services/delayedToast';
 import { IncomeEditForm } from '@/app/components/IncomeEditForm';
 import { Button } from '@/app/components/ui/button';
 import { Pencil } from 'lucide-react';
+import { useAppStore } from '@/app/store/appStore';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
 function IncomeContentInner() {
-  const { state, api } = useBudget();
+  const { state, api, getBudgetSummaryForCurrentPeriod } = useBudget();
+  const budgetPeriodMode = useAppStore((s) => s.budgetPeriodMode);
   const [amount, setAmount] = useState('');
   const [source, setSource] = useState('');
   const [date, setDate] = useState(todayISO());
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
+  const [showAllIncome, setShowAllIncome] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +44,13 @@ function IncomeContentInner() {
     }
   };
 
-  const recent = (state.income ?? []).slice(0, 5);
+  const allIncome = state.income ?? [];
+  const recent = showAllIncome ? allIncome : allIncome.slice(0, 5);
+
+  const { summary, periodLabel } = useMemo(
+    () => getBudgetSummaryForCurrentPeriod(),
+    [getBudgetSummaryForCurrentPeriod, state, budgetPeriodMode] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <div className="space-y-4">
@@ -94,6 +103,14 @@ function IncomeContentInner() {
         </div>
       </form>
       <div className="pt-4 border-t border-border">
+        <div className="py-3 border-t border-border flex items-center justify-between gap-2">
+          <span className="text-sm text-muted-foreground">
+            {periodLabel ? `Income this period (${periodLabel})` : 'Total income'}
+          </span>
+          <span className="text-sm font-bold text-primary tabular-nums font-mono">
+            {formatMoney(summary.totalIncome)}
+          </span>
+        </div>
         <h4 className="text-sm font-medium text-foreground mb-2">Recent Income</h4>
         {recent.length === 0 ? (
           <p className="text-xs text-muted-foreground">No income recorded yet.</p>
@@ -122,7 +139,7 @@ function IncomeContentInner() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground">{entry.source}</p>
-                      <p className="text-xs text-muted-foreground">{entry.date}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(entry.date)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <p className="text-sm font-bold text-primary tabular-nums font-mono">
@@ -141,6 +158,27 @@ function IncomeContentInner() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        {allIncome.length > 5 && (
+          <div className="mt-2">
+            {showAllIncome ? (
+              <button
+                type="button"
+                onClick={() => setShowAllIncome(false)}
+                className="text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              >
+                Show less
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAllIncome(true)}
+                className="text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              >
+                Show all {allIncome.length}
+              </button>
+            )}
           </div>
         )}
       </div>

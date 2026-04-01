@@ -241,16 +241,18 @@ export function useReceiptScanner() {
             Number.isFinite(li.amount) &&
             (li.isTax !== true || li.envelopeId != null)
         );
-        // If any tax line has been explicitly assigned to an envelope, it will
-        // appear in budgetable already. In that case, use the grand total so
-        // amounts reconcile. Otherwise, use subtotal (pre-tax) so non-tax
-        // lines aren't inflated by hidden tax.
         const hasTaxInBudgetable = budgetable.some((li) => li.isTax === true);
+        // When the parser found tax but no subtotal label, derive subtotal from
+        // the non-tax budgetable line items so tax isn't baked into their allocations.
+        const nonTaxBudgetableSum = roundTo2(
+          budgetable.filter((li) => li.isTax !== true).reduce((sum, li) => sum + li.amount, 0)
+        );
+        const effectiveSubtotal = scanToUse.subtotal ?? (nonTaxBudgetableSum > 0 ? nonTaxBudgetableSum : null);
         const totalToAllocate = roundTo2(
           scanToUse.amountPaid ??
             (hasTaxInBudgetable
               ? (scanToUse.amount ?? 0)
-              : (scanToUse.subtotal ?? scanToUse.amount ?? 0))
+              : (effectiveSubtotal ?? scanToUse.amount ?? 0))
         );
         const allocated = allocateTotalProportionally({ items: budgetable, totalToAllocate });
         for (let idx = 0; idx < budgetable.length; idx++) {

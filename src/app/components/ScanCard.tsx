@@ -97,7 +97,7 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
       lineItems: next,
       ...(newSubtotal != null && { subtotal: newSubtotal }),
       ...(shouldUpdateTax && newTax != null && { tax: newTax }),
-      ...(scan.amount == null && newAmount != null && { amount: newAmount }),
+      ...(newAmount != null && { amount: newAmount }),
     });
   };
 
@@ -138,9 +138,23 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
       Number.isFinite(li.amount) &&
       (li.isTax !== true || li.envelopeId != null)
   );
+  // Mirror the save logic in useReceiptScanner exactly so the preview matches what is committed.
+  // hasTaxInBudgetable: any tax line that has been assigned to an envelope
+  const hasTaxInBudgetable = budgetableLines.some((li) => li.isTax === true && li.envelopeId != null);
+  // Derived subtotal from budgetable non-tax line items (used when scan.subtotal is missing)
+  const nonTaxBudgetableSum = roundTo2(
+    budgetableLines.filter((li) => li.isTax !== true).reduce((sum, li) => sum + li.amount, 0)
+  );
+  const effectiveSubtotal = subtotal ?? (nonTaxBudgetableSum > 0 ? nonTaxBudgetableSum : null);
+  // totalForPreview mirrors useReceiptScanner's totalToAllocate exactly
+  const totalForPreview = amountPaid != null
+    ? amountPaid
+    : hasTaxInBudgetable
+      ? (grandTotal ?? 0)
+      : (effectiveSubtotal ?? grandTotal ?? 0);
   const budgetPreviewTotal =
-    amountToUse != null && amountToUse > 0 && budgetableLines.length > 0
-      ? roundTo2(amountToUse)
+    totalForPreview > 0 && budgetableLines.length > 0
+      ? roundTo2(totalForPreview)
       : roundTo2(budgetableLines.reduce((sum, li) => sum + li.amount, 0));
   const budgetPreviewAllocations = budgetableLines.length > 0
     ? allocateTotalProportionally({
@@ -148,8 +162,14 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
         totalToAllocate: budgetPreviewTotal,
       })
     : [];
-  const excludedCount = lineItems.filter((li) => li.excludeFromBudget === true).length;
-  const hasBudgetMismatch = amountToUse != null && amountToUse > 0 && budgetableLines.length > 0 && roundTo2(budgetPreviewTotal) !== roundTo2(amountToUse);
+  const excludedCount = lineItems.filter(
+    (li) => li.excludeFromBudget === true || (li.isTax === true && !li.envelopeId)
+  ).length;
+  const hasBudgetMismatch =
+    amountToUse != null &&
+    amountToUse > 0 &&
+    budgetableLines.length > 0 &&
+    roundTo2(budgetPreviewTotal) !== roundTo2(totalForPreview);
   const currency = scan.currency ?? 'USD';
   const currencySymbol = getCurrencySymbol(currency);
   const formatOpts = { currency };

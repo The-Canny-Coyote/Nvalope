@@ -3,7 +3,7 @@ import { toast } from "sonner";
 type ToastType = "success" | "error" | "info";
 
 let blocking = true;
-const queue: Array<{ type: ToastType; message: string }> = [];
+const queue: Array<{ type: ToastType; message: string; durationMs?: number }> = [];
 
 type UndoQueueItem = {
   message: string;
@@ -24,7 +24,7 @@ function processQueue() {
   const durationMs = BASE_DURATION_MS + count * EXTRA_DURATION_PER_TOAST_MS;
   while (queue.length > 0) {
     const item = queue.shift()!;
-    toast[item.type](item.message, { duration: durationMs });
+    toast[item.type](item.message, { duration: item.durationMs ?? durationMs });
   }
 }
 
@@ -66,8 +66,8 @@ export const delayedToast = {
     queue.push({ type: "error", message });
     processQueue();
   },
-  info: (message: string) => {
-    queue.push({ type: "info", message });
+  info: (message: string, options?: { durationMs?: number }) => {
+    queue.push({ type: "info", message, durationMs: options?.durationMs });
     processQueue();
   },
   /**

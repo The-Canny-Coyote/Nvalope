@@ -220,7 +220,10 @@ export default function App() {
 
   useEffect(() => {
     if (!SHOW_AI_REWORK_TOAST) return;
-    delayedToast.info('The AI Assistant is currently being reworked and will be available soon.');
+    delayedToast.info(
+      'The AI Assistant is currently being reworked and will be available soon. Receipt scanner calculations have been corrected.',
+      { durationMs: 6000 }
+    );
   }, []);
 
   useEffect(() => {

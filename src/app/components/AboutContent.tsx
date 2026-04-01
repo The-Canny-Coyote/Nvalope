@@ -1,5 +1,5 @@
 /**
- * About The Canny Coyote: the why behind the name and how we build Nvalope.
+ * About: why we built Nvalope and how we build it.
  * Shown from the footer "About" link.
  */
 
@@ -7,7 +7,7 @@ export function AboutContent() {
   return (
     <div className="space-y-4 text-sm text-foreground">
       <p className="leading-relaxed">
-        <strong>The Canny Coyote</strong> is the name behind Nvalope and the products we make. We chose it to reflect how we build software and what we care about.
+        Nvalope is built by <strong>Canny Coyote Labs</strong> to reflect what we care about: privacy, clarity, and user control.
       </p>
 
       <div className="space-y-2">

@@ -169,7 +169,7 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
     amountToUse != null &&
     amountToUse > 0 &&
     budgetableLines.length > 0 &&
-    roundTo2(budgetPreviewTotal) !== roundTo2(totalForPreview);
+    roundTo2(budgetPreviewTotal) !== roundTo2(amountToUse);
   const currency = scan.currency ?? 'USD';
   const currencySymbol = getCurrencySymbol(currency);
   const formatOpts = { currency };

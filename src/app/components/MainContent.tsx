@@ -576,7 +576,7 @@ export function MainContent({
               </div>
               <p className="text-xs text-muted-foreground text-center leading-relaxed">
                 All data and processing occurs on your device only • Nvalope™, Cache™, and
-                Cache the AI Assistant™ are trademarks of THE CANNY COYOTE LLC{' '}
+                Cache the AI Assistant™ are trademarks of Canny Coyote Labs{' '}
                 <BrandCoyoteMark decorativeOnly className="inline" />
               </p>
             </div>

@@ -234,7 +234,7 @@ export default function App() {
     );
     setTimeout(() => {
       delayedToast.info(
-        'Update: New colorblind settings help make category colors and charts easier to distinguish.',
+        'Update: New colorblind settings help make category colors and charts easier to distinguish. Also new: Cache Savings Goals (Envelopes & Expenses → Cache Savings Goals).',
         { durationMs: 6500 }
       );
     }, 700);

@@ -261,7 +261,7 @@ export function FeatureToggles({
                 Disabling a feature only hides it from view. Your data (receipts, calendar, etc.) is not deleted.
               </p>
               <div className="space-y-1.5 mt-2">
-                {MODULE_CONFIG.filter((m) => !m.core && !m.premiumOnly).filter((m) => m.id !== 'cacheAssistant' && m.id !== 'advancedAICache').map((config) => {
+                {MODULE_CONFIG.filter((m) => !m.core && !m.premiumOnly && m.id !== 'advancedAICache').map((config) => {
                   const isEnabled = enabledModules.includes(config.id);
                   const isCache = config.id === 'cacheAssistant';
                   const Icon = MODULE_ICONS[config.id] ?? Box;

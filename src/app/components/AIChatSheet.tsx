@@ -126,6 +126,7 @@ export function AIChatSheet({
 
   const performanceTier = useMemo(() => getDevicePerformanceTier(), []);
   const webLLMEnabled = useAppStore((s) => s.webLLMEnabled);
+  const setWebLLMEnabled = useAppStore((s) => s.setWebLLMEnabled);
   const assistantUseLLM = useAppStore((s) => s.assistantUseLLM);
   const setAssistantUseLLM = useAppStore((s) => s.setAssistantUseLLM);
   const [webLLMStatus, setWebLLMStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable' | 'error'>('idle');
@@ -448,6 +449,28 @@ export function AIChatSheet({
               )}
             </div>
           </div>
+          {webLLMAvailable && !webLLMEnabled && aiMode !== 'advanced' && (
+            <div className="px-4 pb-3 border-b border-border">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-medium text-foreground">Upgrade to Basic+</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Download a small local AI model (~800 MB) for natural language replies — fully offline, nothing leaves your device.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWebLLMEnabled(true);
+                    setAssistantUseLLM(true);
+                  }}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+          )}
           {webLLMAvailable && webLLMEnabled && (
             <div className="px-4 pb-3 border-b border-border">
               <div className="flex items-center justify-between gap-3">

@@ -439,7 +439,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           },
         ]
       : []),
-    ...(enabledModules.includes('cacheAssistant') && typeof onOpenAssistant === 'function' && import.meta.env.DEV === true
+    ...(enabledModules.includes('cacheAssistant') && typeof onOpenAssistant === 'function'
       ? [
           {
             id: 106,

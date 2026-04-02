@@ -9,13 +9,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
+import { STORAGE_KEYS } from "@/app/constants/storageKeys";
 
-const NUDGE_SEEN_KEY = "nvalope-encrypted-backup-nudge-seen";
+const LEGACY_NUDGE_SEEN_KEY = "nvalope-encrypted-backup-nudge-seen";
 
 export function getEncryptedBackupNudgeSeen(): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return localStorage.getItem(NUDGE_SEEN_KEY) === "true";
+    const legacy = localStorage.getItem(LEGACY_NUDGE_SEEN_KEY);
+    const v = localStorage.getItem(STORAGE_KEYS.ENCRYPTED_NUDGE_SEEN) ?? legacy;
+    if (legacy && !localStorage.getItem(STORAGE_KEYS.ENCRYPTED_NUDGE_SEEN)) {
+      localStorage.setItem(STORAGE_KEYS.ENCRYPTED_NUDGE_SEEN, legacy);
+      localStorage.removeItem(LEGACY_NUDGE_SEEN_KEY);
+    }
+    return v === "true";
   } catch {
     return true;
   }
@@ -23,7 +30,7 @@ export function getEncryptedBackupNudgeSeen(): boolean {
 
 export function setEncryptedBackupNudgeSeen(): void {
   try {
-    localStorage.setItem(NUDGE_SEEN_KEY, "true");
+    localStorage.setItem(STORAGE_KEYS.ENCRYPTED_NUDGE_SEEN, "true");
   } catch {
     // ignore
   }

@@ -29,6 +29,7 @@ export interface BottomNavBarProps {
   selectedSection: number | null;
   onSelectedSectionChange: (id: number | null) => void;
   scale: number;
+  isMobile?: boolean;
   /** Bar position: bottom = horizontal, left/right = vertical. */
   position?: CardBarPosition;
   /** Effective row count when position is bottom (1–3). */
@@ -74,6 +75,7 @@ function BottomNavBarComponent({
   selectedSection,
   onSelectedSectionChange,
   scale,
+  isMobile = false,
   position = 'bottom',
   rows = 1,
   columns = 1,
@@ -109,7 +111,7 @@ function BottomNavBarComponent({
   const bottomColumnCount = Math.ceil(sections.length / rowCount);
   const sideRowCount = Math.ceil(sections.length / columnCount);
 
-  const canReorder = typeof onSectionOrderChange === 'function';
+  const canReorder = typeof onSectionOrderChange === 'function' && !isMobile;
   const showRowSelector = !isVertical && showRowSelectorStrip && typeof onCardBarRowsChange === 'function';
   const showColumnSelector = isVertical && showRowSelectorStrip && typeof onCardBarColumnsChange === 'function';
   const showSelector = showRowSelector || showColumnSelector;
@@ -249,11 +251,11 @@ function BottomNavBarComponent({
         title={section.description}
         tabIndex={isSelected ? 0 : -1}
         draggable={canReorder}
-        onDragStart={(e) => handleDragStart(e, index)}
-        onDragOver={(e) => handleDragOver(e, index)}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, index)}
-        onDragEnd={handleDragEnd}
+        onDragStart={canReorder ? (e) => handleDragStart(e, index) : undefined}
+        onDragOver={canReorder ? (e) => handleDragOver(e, index) : undefined}
+        onDragLeave={canReorder ? handleDragLeave : undefined}
+        onDrop={canReorder ? (e) => handleDrop(e, index) : undefined}
+        onDragEnd={canReorder ? handleDragEnd : undefined}
         onClick={() => handleClick(section.id)}
         className={`flex min-w-0 flex-col items-center justify-center gap-0.5 py-2 px-1 font-medium text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
           canReorder ? 'cursor-grab active:cursor-grabbing' : ''

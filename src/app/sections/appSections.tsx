@@ -423,7 +423,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
             title: 'Calendar',
             description: 'View your expenses and income on a calendar.',
             color: '#2d7a3f',
-            content: <SectionWithBoundary label="Calendar"><CalendarContent highContrast={highContrast} screenReaderMode={screenReaderMode} /></SectionWithBoundary>,
+            content: <SectionWithBoundary label="Calendar"><CalendarContent highContrast={highContrast} /></SectionWithBoundary>,
           },
         ]
       : []),
@@ -439,7 +439,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           },
         ]
       : []),
-    ...(false && enabledModules.includes('cacheAssistant')
+    ...(enabledModules.includes('cacheAssistant') && typeof onOpenAssistant === 'function' && import.meta.env.DEV === true
       ? [
           {
             id: 106,
@@ -468,7 +468,7 @@ export function useAppSections(params: UseAppSectionsParams): AppSection[] {
           },
         ]
       : []),
-    ...(false && enabledModules.includes('advancedAICache')
+    ...(enabledModules.includes('advancedAICache') && import.meta.env.DEV === true
       ? [
           {
             id: 104,

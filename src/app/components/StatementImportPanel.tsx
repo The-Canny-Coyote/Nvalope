@@ -16,8 +16,10 @@ import { RadioGroup, RadioGroupItem } from '@/app/components/ui/radio-group';
 import { Label } from '@/app/components/ui/label';
 import { delayedToast } from '@/app/services/delayedToast';
 import { toast } from 'sonner';
+import { Info } from 'lucide-react';
 
 const SESSION_TX_HINT_KEY = 'nvalope-statement-import-tx-hint-shown';
+const MIXED_MERCHANTS = /walmart|target|costco|sam's\s*club|amazon|kmart/i;
 
 const dataMgmtBtn =
   'inline-flex items-center gap-2 py-2 px-4 border border-primary/30 rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-primary/5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-0';
@@ -516,6 +518,21 @@ export function StatementImportPanel({
                           <option value="">Uncategorized</option>
                           {envelopeOptions}
                         </select>
+                        {importMode !== 'quick' && MIXED_MERCHANTS.test(d.description) && (
+                          <div className="mt-1 text-[10px] text-amber-900 dark:text-amber-100 flex items-start gap-1">
+                            <a
+                              href="#mixed-merchants"
+                              className="shrink-0 inline-flex items-center justify-center w-4 h-4 rounded border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100 hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-label="More info about mixed merchants"
+                              title="More info"
+                            >
+                              <Info className="w-3 h-3" aria-hidden />
+                            </a>
+                            <span>
+                              This merchant often has purchases across multiple categories. Consider splitting this transaction after import.
+                            </span>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -547,6 +564,10 @@ export function StatementImportPanel({
       </label>
       <p className="text-xs text-muted-foreground">
         Credits usually represent deposits, refunds, and income; review preview counts before confirming import.
+      </p>
+      <p id="mixed-merchants" className="text-[10px] text-muted-foreground">
+        Mixed merchants: stores like Walmart, Target, Costco, and Amazon often include items from many categories. After importing, you can use
+        Transaction History → Split to assign parts of a purchase to different envelopes.
       </p>
 
       {parsed.diagnostics.length > 0 && (

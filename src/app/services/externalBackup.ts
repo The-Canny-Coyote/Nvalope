@@ -1,6 +1,7 @@
 import { openProtectionDB, STORE_FILE_HANDLES } from './protectionDb';
 import { encryptBackupPayload } from '@/app/utils/backupCrypto';
 import { saveLocalAutobackup } from './localBackupIdb';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 const HANDLE_KEY = 'backup-dir';
 
@@ -8,9 +9,9 @@ export const MIN_BACKUP_INTERVAL_MS = 60_000;
 
 const BACKUP_FILENAME_PREFIX = 'nvalope-backup-';
 const BACKUP_FILENAME_SUFFIX = '.json';
-const FIRST_INPUT_KEY = 'nvalope-has-user-input';
-const BACKUP_SUGGESTED_KEY = 'nvalope-backup-folder-suggested';
-const BACKUP_DOWNLOAD_SUGGESTED_KEY = 'nvalope-backup-download-suggested';
+const FIRST_INPUT_KEY = STORAGE_KEYS.FIRST_INPUT;
+const BACKUP_SUGGESTED_KEY = STORAGE_KEYS.BACKUP_SUGGESTED;
+const BACKUP_DOWNLOAD_SUGGESTED_KEY = STORAGE_KEYS.BACKUP_DOWNLOAD_SUGGESTED;
 
 export interface SettingsState {
   enabledModules?: string[];
@@ -443,7 +444,7 @@ function setSuggestedDownloadBackup(): void {
   }
 }
 
-const BACKUP_REMINDER_KEY = 'nvalope-backup-reminder-last';
+const BACKUP_REMINDER_KEY = STORAGE_KEYS.BACKUP_REMINDER;
 const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 /**

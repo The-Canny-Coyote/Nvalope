@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   WHEEL_SCALE: 'nvalope-wheel-scale',
   /** Legacy premium flag (read before Zustand hydrates) */
   PREMIUM: 'nvalope-premium',
+  /** Local premium override flag (alias of PREMIUM — same stored value, backward compat) */
+  PREMIUM_LOCAL: 'nvalope-premium',
   /** Whether the app is installed as a PWA */
   PWA_INSTALLED: 'nvalope-pwa-installed',
   /** TTS (text-to-speech) enabled flag */
@@ -24,10 +26,26 @@ export const STORAGE_KEYS = {
   HINTS_DISABLED: 'nvalope-hints-disabled',
   /** Whether the backup folder prompt has been seen */
   BACKUP_PROMPT_SEEN: 'nvalope-backup-prompt-seen',
+  /** Whether a backup has been suggested to the user */
+  BACKUP_SUGGESTED: 'nvalope-backup-suggested',
+  /** Whether a backup download has been suggested */
+  BACKUP_DOWNLOAD_SUGGESTED: 'nvalope-backup-download-suggested',
+  /** Timestamp (ms) of last periodic backup reminder */
+  BACKUP_REMINDER: 'nvalope-backup-reminder',
+  /** Whether the encrypted-backup nudge dialog has been seen */
+  ENCRYPTED_NUDGE_SEEN: 'nvalope-encrypted-backup-nudge-seen',
+  /** Whether the user has entered their first transaction/income */
+  FIRST_INPUT: 'nvalope-first-input',
   /** Whether the premium AI download notice has been seen */
   PREMIUM_AI_DOWNLOAD_NOTICE_SEEN: 'nvalope-premium-ai-download-notice-seen',
   /** Prefix for entitlement flags (append the entitlement key) */
   ENTITLEMENT_PREFIX: 'nvalope-entitlement-',
   /** Light/dark theme preference (next-themes compatible key) */
   THEME: 'theme',
+} as const;
+
+/** Namespace prefixes for dynamic localStorage keys (append a suffix to form the full key). */
+export const STORAGE_KEY_PREFIX = {
+  /** Prefix for entitlement flags — append the entitlement key (e.g. 'premium_ai') */
+  ENTITLEMENT: 'nvalope-entitlement-',
 } as const;

@@ -62,15 +62,6 @@ function ReceiptArchiveContentInner() {
     delayedToast.success('Image removed. Receipt data kept.');
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg text-primary">Receipt Archive</h3>
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
-
   const filtered = useMemo(() => {
     const q = archiveSearch.trim().toLowerCase();
     if (!q) return archives;
@@ -83,6 +74,15 @@ function ReceiptArchiveContentInner() {
       archiveSortNewest ? b.savedAt.localeCompare(a.savedAt) : a.savedAt.localeCompare(b.savedAt)
     );
   }, [filtered, archiveSortNewest]);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg text-primary">Receipt Archive</h3>
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

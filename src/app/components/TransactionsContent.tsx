@@ -6,6 +6,8 @@ import { useTransactionFilter } from '@/app/contexts/TransactionFilterContext';
 import { TransactionEditForm } from '@/app/components/TransactionEditForm';
 import { delayedToast } from '@/app/services/delayedToast';
 import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
+import { inputCls, selectCls } from '@/app/utils/classNames';
+import { SplitTransactionDialog } from '@/app/components/SplitTransactionDialog';
 
 function TransactionsContentInner() {
   const { state, api } = useBudget();
@@ -17,6 +19,8 @@ function TransactionsContentInner() {
   const [deleteTransactionEditTargetId, setDeleteTransactionEditTargetId] = useState<string | null>(null);
   const [showDeleteTransactionDialogList, setShowDeleteTransactionDialogList] = useState(false);
   const [deleteTransactionListTargetId, setDeleteTransactionListTargetId] = useState<string | null>(null);
+  const [showSplitDialog, setShowSplitDialog] = useState(false);
+  const [splitTargetId, setSplitTargetId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteRef = useRef<string | null>(null);
   pendingDeleteRef.current = pendingDeleteId;
@@ -37,8 +41,8 @@ function TransactionsContentInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount when coming from envelope link
   }, [filterContext?.initialFilter]);
 
-  const transactions = useMemo(() => state.transactions ?? [], [state.transactions]);
-  const envelopes = useMemo(() => state.envelopes ?? [], [state.envelopes]);
+  const transactions = state.transactions;
+  const envelopes = state.envelopes;
   const envelopeNameById = useMemo(
     () => new Map(envelopes.map((envelope) => [envelope.id, envelope.name])),
     [envelopes]
@@ -145,13 +149,13 @@ function TransactionsContentInner() {
           placeholder="Search transactions..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[140px] min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className={`flex-1 min-w-[140px] ${inputCls}`}
           aria-label="Search transactions"
         />
         <select
           value={filterEnvelopeId}
           onChange={(e) => setFilterEnvelopeId(e.target.value)}
-          className="min-h-[44px] px-3 py-2 border border-primary/30 rounded-lg bg-card text-foreground text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className={selectCls}
           aria-label="Filter by envelope"
         >
           <option value="">All Envelopes</option>
@@ -262,6 +266,17 @@ function TransactionsContentInner() {
                       <button
                         type="button"
                         onClick={() => {
+                          setSplitTargetId(tx.id);
+                          setShowSplitDialog(true);
+                        }}
+                        className="text-xs text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        aria-label="Split transaction"
+                      >
+                        Split
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
                           setDeleteTransactionListTargetId(tx.id);
                           setShowDeleteTransactionDialogList(true);
                         }}
@@ -312,6 +327,34 @@ function TransactionsContentInner() {
         onConfirm={() => {
           const id = deleteTransactionListTargetId;
           if (id) handleDeleteTransaction(id);
+        }}
+      />
+
+      <SplitTransactionDialog
+        open={showSplitDialog}
+        onOpenChange={(open) => {
+          setShowSplitDialog(open);
+          if (!open) setSplitTargetId(null);
+        }}
+        transaction={splitTargetId ? (transactions.find((t) => t.id === splitTargetId) ?? null) : null}
+        envelopes={envelopes}
+        onConfirm={(splits) => {
+          const tx = splitTargetId ? transactions.find((t) => t.id === splitTargetId) : undefined;
+          if (!tx) return;
+          try {
+            api.deleteTransaction(tx.id);
+            api.addTransactions(
+              splits.map((s) => ({
+                amount: s.amount,
+                envelopeId: s.envelopeId,
+                description: s.description,
+                date: tx.date,
+              }))
+            );
+            delayedToast.success('Transaction split.');
+          } catch {
+            delayedToast.error('Could not split transaction. Please try again.');
+          }
         }}
       />
     </div>

@@ -6,11 +6,16 @@ import { truncate } from '@/app/utils/truncate';
  *  strings before they are interpolated into the WebLLM system prompt.
  *  Prevents prompt injection via crafted envelope names or transaction descriptions. */
 function sanitizeForPrompt(value: string, maxLength = 120): string {
-  return value
-    .replace(/[\r\n\t\x00-\x1F\x7F]/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .slice(0, maxLength);
+  let cleaned = '';
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code === 9 || code === 10 || code === 13 || code < 32 || code === 127) {
+      cleaned += ' ';
+    } else {
+      cleaned += value[i];
+    }
+  }
+  return cleaned.replace(/\s{2,}/g, ' ').trim().slice(0, maxLength);
 }
 
 /** Minimal transaction shape for the WebLLM system prompt (envelope name resolved by caller). */

@@ -10,13 +10,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
-
-const BACKUP_PROMPT_SEEN_KEY = "nvalope-backup-prompt-seen";
+import { STORAGE_KEYS } from "@/app/constants/storageKeys";
 
 export function getBackupPromptSeen(): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return localStorage.getItem(BACKUP_PROMPT_SEEN_KEY) === "true";
+    return localStorage.getItem(STORAGE_KEYS.BACKUP_PROMPT_SEEN) === "true";
   } catch {
     return true;
   }
@@ -24,7 +23,7 @@ export function getBackupPromptSeen(): boolean {
 
 export function setBackupPromptSeen(): void {
   try {
-    localStorage.setItem(BACKUP_PROMPT_SEEN_KEY, "true");
+    localStorage.setItem(STORAGE_KEYS.BACKUP_PROMPT_SEEN, "true");
   } catch {
     // ignore
   }

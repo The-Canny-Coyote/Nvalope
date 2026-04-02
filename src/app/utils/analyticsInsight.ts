@@ -6,8 +6,11 @@
 import type { BudgetState } from '@/app/store/budgetTypes';
 import { formatMoney } from '@/app/utils/format';
 
-export function getAnalyticsInsight(state: BudgetState): string {
-  const { envelopes } = state;
+export function getAnalyticsInsight(
+  state: BudgetState,
+  periodEnvelopes?: Array<{ id: string; name: string; limit: number; spent: number }>
+): string {
+  const envelopes = periodEnvelopes ?? state.envelopes;
   if (envelopes.length === 0) return '';
 
   const withSpend = envelopes.filter((e) => e.spent > 0);

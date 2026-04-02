@@ -22,9 +22,9 @@ import {
   clampCardsSectionWidth,
 } from '@/app/constants/accessibility';
 import { CORE_MODULE_IDS } from '@/app/constants/modules';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 const PERSIST_KEY = 'nvalope-app-persist';
-const COLORBLIND_MODE_KEY = 'nvalope-colorblind-mode';
 
 export type ColorblindMode = 'none' | 'deuteranopia' | 'tritanopia' | 'monochromacy';
 
@@ -35,7 +35,7 @@ function isColorblindMode(v: unknown): v is ColorblindMode {
 function readColorblindModeFromStorage(): ColorblindMode {
   try {
     if (typeof window === 'undefined') return 'none';
-    const raw = localStorage.getItem(COLORBLIND_MODE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.COLORBLIND_MODE);
     if (isColorblindMode(raw)) return raw;
   } catch {
     /* ignore */
@@ -62,9 +62,9 @@ function getInitialPersisted(): {
         colorblindMode: 'none',
       };
     }
-    const layout = localStorage.getItem('nvalope-layout-scale');
-    const wheel = localStorage.getItem('nvalope-wheel-scale');
-    const premium = localStorage.getItem('nvalope-premium');
+    const layout = localStorage.getItem(STORAGE_KEYS.LAYOUT_SCALE);
+    const wheel = localStorage.getItem(STORAGE_KEYS.WHEEL_SCALE);
+    const premium = localStorage.getItem(STORAGE_KEYS.PREMIUM_LOCAL);
     return {
       layoutScale: layout
         ? clampLayoutScale(Number.parseInt(layout, 10) || LAYOUT_SCALE_DEFAULT)
@@ -330,7 +330,7 @@ if (typeof window !== 'undefined') {
       (s) => s.colorblindMode,
       (v) => {
         try {
-          localStorage.setItem(COLORBLIND_MODE_KEY, v);
+          localStorage.setItem(STORAGE_KEYS.COLORBLIND_MODE, v);
         } catch {
           /* ignore */
         }

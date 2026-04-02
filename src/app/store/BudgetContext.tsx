@@ -5,7 +5,7 @@ import type { BudgetStoreApi, BudgetSummary } from './budgetStore';
 import { getBudget, setBudget } from '@/app/services/budgetIdb';
 import { migrateBudgetTransactionsIfNeeded } from './transactionMigration';
 import { useAppStore } from './appStore';
-import { getPeriodForDate, getPeriodLabel, getDaysLeftInPeriod } from '@/app/utils/date';
+import { getPeriodForDate, getPeriodLabel, getDaysLeftInPeriod, todayISO } from '@/app/utils/date';
 import type { PeriodBounds } from '@/app/utils/date';
 
 const BUDGET_LOAD_TIMEOUT_MS = 15_000;
@@ -124,7 +124,7 @@ export function BudgetProvider({ children, budgetStateRef, onBudgetSaved, onLoad
         : mode === 'weekly'
           ? { weekStartDay: app.weekStartDay ?? 0 }
           : {};
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayISO();
     const period = getPeriodForDate(today, mode, periodOptions);
     if (!period) {
       return {

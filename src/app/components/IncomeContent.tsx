@@ -1,15 +1,13 @@
 import { useState, useRef, memo, useMemo } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { formatMoney, formatDate } from '@/app/utils/format';
+import { todayISO } from '@/app/utils/date';
 import { delayedToast } from '@/app/services/delayedToast';
 import { IncomeEditForm } from '@/app/components/IncomeEditForm';
 import { Button } from '@/app/components/ui/button';
 import { Pencil } from 'lucide-react';
 import { useAppStore } from '@/app/store/appStore';
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function IncomeContentInner() {
   const { state, api, getBudgetSummaryForCurrentPeriod } = useBudget();

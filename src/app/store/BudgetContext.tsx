@@ -110,7 +110,7 @@ export function BudgetProvider({ children, budgetStateRef, onBudgetSaved, onLoad
   const getBudgetSummaryForCurrentPeriod = useCallback(() => {
     if (!api) {
       return {
-        summary: { totalIncome: 0, totalBudgeted: 0, totalSpent: 0, remaining: 0, envelopes: [], recentTransactions: [] },
+        summary: { totalIncome: 0, totalBudgeted: 0, totalSpent: 0, uncategorizedSpent: 0, remaining: 0, envelopes: [], recentTransactions: [] },
         periodLabel: '',
         period: null,
         daysLeftInPeriod: 0,

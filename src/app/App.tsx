@@ -40,8 +40,8 @@ import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
 const BACKUP_DEBOUNCE_MS = 2000;
 
 const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-seen';
-const SHOW_AI_REWORK_TOAST = true;
-const AI_ASSISTANT_ENABLED = false;
+const SHOW_AI_REWORK_TOAST = false;
+const AI_ASSISTANT_ENABLED = true;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -236,7 +236,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     if (window.matchMedia('(display-mode: standalone)').matches) {
       try {
-        localStorage.setItem('nvalopePWAInstalled', 'true');
+        localStorage.setItem('nvalope-pwa-installed', 'true');
       } catch {
         /* ignore */
       }

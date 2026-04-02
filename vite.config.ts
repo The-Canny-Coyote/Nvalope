@@ -3,7 +3,6 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import csp from 'vite-plugin-csp-guard'
 
 /**
  * PWA / WASM: Heavy deps (pdf.js, Tesseract, workers) load as separate chunks. The import worker uses
@@ -34,35 +33,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    csp({
-      algorithm: 'sha256',
-      dev: { run: false },
-      policy: {
-        'default-src': ["'self'"],
-        // Allow Cloudflare Web Analytics + inline scripts (Cloudflare injects inline script at (index):39)
-        // 'wasm-unsafe-eval' for Tesseract.js/WebAssembly / WebLLM WASM; broad 'unsafe-eval' omitted (retest if WebLLM eval-CSP errors appear on upgrade).
-        'script-src': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
-        'script-src-elem': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://cdn.jsdelivr.net', 'https://static.cloudflareinsights.com'],
-        'worker-src': ["'self'", 'blob:', 'https://cdn.jsdelivr.net'],
-        'style-src': ["'self'", "'unsafe-inline'"],
-        'style-src-elem': ["'self'", "'unsafe-inline'"],
-        'img-src': ["'self'", 'data:', 'blob:'],
-        'font-src': ["'self'"],
-        // Keep this explicit to reduce exfiltration surface while allowing known runtime endpoints.
-        // - self: same-origin app/API
-        // - *.workers.dev: default Cloudflare Worker API host
-        // - cdn.jsdelivr.net: WebLLM model assets (jsdelivr CDN)
-        // - raw.githubusercontent.com: WebLLM (@mlc-ai) WASM/runtime from mlc-ai/binary-mlc-llm-libs
-        // - cloudflareinsights.*: analytics beacons
-        // connect-src is intentionally permissive to avoid WebLLM CDN host churn.
-        // Keep other directives tight to limit what can execute.
-        'connect-src': ["'self'", 'https:', 'wss:'],
-        'manifest-src': ["'self'"],
-        'base-uri': ["'self'"],
-        'form-action': ["'self'"],
-        'object-src': ["'none'"],
-      },
-    }),
     VitePWA({
       registerType: 'prompt',
       workbox: {

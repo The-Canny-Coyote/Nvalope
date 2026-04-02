@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, memo, useCallback, useRef } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { formatMoney, formatDate } from '@/app/utils/format';
+import { todayISO } from '@/app/utils/date';
 import { useTransactionFilter } from '@/app/contexts/TransactionFilterContext';
 import { TransactionEditForm } from '@/app/components/TransactionEditForm';
 import { delayedToast } from '@/app/services/delayedToast';
@@ -94,7 +95,6 @@ function TransactionsContentInner() {
     id ? (envelopeNameById.get(id) ?? id) : 'Uncategorized';
 
   const ADD_TRANSACTION_ID = '__new__';
-  const todayISO = () => new Date().toISOString().slice(0, 10);
   const newTransactionDummy = {
     id: ADD_TRANSACTION_ID,
     amount: 0,

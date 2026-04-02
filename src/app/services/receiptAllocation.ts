@@ -1,3 +1,5 @@
+import { roundTo2 } from '@/app/utils/format';
+
 export function allocateTotalProportionally({
   items,
   totalToAllocate,
@@ -25,7 +27,4 @@ export function allocateTotalProportionally({
   return rounded;
 }
 
-function roundTo2(n: number): number {
-  return Math.round(n * 100) / 100;
-}
 

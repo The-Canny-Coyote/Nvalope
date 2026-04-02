@@ -299,6 +299,86 @@ export function FeatureToggles({
               </div>
             </div>
 
+            {/* Local AI Model (WebLLM) */}
+            <div className="space-y-2 border-t border-border pt-3">
+              <div className="flex items-center gap-2">
+                <BrandCoyoteMark decorativeOnly className="text-xl leading-none text-primary" />
+                <h4 className="text-sm font-medium text-foreground">Local AI Model</h4>
+              </div>
+              {webLLMEligible ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Download a small language model to your device. Once downloaded it works fully offline — no data leaves your device.
+                  </p>
+                  <div className={`px-3 py-2 border rounded-lg flex items-center gap-3 transition-colors ${webLLMEnabled ? 'bg-primary/5 border-primary/20' : 'border-border'}`}>
+                    <span className="text-sm font-medium text-foreground min-w-0 flex-1">Enable local AI model</span>
+                    <Checkbox
+                      checked={webLLMEnabled}
+                      onCheckedChange={async (checked) => {
+                        if (checked) {
+                          setWebLLMEnabled(true);
+                        } else {
+                          setShowWebLLMDeleteDialog(true);
+                        }
+                      }}
+                      aria-label={`Local AI model ${webLLMEnabled ? 'enabled' : 'disabled'}`}
+                      className="size-5 shrink-0 rounded"
+                    />
+                  </div>
+                  {webLLMEnabled && (
+                    <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2.5 py-0.5">
+                      {LOCAL_LLM_ACCURACY_NOTE}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                    <span>Secure context: {webLLMEnvSnapshot.secureContext ? '✓' : '✗'}</span>
+                    <span>WebGPU: {webLLMEnvSnapshot.webGpuPresent ? '✓' : '✗'}</span>
+                    <span>Performance tier: {webLLMEnvSnapshot.performanceTier}</span>
+                    {webLLMEnvSnapshot.engineLoaded && <span className="text-primary">Model loaded in memory</span>}
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Local AI is not available on this device:</p>
+                  <ul className="space-y-0.5">
+                    {webLLMBlockReasons.map((r) => (
+                      <li key={r} className="text-xs text-muted-foreground flex gap-1.5">
+                        <span aria-hidden>•</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <AlertDialog open={showWebLLMDeleteDialog} onOpenChange={setShowWebLLMDeleteDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete downloaded model files?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Do you want to remove the downloaded AI model files from this device to free space (hundreds of MB)? If you turn the LLM back on later you will need to redownload the model.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={async () => {
+                    setShowWebLLMDeleteDialog(false);
+                    await unloadWebLLMEngine();
+                    setWebLLMEnabled(false);
+                  }}>Keep files</AlertDialogCancel>
+                  <button
+                    className="inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    onClick={async () => {
+                      setShowWebLLMDeleteDialog(false);
+                      await unloadWebLLMEngine();
+                      await clearWebLLMCache();
+                      setWebLLMEnabled(false);
+                      toast.success('The downloaded assistant model has been removed from this device.');
+                    }}
+                  >Delete files</button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
           </CollapsibleContent>
         </Collapsible>
       </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { ReceiptLineItem as ParserLineItem } from '@/app/services/receiptParser';
 import { delayedToast } from '@/app/services/delayedToast';
-import { formatMoney, getCurrencySymbol } from '@/app/utils/format';
+import { formatMoney, getCurrencySymbol, roundTo2 } from '@/app/utils/format';
+import { todayISO } from '@/app/utils/date';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
 import { allocateTotalProportionally } from '@/app/services/receiptAllocation';
@@ -9,14 +10,6 @@ import { allocateTotalProportionally } from '@/app/services/receiptAllocation';
 const CREATE_ENVELOPE_VALUE = '__create__';
 const EXCLUDE_ENVELOPE_VALUE = '__exclude__';
 
-/** Round to 2 decimal places for money. */
-export function roundTo2(n: number): number {
-  return Math.round(n * 100) / 100;
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export type ReceiptLineItem = ParserLineItem & { originalDescription?: string };
 

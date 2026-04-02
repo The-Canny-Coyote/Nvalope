@@ -77,7 +77,7 @@ export function AppDialogs({
                 )}
                 {hasBackupFolder === false && isExternalBackupSupported && (
                   <p className="text-muted-foreground">
-                    In Chrome or Edge you can set a backup folder in Settings → Data Management so a file is also saved there when autobackup runs (about three changes, at most once per minute).
+                    In Chrome or Edge you can set a backup folder in Settings → Data Management so a file is also saved there when autobackup runs (3 changes, at most once per minute).
                   </p>
                 )}
               </div>

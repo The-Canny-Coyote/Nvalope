@@ -310,6 +310,9 @@ export function FeatureToggles({
                   <p className="text-xs text-muted-foreground">
                     Download a small language model to your device. Once downloaded it works fully offline — no data leaves your device.
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    Enabling local AI downloads a model from Hugging Face/Xet; they will receive your IP address like any download host.
+                  </p>
                   <div className={`px-3 py-2 border rounded-lg flex items-center gap-3 transition-colors ${webLLMEnabled ? 'bg-primary/5 border-primary/20' : 'border-border'}`}>
                     <span className="text-sm font-medium text-foreground min-w-0 flex-1">Enable local AI model</span>
                     <Checkbox

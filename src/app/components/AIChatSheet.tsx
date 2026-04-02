@@ -479,6 +479,9 @@ export function AIChatSheet({
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Regular mode uses built-in replies only: it matches keywords and gives short answers. It cannot hold a long conversation or answer in natural language like the LLM.
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enabling local AI downloads a model from Hugging Face/Xet; they will receive your IP address like any download host.
+                  </p>
                 </div>
                 <Checkbox
                   checked={assistantUseLLM}

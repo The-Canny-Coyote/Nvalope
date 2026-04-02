@@ -607,7 +607,7 @@ export default function App() {
         onBackupNoThanks={() => {
           markBackupSuggestionDismissed();
           delayedToast.info(
-            'After about three changes, a backup copy is saved on this device (at most once per minute). You can set a backup folder or download a backup in Settings → Data Management.'
+            'After 3 changes, a backup copy is saved on this device (at most once per minute). You can set a backup folder or download a backup in Settings → Data Management.'
           );
         }}
         updateAvailable={updateAvailable}

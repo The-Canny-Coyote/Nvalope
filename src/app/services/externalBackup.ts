@@ -458,7 +458,7 @@ export function maybeShowBackupReminder(showToast: (message: string) => void): v
     if (Date.now() - last < BACKUP_REMINDER_INTERVAL_MS) return;
     localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
     showToast(
-      'Tip: After about three changes, a backup copy is saved on this device (at most once per minute). To keep a file elsewhere, download a full backup or set a backup folder (Chrome/Edge) in Settings → Data Management.'
+      'Tip: After 3 changes, a backup copy is saved on this device (at most once per minute). To keep a file elsewhere, download a full backup or set a backup folder (Chrome/Edge) in Settings → Data Management.'
     );
   } catch {
     // ignore
@@ -484,13 +484,13 @@ export function markFirstInput(): void {
       if (hasSuggestedBackupFolder()) return;
       setSuggestedBackupFolder();
       backupSuggestionToast(
-        'Tip: After about three changes, a copy is saved on this device (at most once per minute). To keep a file elsewhere, set a backup folder or download a backup in Settings → Data Management.'
+        'Tip: After 3 changes, a copy is saved on this device (at most once per minute). To keep a file elsewhere, set a backup folder or download a backup in Settings → Data Management.'
       );
     } else {
       if (hasSuggestedDownloadBackup()) return;
       setSuggestedDownloadBackup();
       backupSuggestionToast(
-        'Tip: After about three changes, a copy is saved on this device (at most once per minute). Download a backup from Settings → Data Management to save a file elsewhere (e.g. USB drive).'
+        'Tip: After 3 changes, a copy is saved on this device (at most once per minute). Download a backup from Settings → Data Management to save a file elsewhere (e.g. USB drive).'
       );
     }
   })();

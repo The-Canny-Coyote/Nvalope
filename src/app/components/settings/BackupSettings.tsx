@@ -512,7 +512,7 @@ export function BackupSettings({
             )}
             <div className="space-y-2 text-xs text-muted-foreground">
               <p>
-                After about three changes you make (budget, settings, or app data), Nvalope saves a backup copy on this device. Automatic saves run at most once per minute. Use{' '}
+                After 3 changes you make (budget, settings, or app data), Nvalope saves a backup copy on this device. Automatic saves run at most once per minute. Use{' '}
                 <strong className="text-foreground">Download full backup</strong> anytime for a file you control.
               </p>
               <p>
@@ -562,7 +562,7 @@ export function BackupSettings({
             )}
             {hasBackupFolder === true && isExternalBackupSupported() && (
               <p className="text-xs text-muted-foreground">
-                Backup folder set. One file there is updated when autobackup runs (after about three changes, at most once per minute), in addition to the copy on this device.
+                Backup folder set. One file there is updated when autobackup runs (after 3 changes, at most once per minute), in addition to the copy on this device.
               </p>
             )}
             {isExternalBackupSupported() ? (

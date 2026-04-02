@@ -53,7 +53,7 @@ export interface CalendarContentProps {
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-function CalendarContentInner({ highContrast = false, screenReaderMode: _screenReaderMode = false }: CalendarContentProps) {
+function CalendarContentInner({ highContrast = false }: CalendarContentProps) {
   const { state, api } = useBudget();
   const budgetPeriodMode = useAppStore((s) => s.budgetPeriodMode);
   const biweeklyPeriod1StartDay = useAppStore((s) => s.biweeklyPeriod1StartDay) ?? 1;

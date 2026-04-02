@@ -5,7 +5,8 @@ import { ScanCard } from '@/app/components/ScanCard';
 import { useReceiptScanner } from '@/app/hooks/useReceiptScanner';
 
 export type { ReceiptLineItem, ReceiptScanResult } from '@/app/components/ScanCard';
-export { ScanCard, roundTo2, generateId, LINE_ITEMS_VISIBLE_HEIGHT } from '@/app/components/ScanCard';
+export { ScanCard, generateId, LINE_ITEMS_VISIBLE_HEIGHT } from '@/app/components/ScanCard';
+export { roundTo2 } from '@/app/utils/format';
 
 function ReceiptScannerContentInner() {
   const {

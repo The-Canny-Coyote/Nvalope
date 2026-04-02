@@ -82,6 +82,8 @@ export interface BudgetSummary {
   totalIncome: number;
   totalBudgeted: number;
   totalSpent: number;
+  /** Amount spent in transactions that have no envelopeId. Included in totalSpent. */
+  uncategorizedSpent: number;
   remaining: number;
   envelopes: Array<{ id: string; name: string; limit: number; spent: number; remaining: number }>;
   recentTransactions: Transaction[];
@@ -561,7 +563,11 @@ export function createBudgetStore(
       const state = getState();
       const totalIncome = state.income.reduce((s, i) => s + i.amount, 0);
       const totalBudgeted = state.envelopes.reduce((s, e) => s + e.limit, 0);
-      const totalSpent = state.envelopes.reduce((s, e) => s + e.spent, 0);
+      const categorizedSpent = state.envelopes.reduce((s, e) => s + e.spent, 0);
+      const uncategorizedSpent = state.transactions
+        .filter((t) => !t.envelopeId)
+        .reduce((s, t) => s + t.amount, 0);
+      const totalSpent = categorizedSpent + uncategorizedSpent;
       const remaining = totalIncome - totalSpent;
       const envelopes = state.envelopes.map((e) => ({
         id: e.id,
@@ -575,6 +581,7 @@ export function createBudgetStore(
         totalIncome,
         totalBudgeted,
         totalSpent,
+        uncategorizedSpent,
         remaining,
         envelopes,
         recentTransactions,
@@ -590,9 +597,13 @@ export function createBudgetStore(
       const totalBudgeted = state.envelopes.reduce((s, e) => s + e.limit, 0);
       const spentByEnvelope: Record<string, number> = {};
       for (const e of state.envelopes) spentByEnvelope[e.id] = 0;
+      let uncategorizedSpent = 0;
       for (const tx of state.transactions) {
-        if (tx.envelopeId && isDateInPeriod(tx.date, start, end)) {
+        if (!isDateInPeriod(tx.date, start, end)) continue;
+        if (tx.envelopeId) {
           spentByEnvelope[tx.envelopeId] = (spentByEnvelope[tx.envelopeId] ?? 0) + tx.amount;
+        } else {
+          uncategorizedSpent += tx.amount;
         }
       }
       const envelopes = state.envelopes.map((e) => {
@@ -605,7 +616,8 @@ export function createBudgetStore(
           remaining: e.limit - spent,
         };
       });
-      const totalSpent = envelopes.reduce((s, e) => s + e.spent, 0);
+      const categorizedSpent = envelopes.reduce((s, e) => s + e.spent, 0);
+      const totalSpent = categorizedSpent + uncategorizedSpent;
       const remaining = totalIncome - totalSpent;
       const recentTransactions = state.transactions
         .filter((t) => isDateInPeriod(t.date, start, end))
@@ -614,6 +626,7 @@ export function createBudgetStore(
         totalIncome,
         totalBudgeted,
         totalSpent,
+        uncategorizedSpent,
         remaining,
         envelopes,
         recentTransactions,

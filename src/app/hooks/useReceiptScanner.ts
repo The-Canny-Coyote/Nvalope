@@ -9,11 +9,12 @@ import { suggestCategory } from '@/app/services/receiptCategorization';
 import { preprocessReceiptImage } from '@/app/utils/receiptPreprocess';
 import { delayedToast } from '@/app/services/delayedToast';
 import { toast } from 'sonner';
-import { parseYYYYMMDD } from '@/app/utils/date';
+import { parseYYYYMMDD, todayISO } from '@/app/utils/date';
 import { compressReceiptImageDataUrl } from '@/app/utils/receiptImageCompress';
 import type { StoredReceiptScan, ReceiptArchiveItem } from '@/app/services/appDataIdb';
 import { allocateTotalProportionally } from '@/app/services/receiptAllocation';
-import { generateId, roundTo2, type ReceiptScanResult } from '@/app/components/ScanCard';
+import { generateId, type ReceiptScanResult } from '@/app/components/ScanCard';
+import { roundTo2 } from '@/app/utils/format';
 
 const ACCEPTED_IMAGE_TYPES = [
   'image/jpeg',
@@ -38,9 +39,6 @@ function isWithinSizeLimit(file: File): boolean {
   return file.size > 0 && file.size <= MAX_FILE_SIZE_BYTES;
 }
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function useReceiptScanner() {
   const { state, api } = useBudget();

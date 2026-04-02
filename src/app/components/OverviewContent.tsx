@@ -74,6 +74,7 @@ function OverviewContentInner() {
           totalIncome: 0,
           totalBudgeted: 0,
           totalSpent: 0,
+          uncategorizedSpent: 0,
           remaining: 0,
           envelopes: [],
           recentTransactions: [],
@@ -86,7 +87,12 @@ function OverviewContentInner() {
   }, [getBudgetSummaryForCurrentPeriod, state, budgetPeriodMode]); // eslint-disable-line react-hooks/exhaustive-deps
   const totalBudgeted = Number.isFinite(summary.totalBudgeted) ? summary.totalBudgeted : 0;
   const totalSpent = Number.isFinite(summary.totalSpent) ? summary.totalSpent : 0;
-  const pct = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0;
+  const totalIncome = Number.isFinite(summary.totalIncome) ? summary.totalIncome : 0;
+  // Use the smaller of totalBudgeted or totalIncome as the denominator so the health bar
+  // reflects real headroom: if envelope limits exceed period income the bar would otherwise
+  // show false slack (e.g. 20% used when income is already gone).
+  const healthDenominator = totalIncome > 0 ? Math.min(totalBudgeted, totalIncome) : totalBudgeted;
+  const pct = healthDenominator > 0 ? Math.round((totalSpent / healthDenominator) * 100) : 0;
   const isOverBudget = pct > 100;
   const daysLeft = Number.isFinite(daysLeftInPeriod) ? daysLeftInPeriod : 0;
 

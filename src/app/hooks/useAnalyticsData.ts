@@ -44,10 +44,9 @@ export function useAnalyticsData(
   );
 
   return useMemo(() => {
-    const envelopes = state.envelopes;
-    const usePeriodEnvelopes = budgetPeriodMode === 'biweekly' || budgetPeriodMode === 'weekly' ? periodSummary.envelopes : null;
-    const envelopeSource =
-      usePeriodEnvelopes ?? envelopes.map((e) => ({ id: e.id, name: e.name, limit: e.limit, spent: e.spent, remaining: e.limit - e.spent }));
+    // Always use period-filtered envelope data — e.spent is an all-time cache and would
+    // show all-time totals in monthly mode instead of current-period totals.
+    const envelopeSource = periodSummary.envelopes;
     const transactions = state.transactions;
     const income = state.income;
     const savingsGoals = state.savingsGoals;
@@ -60,7 +59,17 @@ export function useAnalyticsData(
       fill: undefined as string | undefined,
       envelopeId: e.id,
     }));
-    const totalSpent = envelopeSource.reduce((s, e) => s + e.spent, 0);
+    if (periodSummary.uncategorizedSpent > 0) {
+      byEnvelope.push({
+        name: 'Uncategorized',
+        value: periodSummary.uncategorizedSpent,
+        limit: 0,
+        remaining: -periodSummary.uncategorizedSpent,
+        fill: undefined,
+        envelopeId: 'uncategorized',
+      });
+    }
+    const totalSpent = periodSummary.totalSpent;
     const totalIncome = income.reduce((s, i) => s + i.amount, 0);
 
     const now = new Date();
@@ -370,7 +379,6 @@ export function useAnalyticsData(
       topEnvelopes,
     };
   }, [
-    state.envelopes,
     state.transactions,
     state.income,
     state.savingsGoals,

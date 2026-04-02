@@ -289,6 +289,21 @@ describe('createBudgetStore', () => {
     expect(period2.envelopes[0].spent).toBe(30);
   });
 
+  it('uncategorized transactions are included in totalSpent', () => {
+    const { api, getState } = createStore();
+    const envId = getState().envelopes[0].id;
+    api.addTransaction({ amount: 40, envelopeId: envId, description: 'categorized', date: '2025-02-01' });
+    api.addTransaction({ amount: 25, description: 'uncategorized', date: '2025-02-01' });
+
+    const summary = api.getBudgetSummary();
+    expect(summary.uncategorizedSpent).toBe(25);
+    expect(summary.totalSpent).toBe(65);
+
+    const period = api.getBudgetSummaryForPeriod({ start: '2025-02-01', end: '2025-02-28' });
+    expect(period.uncategorizedSpent).toBe(25);
+    expect(period.totalSpent).toBe(65);
+  });
+
   it('importData recomputes envelope spent from positive categorized transactions', () => {
     const { api, getState } = createStore(getDefaultBudgetState());
     const imported: BudgetState = {

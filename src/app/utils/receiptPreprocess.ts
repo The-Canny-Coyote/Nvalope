@@ -1,16 +1,16 @@
 /**
  * Canvas preprocessing for receipt images before OCR: improves Tesseract accuracy.
- * Grayscale → contrast 150% → threshold → resize (max 1024×768, aspect preserved).
+ * Grayscale → contrast 160% → threshold → resize (max 1536×2048, aspect preserved).
  */
 
-const MAX_WIDTH = 1024;
-const MAX_HEIGHT = 768;
-const CONTRAST_FACTOR = 1.5;
+const MAX_WIDTH = 1536;
+const MAX_HEIGHT = 2048;
+const CONTRAST_FACTOR = 1.6;
 const THRESHOLD = 128;
 
 /**
  * Preprocess an image (file or data URL) for receipt OCR.
- * Returns a data URL (JPEG) suitable for Tesseract.recognize().
+ * Returns a data URL (PNG) suitable for Tesseract.recognize().
  */
 export function preprocessReceiptImage(source: File | string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -42,7 +42,7 @@ export function preprocessReceiptImage(source: File | string): Promise<string> {
           data[i] = data[i + 1] = data[i + 2] = v;
         }
         ctx.putImageData(imageData, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const dataUrl = canvas.toDataURL('image/png');
         resolve(dataUrl);
       } catch (e) {
         reject(e);

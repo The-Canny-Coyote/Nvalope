@@ -733,6 +733,17 @@ function CalendarContentInner({ highContrast = false }: CalendarContentProps) {
         })()
       )}
 
+      {/* Empty state or discoverability hint */}
+      {eventsForMonth.length === 0 && !searchLower ? (
+        <p className="text-center text-sm text-muted-foreground py-2">
+          No activity this month — tap any day to add a transaction, income, or bill.
+        </p>
+      ) : !selectedDate ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Tap a day to view or add entries
+        </p>
+      ) : null}
+
       {/* Selected day detail: modal when user clicks a day */}
       <Dialog
         open={!!selectedDate}

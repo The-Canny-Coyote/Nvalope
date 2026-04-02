@@ -44,7 +44,7 @@ const HEADER_STARTS = /^(RECEIPT|INVOICE|DATE|TIME|TOTAL|SUBTOTAL|TAX|AMOUNT|BAL
 /** Payment/total lines to exclude from line items (e.g. "46.30 TOTAL PURCHASE" or OCR "107AL PURCHASE") */
 const PAYMENT_TOTAL_LINE = /\d+\.?\d*\s+TOTAL\s+PURCHASE|TOTAL\s+PURCHASE\s+\d|^\s*[\d,.]+\s*TOTAL\s|\d*AL\s+PURCHASE/i;
 /** Total with label: supports US and European amounts. */
-const TOTAL_LABELS = /\b(TOTAL|TOTAL\s+PURCHASE|AMOUNT\s+DUE|BALANCE\s+DUE|GRAND\s+TOTAL|TOTAL\s+DUE|AMOUNT\s+PAID|TOTAL\s+SALE|CASH\s+TOTAL|CREDIT\s+TOTAL|TOTAL\s+AMOUNT|PAYMENT\s+TOTAL|BAL\.?\s*DUE|DUE\s+TODAY|FINAL\s+TOTAL)(?:\s*[:.]*)\s*\$?\s*([\d,.]+\d)\b/gi;
+const TOTAL_LABELS = /\b(TOTAL|TOTAL\s+PURCHASE|AMOUNT\s+DUE|BALANCE\s+DUE|GRAND\s+TOTAL|TOTAL\s+DUE|AMOUNT\s+PAID|TOTAL\s+SALE|CASH\s+TOTAL|CREDIT\s+TOTAL|TOTAL\s+AMOUNT|PAYMENT\s+TOTAL|BAL\.?\s*DUE|DUE\s+TODAY|FINAL\s+TOTAL|NET\s+TOTAL|NET\s+DUE|INVOICE\s+TOTAL|SALE\s+TOTAL|SALES\s+TOTAL|TOTAL\s+INCL\.?\s*TAX)(?:\s*[:.]*)\s*\$?\s*([\d,.]+\d)\b/gi;
 /** Any dollar amount at end of line (strict 2 decimals) for fallback */
 const ANY_DOLLAR_STRICT = /\$?\s*([\d,]+\.\d{2})\s*$/gm;
 /** Any dollar amount (flexible: 46.30, 46.3, 46) for fallback when no TOTAL label */
@@ -97,14 +97,14 @@ function isValidTotal(n: number): boolean {
   return n !== 0 && Math.abs(n) < 1_000_000 && Number.isFinite(n);
 }
 
-/** Normalize OCR output: collapse runs of spaces/newlines, trim lines, fix full-width digits. */
+/** Normalize OCR output: collapse runs of spaces/newlines, trim lines, fix full-width digits, fix common OCR digit substitutions. */
 function normalizeReceiptText(raw: string): string {
   const fullWidthDigits = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
   let out = raw;
   fullWidthDigits.forEach((c, i) => {
     out = out.split(c).join(String(i));
   });
-  return out
+  out = out
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/[ \t]+/g, ' ')
@@ -112,6 +112,13 @@ function normalizeReceiptText(raw: string): string {
     .replace(/ +\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+  // Fix common OCR digit/letter substitutions in price-like contexts only.
+  // O → 0 when sandwiched between digits or after $ or before a decimal
+  out = out.replace(/(?<=[$\d])O(?=[\d.])/g, '0');
+  out = out.replace(/([\s\n])O(\.\d)/g, '$10$2');
+  // l → 1 when followed by a decimal+digits (e.g. "l.99")
+  out = out.replace(/([\s\n$])l(\.\d)/g, '$11$2');
+  return out;
 }
 
 function normalizeDesc(s: string): string {

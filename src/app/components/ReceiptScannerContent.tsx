@@ -1,11 +1,11 @@
 import { memo } from 'react';
 import { useBudget } from '@/app/store/BudgetContext';
 import { Progress } from '@/app/components/ui/progress';
-import { ScanCard } from '@/app/components/ScanCard';
+import { ScanCard, ScanCardSkeleton } from '@/app/components/ScanCard';
 import { useReceiptScanner } from '@/app/hooks/useReceiptScanner';
 
 export type { ReceiptLineItem, ReceiptScanResult } from '@/app/components/ScanCard';
-export { ScanCard, generateId, LINE_ITEMS_VISIBLE_HEIGHT } from '@/app/components/ScanCard';
+export { ScanCard, ScanCardSkeleton, generateId, LINE_ITEMS_VISIBLE_HEIGHT } from '@/app/components/ScanCard';
 export { roundTo2 } from '@/app/utils/format';
 
 function ReceiptScannerContentInner() {
@@ -128,10 +128,11 @@ function ReceiptScannerContentInner() {
 
       <div className="pt-4 border-t border-border">
         <h4 className="text-sm font-medium text-foreground mb-2">Recent scans</h4>
-        {scans.length === 0 ? (
+        {scans.length === 0 && !scanning ? (
           <p className="text-xs text-muted-foreground">No receipts scanned yet. Upload an image above.</p>
         ) : (
           <ul className="space-y-3">
+            {scanning && <ScanCardSkeleton />}
             {scans.map((scan) => (
               <ScanCard
                 key={scan.id}

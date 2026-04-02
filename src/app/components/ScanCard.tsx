@@ -36,6 +36,8 @@ export interface ReceiptScanResult {
   imageDataUrl?: string;
   /** Parsed merchant name (OCR); used to learn store name when user edits and saves. */
   parsedMerchant?: string;
+  /** Tesseract overall confidence for the best OCR pass (0–100). Used to warn users about low-quality scans. */
+  ocrConfidence?: number;
 }
 
 export function generateId(): string {
@@ -169,6 +171,20 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
 
   return (
     <li className="p-3 bg-card border border-border rounded-lg flex flex-col gap-3">
+      {/* Low OCR confidence warning */}
+      {scan.ocrConfidence != null && scan.ocrConfidence < 60 && (
+        <div
+          className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs"
+          role="alert"
+        >
+          <span className="shrink-0 mt-0.5" aria-hidden>⚠</span>
+          <span>
+            <strong>Low scan quality</strong> — the image was hard to read (confidence {scan.ocrConfidence}%).
+            Check all values carefully, especially totals and line item amounts.
+          </span>
+        </div>
+      )}
+
       {/* Store name at top */}
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">Store name</span>
@@ -259,13 +275,13 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                   />
                   {item.isTax === true ? (
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground" title="Tax line">
+                      <span className="text-[10px] px-1.5 py-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium" title="Tax line">
                         Tax
                       </span>
                       <button
                         type="button"
                         onClick={() => updateLineItem(i, { isTax: false })}
-                        className="text-[10px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        className="text-[10px] px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[2rem]"
                         aria-label={`Mark item ${i + 1} as not tax`}
                         title="Not tax?"
                       >
@@ -319,7 +335,7 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
                   <button
                     type="button"
                     onClick={() => removeLineItem(i)}
-                    className="text-xs px-1.5 py-0.5 rounded border border-destructive/50 text-destructive hover:bg-destructive/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 shrink-0"
+                    className="text-xs px-2 py-1.5 rounded border border-destructive/50 text-destructive hover:bg-destructive/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 shrink-0 min-h-[2rem]"
                     aria-label={`Remove item ${i + 1}`}
                     title="Remove line item"
                   >
@@ -336,74 +352,84 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
 
       {/* Subtotal, Tax, Grand total — always visible, user edits directly */}
       <div className="flex flex-col gap-2 text-sm">
-        {scan.currency && (
-          <span className="self-end text-xs text-muted-foreground px-2 py-0.5 bg-muted/60 rounded-full">
-            {scan.currency}
-          </span>
-        )}
-        <label className="flex justify-between items-center gap-2 text-muted-foreground">
-          <span>Subtotal</span>
-          <span className="flex items-center gap-1">
-            <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={subtotal != null ? subtotal.toFixed(2) : ''}
-              onChange={(e) => {
-                const v = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
-                onUpdate({ subtotal: v != null && !Number.isNaN(v) ? roundTo2(v) : undefined });
-              }}
-              placeholder="0.00"
-              className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
-              aria-label="Subtotal"
-            />
-          </span>
-        </label>
-        <label className="flex justify-between items-center gap-2 text-muted-foreground">
-          <span>Tax</span>
-          <span className="flex items-center gap-1">
-            <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={tax != null ? tax.toFixed(2) : ''}
-              onChange={(e) => {
-                const v = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
-                onUpdate({ tax: v != null && !Number.isNaN(v) ? roundTo2(v) : undefined });
-              }}
-              placeholder="0.00"
-              className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
-              aria-label="Tax"
-            />
-          </span>
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Tax is distributed proportionally across your budgeted line items unless you assign it to an envelope or exclude it.
-        </p>
-        <label className="flex justify-between items-center gap-2 font-medium text-foreground border-t border-border pt-2">
-          <span>Grand total</span>
-          <span className="flex items-center gap-1">
-            <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
-            <input
-              type="number"
-              step="0.01"
-              value={grandTotal != null ? grandTotal.toFixed(2) : ''}
-              onChange={(e) => {
-                const v = e.target.value !== '' ? parseFloat(e.target.value) : null;
-                if (v != null && !Number.isNaN(v) && v === 0 && onRemoveScan) {
-                  setShowRemoveReceiptFromListDialog(true);
-                  return;
-                }
-                onUpdate({ amount: v != null && !Number.isNaN(v) ? roundTo2(v) : v });
-              }}
-              placeholder="0.00"
-              className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
-              aria-label="Grand total"
-            />
-          </span>
-        </label>
+        <div className="rounded-lg border border-border bg-muted/30 p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Totals</span>
+            {scan.currency && (
+              <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted/60 rounded-full">
+                {scan.currency}
+              </span>
+            )}
+          </div>
+          <label className="flex justify-between items-center gap-2 text-muted-foreground">
+            <span>Subtotal</span>
+            <span className="flex items-center gap-1">
+              <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={subtotal != null ? subtotal.toFixed(2) : ''}
+                onChange={(e) => {
+                  const v = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
+                  onUpdate({ subtotal: v != null && !Number.isNaN(v) ? roundTo2(v) : undefined });
+                }}
+                placeholder="0.00"
+                className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
+                aria-label="Subtotal"
+              />
+            </span>
+          </label>
+          <label className="flex justify-between items-center gap-2 text-muted-foreground">
+            <span className="flex flex-col gap-0.5">
+              <span>Tax</span>
+              {showTaxSpreadNote && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400">spread across items</span>
+              )}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={tax != null ? tax.toFixed(2) : ''}
+                onChange={(e) => {
+                  const v = e.target.value !== '' ? parseFloat(e.target.value) : undefined;
+                  onUpdate({ tax: v != null && !Number.isNaN(v) ? roundTo2(v) : undefined });
+                }}
+                placeholder="0.00"
+                className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
+                aria-label="Tax"
+              />
+            </span>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Tax is distributed proportionally across your budgeted line items unless you assign it to an envelope or exclude it.
+          </p>
+          <label className="flex justify-between items-center gap-2 font-semibold text-foreground border-t border-border pt-2">
+            <span>Grand total <span className="text-xs font-normal text-muted-foreground">(from receipt)</span></span>
+            <span className="flex items-center gap-1">
+              <span className="text-muted-foreground shrink-0" aria-hidden>{currencySymbol}</span>
+              <input
+                type="number"
+                step="0.01"
+                value={grandTotal != null ? grandTotal.toFixed(2) : ''}
+                onChange={(e) => {
+                  const v = e.target.value !== '' ? parseFloat(e.target.value) : null;
+                  if (v != null && !Number.isNaN(v) && v === 0 && onRemoveScan) {
+                    setShowRemoveReceiptFromListDialog(true);
+                    return;
+                  }
+                  onUpdate({ amount: v != null && !Number.isNaN(v) ? roundTo2(v) : v });
+                }}
+                placeholder="0.00"
+                className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-foreground text-sm tabular-nums text-right font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
+                aria-label="Grand total"
+              />
+            </span>
+          </label>
+        </div>
         <label className="flex justify-between items-center gap-2 text-muted-foreground">
           <span>Amount you paid</span>
           <span className="flex items-center gap-1">
@@ -636,6 +662,60 @@ export function ScanCard({ scan, hasEnvelopes, envelopes, onUpdate, onSave, onRe
           </form>
         </DialogContent>
       </Dialog>
+    </li>
+  );
+}
+
+/** Skeleton placeholder shown while OCR is running, sized to match a typical ScanCard. */
+export function ScanCardSkeleton() {
+  return (
+    <li
+      className="p-3 bg-card border border-border rounded-lg flex flex-col gap-3 animate-pulse"
+      aria-hidden="true"
+    >
+      {/* Store name */}
+      <div className="h-4 w-1/3 rounded bg-muted/60" />
+      <div className="h-8 w-full rounded-lg bg-muted/40" />
+
+      {/* Date / time row */}
+      <div className="flex gap-4">
+        <div className="h-7 w-28 rounded-lg bg-muted/40" />
+        <div className="h-7 w-24 rounded-lg bg-muted/40" />
+      </div>
+
+      {/* Line items header */}
+      <div className="flex justify-between">
+        <div className="h-3 w-16 rounded bg-muted/60" />
+        <div className="h-6 w-24 rounded-lg bg-muted/40" />
+      </div>
+
+      {/* Line item rows */}
+      <div className="rounded-lg bg-muted/30 p-2 flex flex-col gap-2">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <div className="h-6 flex-1 rounded bg-muted/50" />
+            <div className="h-6 w-16 rounded bg-muted/50" />
+            <div className="h-6 w-24 rounded bg-muted/50" />
+          </div>
+        ))}
+      </div>
+
+      {/* Totals box */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3 flex flex-col gap-2">
+        <div className="flex justify-between">
+          <div className="h-3 w-10 rounded bg-muted/60" />
+          <div className="h-4 w-12 rounded bg-muted/40" />
+        </div>
+        {['Subtotal', 'Tax', 'Grand total'].map((_, i) => (
+          <div key={i} className="flex justify-between items-center">
+            <div className={`h-3 rounded bg-muted/50 ${i === 2 ? 'w-24' : 'w-14'}`} />
+            <div className="h-7 w-24 rounded-lg bg-muted/40" />
+          </div>
+        ))}
+      </div>
+
+      {/* Save button */}
+      <div className="h-9 w-20 rounded-lg bg-primary/20" />
     </li>
   );
 }

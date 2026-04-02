@@ -3,7 +3,7 @@
  * State lives in appStore.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAppStore } from '@/app/store/appStore';
 
 export interface UseModulesParams {
@@ -30,6 +30,13 @@ export function useModules({
 }: UseModulesParams): UseModulesReturn {
   const enabledModules = useAppStore((s) => s.enabledModules);
   const setEnabledModules = useAppStore((s) => s.setEnabledModules);
+  const cacheAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cacheAnimTimerRef.current !== null) clearTimeout(cacheAnimTimerRef.current);
+    };
+  }, []);
 
   const enableCache = useCallback(() => {
     saveScrollForRestore();
@@ -37,8 +44,11 @@ export function useModules({
     setEnabledModules((prev) =>
       prev.includes('cacheAssistant') ? prev : [...prev, 'cacheAssistant']
     );
-    const shortAnimationMs = 150;
-    setTimeout(() => setShowCacheAnimation(false), shortAnimationMs);
+    if (cacheAnimTimerRef.current !== null) clearTimeout(cacheAnimTimerRef.current);
+    cacheAnimTimerRef.current = setTimeout(() => {
+      cacheAnimTimerRef.current = null;
+      setShowCacheAnimation(false);
+    }, 150);
   }, [saveScrollForRestore, setShowCacheAnimation, setEnabledModules]);
 
   const enableModule = useCallback(

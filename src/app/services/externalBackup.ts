@@ -345,7 +345,9 @@ export async function triggerBackupNow(
   }
 }
 
-export function stopAutoBackup(): void {}
+export function stopAutoBackup(): void {
+  cancelScheduledBackup();
+}
 
 export function isExternalBackupSupported(): boolean {
   return typeof window !== 'undefined' && 'showDirectoryPicker' in window;

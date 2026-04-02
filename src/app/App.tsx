@@ -39,9 +39,6 @@ import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
 import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 const BACKUP_DEBOUNCE_MS = 2000;
-const SHOW_AI_REWORK_TOAST = false;
-const AI_ASSISTANT_ENABLED = true;
-const SHOW_QOL_UPDATE_TOASTS = true;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -219,31 +216,28 @@ export default function App() {
   const [settingsOptionalFeaturesOpen, setSettingsOptionalFeaturesOpen] = useState(false);
 
   useEffect(() => {
-    if (!SHOW_AI_REWORK_TOAST) return;
-    delayedToast.info(
-      'The AI Assistant is currently being reworked and will be available soon. Receipt scanner calculations have been corrected.',
-      { durationMs: 6000 }
-    );
-  }, []);
-
-  useEffect(() => {
-    if (!SHOW_QOL_UPDATE_TOASTS) return;
+    if (localStorage.getItem(STORAGE_KEYS.QOL_UPDATE_TOASTS_SEEN) === 'true') return;
+    localStorage.setItem(STORAGE_KEYS.QOL_UPDATE_TOASTS_SEEN, 'true');
     delayedToast.info(
       'Tip: After 3 changes, a backup copy is saved on this device (at most once per minute). Set a backup folder or download a backup in Settings → Data Management.',
       { durationMs: 6500 }
     );
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       delayedToast.info(
         'Update: New colorblind settings help make category colors and charts easier to distinguish. Also new: Cache Savings Goals (Envelopes & Expenses → Cache Savings Goals).',
         { durationMs: 6500 }
       );
     }, 700);
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       delayedToast.info(
         'New in Nvalope: clearer receipt scanning (tax + totals), easier transaction review (split + unassigned), and better calendar planning (bills + pay shortcut).',
         { durationMs: 7500 }
       );
     }, 1400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
   useEffect(() => {
@@ -572,7 +566,7 @@ export default function App() {
     restoreScrollAfterLayout,
     onBeforeOpenFeatureCollapsibles: saveScrollAndAnchorBeforeModuleToggle,
     onBeforeOpenDataMgmt: saveScrollForRestore,
-    onOpenAssistant: AI_ASSISTANT_ENABLED ? () => setAssistantOpen(true) : undefined,
+    onOpenAssistant: () => setAssistantOpen(true),
     hasBackupFolder,
     useCardLayout,
     setUseCardLayout,
@@ -645,8 +639,7 @@ export default function App() {
         onBudgetSaved={handleBudgetSaved}
         onLoadError={(msg) => delayedToast.error(msg)}
       >
-        {AI_ASSISTANT_ENABLED && (
-          <AIChatSheet
+        <AIChatSheet
             open={assistantOpen}
             onOpenChange={setAssistantOpen}
             aiMode={effectiveEnabledModules.includes('advancedAICache') && !assistantFallbackToBasic ? 'advanced' : 'basic'}
@@ -655,7 +648,6 @@ export default function App() {
             initialMessages={initialAssistantMessages ?? undefined}
             onMessagesChange={onAssistantMessagesChange}
           />
-        )}
         <AppErrorBoundary>
           <MainContent
             mainScrollRef={mainScrollRef}
@@ -669,7 +661,7 @@ export default function App() {
             wheelScale={wheelScale}
             enabledModules={effectiveEnabledModules}
             showCacheAnimation={showCacheAnimation}
-            setAssistantOpen={AI_ASSISTANT_ENABLED ? setAssistantOpen : () => {}}
+            setAssistantOpen={setAssistantOpen}
             useCardLayout={useCardLayout}
             setUseCardLayout={setUseCardLayout}
           />

@@ -38,6 +38,8 @@ export const STORAGE_KEYS = {
   FIRST_INPUT: 'nvalope-first-input',
   /** Whether the premium AI download notice has been seen */
   PREMIUM_AI_DOWNLOAD_NOTICE_SEEN: 'nvalope-premium-ai-download-notice-seen',
+  /** Whether the QoL update toasts have been shown (show once, never repeat) */
+  QOL_UPDATE_TOASTS_SEEN: 'nvalope-qol-update-toasts-seen',
   /** Prefix for entitlement flags (append the entitlement key) */
   ENTITLEMENT_PREFIX: 'nvalope-entitlement-',
   /** Light/dark theme preference (next-themes compatible key) */

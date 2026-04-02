@@ -41,6 +41,7 @@ import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 const BACKUP_DEBOUNCE_MS = 2000;
 const SHOW_AI_REWORK_TOAST = false;
 const AI_ASSISTANT_ENABLED = true;
+const SHOW_QOL_UPDATE_TOASTS = true;
 
 export default function App() {
   const [showCacheAnimation, setShowCacheAnimation] = useState(false);
@@ -223,6 +224,26 @@ export default function App() {
       'The AI Assistant is currently being reworked and will be available soon. Receipt scanner calculations have been corrected.',
       { durationMs: 6000 }
     );
+  }, []);
+
+  useEffect(() => {
+    if (!SHOW_QOL_UPDATE_TOASTS) return;
+    delayedToast.info(
+      'Tip: After 3 changes, a backup copy is saved on this device (at most once per minute). Set a backup folder or download a backup in Settings → Data Management.',
+      { durationMs: 6500 }
+    );
+    setTimeout(() => {
+      delayedToast.info(
+        'Update: New colorblind settings help make category colors and charts easier to distinguish.',
+        { durationMs: 6500 }
+      );
+    }, 700);
+    setTimeout(() => {
+      delayedToast.info(
+        'New in Nvalope: clearer receipt scanning (tax + totals), easier transaction review (split + unassigned), and better calendar planning (bills + pay shortcut).',
+        { durationMs: 7500 }
+      );
+    }, 1400);
   }, []);
 
   useEffect(() => {

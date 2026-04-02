@@ -112,7 +112,7 @@ export function GlossaryContent() {
         <h2 className="text-lg font-semibold text-primary">Glossary</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Definitions of terms used in Nvalope. Search or filter by category to find what you're looking for.
+        Definitions of terms used in Nvalope. Search or filter by category to find what you&apos;re looking for.
       </p>
 
       <div className="space-y-3">

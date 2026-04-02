@@ -36,10 +36,9 @@ import { usePremiumEntitlements } from '@/app/hooks/usePremiumEntitlements';
 import { hasEntitlement } from '@/app/premium/entitlements';
 import { useCheckUpdatesToast } from '@/app/hooks/useCheckUpdatesToast';
 import { useBackupFolderReminders } from '@/app/hooks/useBackupFolderReminders';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 const BACKUP_DEBOUNCE_MS = 2000;
-
-const PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY = 'nvalope-premium-ai-download-notice-seen';
 const SHOW_AI_REWORK_TOAST = false;
 const AI_ASSISTANT_ENABLED = true;
 
@@ -236,7 +235,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     if (window.matchMedia('(display-mode: standalone)').matches) {
       try {
-        localStorage.setItem('nvalope-pwa-installed', 'true');
+        localStorage.setItem(STORAGE_KEYS.PWA_INSTALLED, 'true');
       } catch {
         /* ignore */
       }
@@ -452,7 +451,7 @@ export default function App() {
   const handleEnableAdvancedAICacheClick = () => {
     if (!isPremium) return;
     try {
-      if (localStorage.getItem(PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY) === 'true') {
+      if (localStorage.getItem(STORAGE_KEYS.PREMIUM_AI_DOWNLOAD_NOTICE_SEEN) === 'true') {
         enableModule('advancedAICache');
         return;
       }
@@ -465,7 +464,7 @@ export default function App() {
   const handleAdvancedAIDownloadNoticeAck = () => {
     if (!isPremium) return;
     try {
-      localStorage.setItem(PREMIUM_AI_DOWNLOAD_NOTICE_SEEN_KEY, 'true');
+      localStorage.setItem(STORAGE_KEYS.PREMIUM_AI_DOWNLOAD_NOTICE_SEEN, 'true');
     } catch {
       // ignore
     }

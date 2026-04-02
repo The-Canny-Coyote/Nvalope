@@ -17,6 +17,7 @@ import { AccessibilityTypographySliders, AccessibilityCardsAndBarSliders } from 
 import { AccessibilityToggles } from '@/app/components/AccessibilityToggles';
 import { AccessibilityPresets } from '@/app/components/AccessibilityPresets';
 import { useAppStore } from '@/app/store/appStore';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 export type { AccessibilityMode } from '@/app/components/accessibilityMode';
 
@@ -145,7 +146,7 @@ export function AccessibilityContent({
 
   const [ttsEnabled, setTtsEnabled] = useState(() => {
     try {
-      return typeof window !== 'undefined' && window.localStorage.getItem('nvalope-tts-enabled') === 'true';
+      return typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEYS.TTS_ENABLED) === 'true';
     } catch {
       return false;
     }
@@ -180,7 +181,7 @@ export function AccessibilityContent({
       setTtsSpeaking(false);
     }
     try {
-      if (typeof window !== 'undefined') window.localStorage.setItem('nvalope-tts-enabled', String(on));
+      if (typeof window !== 'undefined') window.localStorage.setItem(STORAGE_KEYS.TTS_ENABLED, String(on));
     } catch {
       /* ignore */
     }

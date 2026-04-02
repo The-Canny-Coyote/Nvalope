@@ -107,7 +107,7 @@ export function AIChatSheet({
       const { summary, periodLabel } = getBudgetSummaryForCurrentPeriod();
       return {
         ...summary,
-        analyticsInsight: getAnalyticsInsight(state),
+        analyticsInsight: getAnalyticsInsight(state, summary.envelopes),
         periodLabel: periodLabel || undefined,
       };
     } catch {

@@ -1,5 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 function getThemeFromDOM(): 'light' | 'dark' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -10,7 +11,12 @@ export function ThemeToggle() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('theme');
+      const legacy = localStorage.getItem('theme');
+      const saved = localStorage.getItem(STORAGE_KEYS.THEME) ?? legacy;
+      if (legacy && !localStorage.getItem(STORAGE_KEYS.THEME)) {
+        localStorage.setItem(STORAGE_KEYS.THEME, legacy);
+        localStorage.removeItem('theme');
+      }
       if (saved === 'dark' && !document.documentElement.classList.contains('dark')) {
         document.documentElement.classList.add('dark');
         setTheme('dark');
@@ -30,7 +36,7 @@ export function ThemeToggle() {
     const newTheme = currentlyDark ? 'light' : 'dark';
     setTheme(newTheme);
     try {
-      localStorage.setItem('theme', newTheme);
+      localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
     } catch {
       /* ignore */
     }

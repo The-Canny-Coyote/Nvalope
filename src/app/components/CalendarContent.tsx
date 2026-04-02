@@ -48,7 +48,6 @@ function parseCalendarViewState(currentDateStr: string, selectedDateStr: string 
 
 export interface CalendarContentProps {
   highContrast?: boolean;
-  screenReaderMode?: boolean;
 }
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

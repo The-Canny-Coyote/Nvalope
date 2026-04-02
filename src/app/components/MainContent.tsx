@@ -70,6 +70,7 @@ export interface MainContentProps {
   setAssistantOpen: (open: boolean) => void;
   useCardLayout: boolean;
   setUseCardLayout: (v: boolean) => void;
+  isMobile: boolean;
 }
 
 export function MainContent({
@@ -87,6 +88,7 @@ export function MainContent({
   setAssistantOpen,
   useCardLayout,
   setUseCardLayout: _setUseCardLayout,
+  isMobile,
 }: MainContentProps) {
   const showGridBackground = useAppStore((s) => s.showGridBackground);
   const reducedMotion = useAppStore((s) => s.reducedMotion);
@@ -112,12 +114,12 @@ export function MainContent({
   const _setWheelMinimized = useAppStore((s) => s.setWheelMinimized);
   const listSections = allSections;
   const [narrowViewport, setNarrowViewport] = useState(
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 480px)').matches : false
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 640px)').matches : false
   );
   const prevScrolledSectionRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const m = window.matchMedia('(max-width: 480px)');
+    const m = window.matchMedia('(max-width: 640px)');
     const listener = () => setNarrowViewport(m.matches);
     m.addEventListener('change', listener);
     return () => m.removeEventListener('change', listener);
@@ -393,6 +395,11 @@ export function MainContent({
               </div>
             ) : useCardLayout ? (
               <div key="cards" data-layout="cards" className="flex w-full min-w-0 flex-col items-center">
+                {selectedWheelSection == null && (
+                  <p className="text-sm text-muted-foreground text-center mt-4">
+                    Tap a section below to get started.
+                  </p>
+                )}
                 <div className="w-full min-w-0 mt-4">
                   <AnimatePresence mode="wait">
                     {selectedWheelSection != null && (() => {
@@ -438,12 +445,12 @@ export function MainContent({
                                 className="relative z-10 mx-auto block w-full max-w-full min-w-0 overflow-hidden"
                                 style={{
                                   maxWidth: `${600 * scaleRatio}px`,
-                                  maxHeight: `${410 * scaleRatio}px`,
+                                  maxHeight: `${435 * scaleRatio}px`,
                                 }}
                               >
                                 <div
                                   style={{
-                                    transform: `translateY(-${80 * scaleRatio}px)`,
+                                    transform: `translateY(-${68 * scaleRatio}px)`,
                                     transformOrigin: 'top center',
                                   }}
                                 >
@@ -660,6 +667,7 @@ export function MainContent({
             setSelectedWheelSection(id);
           }}
           scale={wheelScale}
+          isMobile={isMobile}
           position={cardBarPosition}
           onCardBarPositionChange={setCardBarPosition}
           rows={effectiveCardBarRows}

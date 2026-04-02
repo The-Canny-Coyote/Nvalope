@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getBackupPromptSeen, setBackupPromptSeen } from './BackupFolderPrompt';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
-const KEY = 'nvalope-backup-prompt-seen';
+const KEY = STORAGE_KEYS.BACKUP_PROMPT_SEEN;
 
 describe('BackupFolderPrompt', () => {
   beforeEach(() => {

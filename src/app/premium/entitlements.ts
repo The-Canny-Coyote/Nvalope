@@ -11,6 +11,8 @@
  * To inquire about a commercial license: support@nvalope.com
  */
 
+import { STORAGE_KEY_PREFIX } from '@/app/constants/storageKeys';
+
 export type EntitlementKey =
   | 'premium_full'
   // Future: multi-user and collaboration mode (not yet client-side implemented)
@@ -33,7 +35,6 @@ export interface EntitlementsResponse {
 
 const ENTITLEMENTS_API_PATH = '/api/entitlements';
 const SESSION_API_PATH = '/api/session';
-const STORAGE_KEY_PREFIX = 'nvalope-entitlement-';
 
 export function isPremiumFeatureEnabled(): boolean {
   return (import.meta.env?.VITE_PREMIUM_AVAILABLE as string) === 'true';
@@ -110,8 +111,8 @@ export function hasEntitlement(
   if (fromApi?.premium_full) return true;
   if (fromApi && key in fromApi && (fromApi as Record<string, boolean>)[key]) return true;
   try {
-    if (localStorage.getItem(`${STORAGE_KEY_PREFIX}${key}`) === 'true') return true;
-    if (key !== 'premium_full' && localStorage.getItem(`${STORAGE_KEY_PREFIX}premium_full`) === 'true') return true;
+    if (localStorage.getItem(`${STORAGE_KEY_PREFIX.ENTITLEMENT}${key}`) === 'true') return true;
+    if (key !== 'premium_full' && localStorage.getItem(`${STORAGE_KEY_PREFIX.ENTITLEMENT}premium_full`) === 'true') return true;
   } catch {
     // ignore
   }
@@ -121,8 +122,8 @@ export function hasEntitlement(
 export function setLocalEntitlement(key: EntitlementKey, value: boolean): void {
   if (getApiBase().length > 0) return;
   try {
-    if (value) localStorage.setItem(`${STORAGE_KEY_PREFIX}${key}`, 'true');
-    else localStorage.removeItem(`${STORAGE_KEY_PREFIX}${key}`);
+    if (value) localStorage.setItem(`${STORAGE_KEY_PREFIX.ENTITLEMENT}${key}`, 'true');
+    else localStorage.removeItem(`${STORAGE_KEY_PREFIX.ENTITLEMENT}${key}`);
   } catch {
     // ignore
   }

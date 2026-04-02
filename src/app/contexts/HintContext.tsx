@@ -1,13 +1,11 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
-const STORAGE_MASTER = 'nvalope-hints-master';
-const STORAGE_DISABLED = 'nvalope-hints-disabled';
+import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 function loadMaster(): boolean {
   try {
-    const v = localStorage.getItem(STORAGE_MASTER);
+    const v = localStorage.getItem(STORAGE_KEYS.HINTS_MASTER);
     if (v === 'false') return false;
     if (v === 'true') return true;
   } catch { /* ignore */ }
@@ -16,7 +14,7 @@ function loadMaster(): boolean {
 
 function loadDisabled(): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_DISABLED);
+    const raw = localStorage.getItem(STORAGE_KEYS.HINTS_DISABLED);
     if (raw) {
       const arr = JSON.parse(raw) as unknown;
       if (Array.isArray(arr) && arr.every((x) => typeof x === 'string')) return new Set(arr);
@@ -27,7 +25,7 @@ function loadDisabled(): Set<string> {
 
 function saveDisabled(disabled: Set<string>) {
   try {
-    localStorage.setItem(STORAGE_DISABLED, JSON.stringify([...disabled]));
+    localStorage.setItem(STORAGE_KEYS.HINTS_DISABLED, JSON.stringify([...disabled]));
   } catch { /* ignore */ }
 }
 
@@ -47,7 +45,7 @@ export function HintProvider({ children }: { children: React.ReactNode }) {
   const setMasterEnabled = useCallback((v: boolean) => {
     setMasterState(v);
     try {
-      localStorage.setItem(STORAGE_MASTER, v ? 'true' : 'false');
+      localStorage.setItem(STORAGE_KEYS.HINTS_MASTER, v ? 'true' : 'false');
     } catch { /* ignore */ }
   }, []);
 

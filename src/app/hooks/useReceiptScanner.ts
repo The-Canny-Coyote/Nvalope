@@ -94,7 +94,8 @@ export function useReceiptScanner() {
         tessedit_pageseg_mode: Tesseract.PSM.SINGLE_COLUMN,
         debug_file: '/dev/null',
       });
-      let { data: { text } } = await worker.recognize(ocrImage, { rotateAuto: true });
+      let { data: { text, confidence } } = await worker.recognize(ocrImage, { rotateAuto: true });
+      let ocrConfidence: number = Math.round(confidence ?? 0);
       let parsed;
       try {
         parsed = parseReceiptText(text ?? '', { glossary });
@@ -105,7 +106,7 @@ export function useReceiptScanner() {
         const modes = [Tesseract.PSM.AUTO, Tesseract.PSM.SINGLE_BLOCK] as const;
         for (const psm of modes) {
           await worker!.setParameters({ tessedit_pageseg_mode: psm, debug_file: '/dev/null' });
-          const { data: { text: t } } = await worker!.recognize(ocrImage, { rotateAuto: true });
+          const { data: { text: t, confidence: c } } = await worker!.recognize(ocrImage, { rotateAuto: true });
           let p;
           try {
             p = parseReceiptText(t ?? '', { glossary });
@@ -115,6 +116,7 @@ export function useReceiptScanner() {
           if ((t ?? '').trim().length > (text ?? '').trim().length || (p.amount != null && parsed.amount == null) || p.lineItems.length > parsed.lineItems.length) {
             text = t;
             parsed = p;
+            ocrConfidence = Math.round(c ?? ocrConfidence);
           }
         }
       }
@@ -165,6 +167,7 @@ export function useReceiptScanner() {
           change: parsed.change,
           isRefund: parsed.isRefund,
           taxRate,
+          ocrConfidence,
           imageDataUrl,
         },
         ...prev,

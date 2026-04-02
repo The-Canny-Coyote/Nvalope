@@ -103,10 +103,10 @@ function EnvelopeEditForm({
       <Dialog open={showZeroLimitConfirm} onOpenChange={(open) => !open && setShowZeroLimitConfirm(false)}>
         <DialogContent className="max-w-sm" aria-describedby="zero-limit-desc">
           <DialogHeader>
-            <DialogTitle>Maximum set to zero</DialogTitle>
+            <DialogTitle>Set budget limit to zero?</DialogTitle>
           </DialogHeader>
           <p id="zero-limit-desc" className="text-sm text-muted-foreground mb-4">
-            Setting the maximum to 0 removes the budget for this envelope. Do you want to delete the envelope instead? Transactions in it will become uncategorized.
+            A zero limit means this envelope has no spending cap. You can keep it running without a limit, or delete it entirely — deleting will move its transactions to Uncategorized.
           </p>
           <div className="flex flex-col gap-2">
             {onDelete && (
@@ -125,7 +125,7 @@ function EnvelopeEditForm({
               onClick={() => handleZeroLimitChoice('keep')}
               className="min-h-[44px] w-full justify-center"
             >
-              Keep envelope with 0 limit
+              Keep with no limit
             </Button>
             <Button
               type="button"

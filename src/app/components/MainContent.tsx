@@ -460,7 +460,7 @@ export function MainContent({
                                     showCacheAnimation={showCacheAnimation}
                                     accessibilityMode={selectedMode}
                                     onUserAction={() => {}}
-                                    onOpenAssistant={() => setAssistantOpen(true)}
+                                    onOpenAssistant={enabledModules.includes('cacheAssistant') ? () => setAssistantOpen(true) : undefined}
                                     selectedSection={selectedWheelSection}
                                     onSelectedSectionChange={(id) => {
                                       if (id === null) saveScrollForRestore();

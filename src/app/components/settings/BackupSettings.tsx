@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
-import { ChevronDown, ChevronUp, Database, Lock } from 'lucide-react';
+import { ChevronDown, ChevronUp, Database, Download, FolderOpen, HelpCircle, Lock, Upload } from 'lucide-react';
 import { isExternalBackupSupported, scheduleBackup } from '@/app/services/externalBackup';
 import { SHOW_BANK_STATEMENT_IMPORT } from '@/app/constants/features';
 import { useBudget } from '@/app/store/BudgetContext';
@@ -15,6 +15,7 @@ import { Checkbox } from '@/app/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/app/components/ui/collapsible';
 import { Alert, AlertTitle, AlertDescription } from '@/app/components/ui/alert';
 import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/app/components/ui/tooltip';
 import { toast } from 'sonner';
 import {
   classifyImportedTransactions,
@@ -64,6 +65,28 @@ export interface BackupSettingsProps {
   jumpToDataRef: MutableRefObject<(() => void) | null>;
 }
 
+// ---------------------------------------------------------------------------
+// Small inline help tooltip — keeps each button self-documenting without
+// cluttering the surrounding layout.
+// ---------------------------------------------------------------------------
+function HelpTip({ children }: { children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="inline-flex items-center justify-center w-4 h-4 text-muted-foreground cursor-help shrink-0"
+          aria-label="More information"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="max-w-[240px] text-xs leading-relaxed">
+        {children}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function BackupSettings({
   enabledModules,
   onChooseBackupFolder,
@@ -95,15 +118,30 @@ export function BackupSettings({
   const [passwordDialogMode, setPasswordDialogMode] = useState<PasswordDialogMode>('set');
   const [pendingImportEncryptedContent, setPendingImportEncryptedContent] = useState<string | null>(null);
   const [showEncryptedNudge, setShowEncryptedNudge] = useState(false);
-  const [dataMgmtOpen, setDataMgmtOpen] = useState(false);
+  // Two separate collapsibles instead of one
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [showImportConfirmDialog, setShowImportConfirmDialog] = useState(false);
   const pendingImportRawRef = useRef<Record<string, unknown> | null>(null);
   const [showSampleDataConfirmDialog, setShowSampleDataConfirmDialog] = useState(false);
 
-  const handleDataMgmtOpenChange = useCallback(
+  // jumpToDataRef opens the backup collapsible (backward-compat: callers expect
+  // the data section to open, which is the backup section).
+  const handleBackupOpenChange = useCallback(
     (open: boolean) => {
       if (open) onBeforeOpen?.();
-      setDataMgmtOpen(open);
+      setBackupOpen(open);
+      if (open && restoreScrollAfterLayout) {
+        requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
+      }
+    },
+    [onBeforeOpen, restoreScrollAfterLayout]
+  );
+
+  const handleImportOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) onBeforeOpen?.();
+      setImportOpen(open);
       if (open && restoreScrollAfterLayout) {
         requestAnimationFrame(() => requestAnimationFrame(restoreScrollAfterLayout));
       }
@@ -112,8 +150,8 @@ export function BackupSettings({
   );
 
   const openDataSection = useCallback(() => {
-    handleDataMgmtOpenChange(true);
-  }, [handleDataMgmtOpenChange]);
+    handleBackupOpenChange(true);
+  }, [handleBackupOpenChange]);
 
   useLayoutEffect(() => {
     jumpToDataRef.current = openDataSection;
@@ -128,8 +166,9 @@ export function BackupSettings({
     statementImportInputRef.current?.click();
   };
 
-  const dataMgmtBtn =
+  const btnBase =
     'inline-flex items-center gap-2 py-2 px-4 border border-primary/30 rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-primary/5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-0';
+  const btnDisabled = 'disabled:opacity-60 disabled:pointer-events-none';
 
   const handleExportBackup = () => {
     if (!api) {
@@ -239,7 +278,7 @@ export function BackupSettings({
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const MAX_BACKUP_BYTES = 50 * 1024 * 1024; // 50 MB
+    const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
     if (file.size > MAX_BACKUP_BYTES) {
       delayedToast.error('This file is too large to be a valid Nvalope backup. Check that you selected the right file.');
       return;
@@ -274,7 +313,7 @@ export function BackupSettings({
     if (!file) return;
     e.target.value = '';
     if (!showBankStatementImport) return;
-    const MAX_STATEMENT_BYTES = 20 * 1024 * 1024; // 20 MB
+    const MAX_STATEMENT_BYTES = 20 * 1024 * 1024;
     if (file.size > MAX_STATEMENT_BYTES) {
       delayedToast.error('This file is too large. Bank statement files are typically under 5 MB. Check that you selected the right file.');
       return;
@@ -444,13 +483,25 @@ export function BackupSettings({
     }
   };
 
+  const externalSupported = isExternalBackupSupported();
+
+  // -------------------------------------------------------------------------
+  // Shared collapsible trigger style (reused for both sections)
+  // -------------------------------------------------------------------------
+  const triggerCls =
+    'flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3.5 text-left transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer glass-card shadow-sm';
+
   return (
     <>
-      <div id="settings-data">
-        <Collapsible open={dataMgmtOpen} onOpenChange={handleDataMgmtOpenChange} className="pt-4 border-t border-border">
+      <div id="settings-data" className="space-y-3 pt-4 border-t border-border">
+
+        {/* ================================================================
+            SECTION 1 — Back up & restore
+        ================================================================ */}
+        <Collapsible open={backupOpen} onOpenChange={handleBackupOpenChange}>
           <CollapsibleTrigger
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3.5 text-left transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer glass-card shadow-sm"
-            aria-expanded={dataMgmtOpen}
+            className={triggerCls}
+            aria-expanded={backupOpen}
             onPointerDownCapture={() => onBeforeOpen?.()}
             onKeyDownCapture={(e) => {
               if (e.key === 'Enter' || e.key === ' ') onBeforeOpen?.();
@@ -461,140 +512,204 @@ export function BackupSettings({
                 <Database className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <span className="block text-sm font-semibold text-foreground">Data Management</span>
-                <span className="block text-xs text-muted-foreground">Full backup, budget-only export, import, updates</span>
+                <span className="block text-sm font-semibold text-foreground">Back up &amp; restore</span>
+                <span className="block text-xs text-muted-foreground">
+                  {hasBackupFolder === true ? 'Auto-backup active · folder set' : 'Download, auto-backup, encryption'}
+                </span>
               </div>
             </div>
-            {dataMgmtOpen ? (
+            {backupOpen ? (
               <ChevronUp className="h-5 w-5 shrink-0 text-primary" aria-hidden />
             ) : (
               <ChevronDown className="h-5 w-5 shrink-0 text-primary" aria-hidden />
             )}
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-2 pt-2">
+
+          <CollapsibleContent className="space-y-3 pt-3">
+
+            {/* Browser-data-clear warning — still important, kept compact */}
             <Alert className="border-amber-500/50 bg-amber-500/10 text-foreground [&_[data-slot=alert-description]]:text-muted-foreground">
               <AlertTitle>Clearing browser data removes your app data</AlertTitle>
               <AlertDescription>
-                <p>
-                  If you clear &quot;cookies and other site data&quot; (or similar) in your browser for this site, <strong>all of Nvalope&apos;s data is deleted</strong>: your budget, the local backup copy, and the app&apos;s memory of your backup folder. The app cannot warn you at the moment you clear—so set a backup folder or download a full backup now if you want a copy that survives.
-                </p>
-                <p className="mt-2">
-                  <strong>Backup folder:</strong> The <em>files</em> in the folder you chose are on your disk and are <strong>not</strong> deleted when you clear site data. After clearing, you will need to choose that folder again in Settings so the app can write to it. Your existing backup file in that folder remains.
-                </p>
+                If you clear &quot;cookies and other site data&quot; in your browser, <strong>all Nvalope data is deleted</strong>. Set a backup folder or download a backup now to keep a copy that survives.
+                {hasBackupFolder === true && (
+                  <span className="block mt-1">Your backup folder files are on your disk and are not affected — but you will need to re-select the folder in Settings after clearing.</span>
+                )}
               </AlertDescription>
             </Alert>
-            <p className="text-xs text-muted-foreground">
-              <strong>Full backup</strong> = everything (budget, settings, receipts, chat). Use to restore or move to another device. <strong>Budget-only export</strong> = envelopes, transactions, and income only—no settings or app data. Use for sharing or other tools. <strong>Import</strong> = replace this app’s data from a file (full backup or budget-only).
-            </p>
-            {SHOW_BANK_STATEMENT_IMPORT && isPremiumFeatureEnabled() && !hasPremiumImport && (
-              <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/30 p-3" role="status">
-                <strong>Bank statement import</strong> (PDF, CSV, OFX/QFX, QIF) requires the premium import entitlement. Upgrade to unlock.
-              </p>
-            )}
-            {showBankStatementImport && (
-              <>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Bank statement import</strong> is in this section: expand <strong>Data Management</strong>, then use{' '}
-                  <strong>Import bank statement</strong>. Supported formats: CSV, PDF, OFX/QFX, and QIF. Everything is parsed on your device; CSV or
-                  OFX exports are usually the most reliable.
+
+            {/* ── Encryption ── */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer" htmlFor="settings-encrypt-backups">
+                  <Lock className="h-4 w-4 text-muted-foreground" aria-hidden />
+                  <span className="text-sm font-medium">Encrypt backups</span>
+                  <Checkbox
+                    id="settings-encrypt-backups"
+                    checked={encryptBackups}
+                    onCheckedChange={(checked) => setEncryptBackups(checked === true)}
+                    aria-label="Encrypt backup files with a password"
+                    className="size-5 shrink-0 rounded"
+                  />
+                  <HelpTip>
+                    When enabled, downloaded backups are protected with a password you choose. The password is not stored — you must remember it or the backup cannot be opened.
+                  </HelpTip>
+                </label>
+                {encryptBackups && setBackupPassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPasswordDialogMode('set');
+                      setPasswordDialogOpen(true);
+                    }}
+                    className={btnBase}
+                  >
+                    <Lock className="h-4 w-4" aria-hidden />
+                    Set backup password
+                  </button>
+                )}
+              </div>
+              {encryptBackups && (
+                <p className="text-xs text-amber-600 dark:text-amber-500">
+                  If you forget your password, encrypted backups cannot be opened — there is no recovery. Store backups on an external drive and keep your password safe.
                 </p>
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  For <strong>CSV</strong> (a spreadsheet-style download): Nvalope reads the first row of your file as column names and{' '}
-                  <strong>tries to auto-fill</strong> which column is the date, description, and amount. You normally do not need to touch those
-                  choices unless the preview looks wrong—then you pick the right column from each menu. You can also save a mapping for the next
-                  time you import from the same bank.
-                </p>
-                <p className="text-xs text-primary font-medium">
-                  <strong>Transaction history</strong> is an optional feature and is off by default. If you use bank statement import, enable{' '}
-                  <strong>Transactions</strong> under <strong>Optional features</strong> (above) so you can browse imported lines in one place.
-                </p>
-              </>
-            )}
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <p>
-                After 3 changes you make (budget, settings, or app data), Nvalope saves a backup copy on this device. Automatic saves run at most once per minute. Use{' '}
-                <strong className="text-foreground">Download full backup</strong> anytime for a file you control.
-              </p>
-              <p>
-                {isExternalBackupSupported()
-                  ? 'Chrome, Edge, and other Chromium browsers can ask you to choose a folder on your disk (File System Access API). One file there is updated when autobackup runs. Safari and Firefox do not let websites pick an arbitrary folder—here, autobackup stays on this device until you download a copy.'
-                  : 'This browser does not support choosing a folder on your disk for automatic backups. Autobackup still runs to a copy on this device (IndexedDB); use Download full backup to save a file elsewhere (e.g. USB drive).'}
-              </p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              We recommend storing backup files on an external storage device (e.g. USB drive or external disk) so you have a copy if this device is lost or replaced.
-            </p>
-            <p className="text-xs font-medium text-foreground">Save a full copy • Export numbers only • Replace from file</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer" htmlFor="settings-encrypt-backups">
-                <Lock className="h-4 w-4 text-muted-foreground" aria-hidden />
-                <span className="text-sm font-medium">Encrypt backups</span>
-                <Checkbox
-                  id="settings-encrypt-backups"
-                  checked={encryptBackups}
-                  onCheckedChange={(checked) => setEncryptBackups(checked === true)}
-                  aria-label="Encrypt backup files with a password"
-                  className="size-5 shrink-0 rounded"
-                />
-              </label>
-              {encryptBackups && setBackupPassword && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPasswordDialogMode('set');
-                    setPasswordDialogOpen(true);
-                  }}
-                  className={dataMgmtBtn}
-                >
-                  🔐 Set backup password
-                </button>
               )}
             </div>
-            {encryptBackups && (
-              <>
-                <p className="text-xs text-muted-foreground">
-                  Full backups (folder and download) will be encrypted only when a password is set. Until you set a password above, new backups are saved <strong>unencrypted</strong>. The password is used for this session only and is not stored.
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">
-                  If you forget this password, encrypted backups cannot be opened. There is no recovery. Store backup files on an external storage device (e.g. USB drive or external disk) and keep your password in a safe place.
-                </p>
-              </>
-            )}
-            {hasBackupFolder === true && isExternalBackupSupported() && (
-              <p className="text-xs text-muted-foreground">
-                Backup folder set. One file there is updated when autobackup runs (after 3 changes, at most once per minute), in addition to the copy on this device.
-              </p>
-            )}
-            {isExternalBackupSupported() ? (
+
+            {/* ── Backup folder (Chromium only) ── */}
+            {externalSupported && (
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={onChooseBackupFolder} className={dataMgmtBtn}>
-                  📁 Choose backup folder
+                <button type="button" onClick={onChooseBackupFolder} className={btnBase}>
+                  <FolderOpen className="h-4 w-4" aria-hidden />
+                  {hasBackupFolder === true ? 'Change backup folder' : 'Choose backup folder'}
                 </button>
-              </div>
-            ) : onDownloadFullBackup ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={handleDownloadFullBackupClick} className={dataMgmtBtn}>
-                  💾 Download full backup
-                </button>
-              </div>
-            ) : null}
-            {onDownloadFullBackup && isExternalBackupSupported() && (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={handleDownloadFullBackupClick} className={dataMgmtBtn}>
-                  💾 Download full backup
-                </button>
+                <HelpTip>
+                  Pick a folder on your device. Nvalope will write one backup file there automatically after every 3 changes (at most once per minute). That file stays on your disk even if you clear browser data.
+                </HelpTip>
               </div>
             )}
-            <div className="flex items-center gap-2">
+
+            {/* ── Download full backup ── */}
+            {onDownloadFullBackup && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={handleDownloadFullBackupClick} className={btnBase}>
+                  <Download className="h-4 w-4" aria-hidden />
+                  Download full backup (everything)
+                </button>
+                <HelpTip>
+                  Downloads a single JSON file containing your budget, settings, receipts, and chat history. Use this to restore your data or move to a new device. {encryptBackups ? 'Will be encrypted with your password.' : ''}
+                </HelpTip>
+              </div>
+            )}
+
+            {/* ── Export budget only ── */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleExportBackup}
                 disabled={!api}
-                className={`${dataMgmtBtn} disabled:opacity-60 disabled:pointer-events-none`}
+                className={`${btnBase} ${btnDisabled}`}
               >
-                💾 Export budget data only
+                <Download className="h-4 w-4" aria-hidden />
+                Export budget only (no receipts)
+              </button>
+              <HelpTip>
+                Downloads a smaller file with just your envelopes, transactions, and income — no settings or receipt images. Useful for sharing your numbers or opening in another tool.
+              </HelpTip>
+            </div>
+
+            {/* 1.4 — Browser compat note: only shown when folder API is not supported */}
+            {!externalSupported && (
+              <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/30 p-2">
+                Auto-backup to a folder is not available in this browser (requires Chrome or Edge). Your data is still backed up automatically on this device. Use <strong>Download full backup</strong> to save a copy elsewhere.
+              </p>
+            )}
+
+            {/* ── Check for updates ── */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onCheckForUpdates}
+                disabled={checkingForUpdate}
+                className={`${btnBase} ${btnDisabled}`}
+              >
+                {checkingForUpdate ? '⏳ Checking…' : '🔄 Check for updates'}
               </button>
             </div>
+
+            {/* ── Sample data ── */}
+            <div className="space-y-1.5 pt-1">
+              <p className="text-xs font-medium text-foreground">Sample data</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!api) return;
+                    const existing = api.getState();
+                    const hasData =
+                      (existing.transactions?.length ?? 0) > 0 || (existing.envelopes?.length ?? 0) > 0;
+                    if (hasData) {
+                      setShowSampleDataConfirmDialog(true);
+                      return;
+                    }
+                    const state = getSeedBudgetState();
+                    api.importData(state);
+                    delayedToast.success('Sample data loaded. You can try the assistant and other sections.');
+                  }}
+                  disabled={!api}
+                  className={`${btnBase} ${btnDisabled}`}
+                >
+                  Load sample data
+                </button>
+                <HelpTip>
+                  Loads demo envelopes, income, and transactions for the current month. Use this to explore features without entering real data. Your existing data will be replaced.
+                </HelpTip>
+              </div>
+            </div>
+
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* ================================================================
+            SECTION 2 — Import data
+        ================================================================ */}
+        <Collapsible open={importOpen} onOpenChange={handleImportOpenChange}>
+          <CollapsibleTrigger
+            className={triggerCls}
+            aria-expanded={importOpen}
+            onPointerDownCapture={() => onBeforeOpen?.()}
+            onKeyDownCapture={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') onBeforeOpen?.();
+            }}
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary" aria-hidden>
+                <Upload className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-semibold text-foreground">Import data</span>
+                <span className="block text-xs text-muted-foreground">
+                  Restore from backup · bank statement (CSV, PDF, OFX)
+                </span>
+              </div>
+            </div>
+            {importOpen ? (
+              <ChevronUp className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            ) : (
+              <ChevronDown className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            )}
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="space-y-3 pt-3">
+
+            {/* Premium gate for bank statement import */}
+            {SHOW_BANK_STATEMENT_IMPORT && isPremiumFeatureEnabled() && !hasPremiumImport && (
+              <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/30 p-3" role="status">
+                <strong>Bank statement import</strong> requires the premium import entitlement. Upgrade to unlock.
+              </p>
+            )}
+
+            {/* ── Restore from backup file ── */}
             <input
               ref={importInputRef}
               type="file"
@@ -603,38 +718,45 @@ export function BackupSettings({
               aria-hidden
               onChange={handleImportFile}
             />
-            {showBankStatementImport && (
-              <input
-                ref={statementImportInputRef}
-                type="file"
-                accept=".csv,.pdf,.ofx,.qfx,.qif,text/csv,application/pdf,application/vnd.intu.qfx,application/x-ofx,application/qif"
-                className="hidden"
-                aria-hidden
-                data-testid="statement-import-input"
-                onChange={handleStatementImportFile}
-              />
-            )}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleImportClick}
                 disabled={importing || !api}
-                className={`${dataMgmtBtn} disabled:opacity-60 disabled:pointer-events-none`}
+                className={`${btnBase} ${btnDisabled}`}
               >
-                {importing ? '⏳ Importing…' : '📥 Import from file'}
+                <Upload className="h-4 w-4" aria-hidden />
+                {importing ? '⏳ Importing…' : 'Restore from backup file'}
               </button>
+              <HelpTip>
+                Replaces all your current data with the contents of a Nvalope backup file (.json). Use this to restore data on this device or after a browser reset. Encrypted backups will ask for your password.
+              </HelpTip>
             </div>
+
+            {/* ── Bank statement import ── */}
             {showBankStatementImport && (
               <>
-                <div className="flex items-center gap-2">
+                <input
+                  ref={statementImportInputRef}
+                  type="file"
+                  accept=".csv,.pdf,.ofx,.qfx,.qif,text/csv,application/pdf,application/vnd.intu.qfx,application/x-ofx,application/qif"
+                  className="hidden"
+                  aria-hidden
+                  data-testid="statement-import-input"
+                  onChange={handleStatementImportFile}
+                />
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleStatementImportClick}
                     disabled={statementImporting || !api}
-                    className={`${dataMgmtBtn} disabled:opacity-60 disabled:pointer-events-none`}
+                    className={`${btnBase} ${btnDisabled}`}
                   >
-                    {statementImporting ? '⏳ Parsing statement…' : '📄 Import bank statement'}
+                    {statementImporting ? '⏳ Parsing statement…' : 'Import bank statement'}
                   </button>
+                  <HelpTip>
+                    Upload a CSV, PDF, OFX, QFX, or QIF export from your bank. Nvalope reads it on your device, lets you assign each transaction to an envelope, and skips duplicates. CSV or OFX are most reliable.
+                  </HelpTip>
                 </div>
                 {statementPreview && api && (
                   <StatementImportPanel
@@ -678,46 +800,13 @@ export function BackupSettings({
                 )}
               </>
             )}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onCheckForUpdates}
-                disabled={checkingForUpdate}
-                className={`${dataMgmtBtn} disabled:opacity-60 disabled:pointer-events-none`}
-              >
-                {checkingForUpdate ? '⏳ Checking…' : '🔄 Check for updates'}
-              </button>
-            </div>
-            <p className="text-xs font-medium text-foreground mt-4">Sample data</p>
-            <p className="text-xs text-muted-foreground">
-              Load sample envelopes, income, and transactions for the current month so you can try the assistant and other features without entering data.
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!api) return;
-                  const existing = api.getState();
-                  const hasData =
-                    (existing.transactions?.length ?? 0) > 0 || (existing.envelopes?.length ?? 0) > 0;
-                  if (hasData) {
-                    setShowSampleDataConfirmDialog(true);
-                    return;
-                  }
-                  const state = getSeedBudgetState();
-                  api.importData(state);
-                  delayedToast.success('Sample data loaded. You can try the assistant and other sections.');
-                }}
-                disabled={!api}
-                className={`${dataMgmtBtn} disabled:opacity-60 disabled:pointer-events-none`}
-              >
-                Load sample data
-              </button>
-            </div>
+
           </CollapsibleContent>
         </Collapsible>
+
       </div>
 
+      {/* ── Dialogs (shared between both sections) ── */}
       <BackupPasswordDialog
         open={passwordDialogOpen}
         onOpenChange={setPasswordDialogOpen}

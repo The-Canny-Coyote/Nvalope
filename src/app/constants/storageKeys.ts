@@ -42,6 +42,8 @@ export const STORAGE_KEYS = {
   QOL_UPDATE_TOASTS_SEEN: 'nvalope-qol-update-toasts-seen',
   /** Whether the receipt scanner first-use guide has been dismissed */
   RECEIPT_SCANNER_INTRO_SEEN: 'nvalope-receipt-scanner-intro-seen',
+  /** Unix timestamp (ms) of the last successful auto-backup write */
+  LAST_BACKUP_SUCCESS: 'nvalope-last-backup-success',
   /** Prefix for entitlement flags (append the entitlement key) */
   ENTITLEMENT_PREFIX: 'nvalope-entitlement-',
   /** Light/dark theme preference (next-themes compatible key) */

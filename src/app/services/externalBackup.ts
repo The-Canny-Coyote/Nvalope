@@ -4,8 +4,19 @@ import { saveLocalAutobackup } from './localBackupIdb';
 import { STORAGE_KEYS } from '@/app/constants/storageKeys';
 
 const HANDLE_KEY = 'backup-dir';
+const LAST_BACKUP_SUCCESS_KEY = STORAGE_KEYS.LAST_BACKUP_SUCCESS;
 
 export const MIN_BACKUP_INTERVAL_MS = 60_000;
+
+/** Returns the Unix timestamp (ms) of the last successful auto-backup, or 0 if never. */
+export function getLastBackupSuccessTime(): number {
+  try {
+    const raw = localStorage.getItem(LAST_BACKUP_SUCCESS_KEY);
+    return raw ? Number(raw) : 0;
+  } catch {
+    return 0;
+  }
+}
 
 const BACKUP_FILENAME_PREFIX = 'nvalope-backup-';
 const BACKUP_FILENAME_SUFFIX = '.json';
@@ -324,6 +335,7 @@ export async function triggerBackupNow(
       password,
     });
     if (result.ok) {
+      try { localStorage.setItem(LAST_BACKUP_SUCCESS_KEY, String(Date.now())); } catch { /* ignore */ }
       if (!silent) autobackupNotify?.('done');
     } else {
       if (!silent) autobackupNotify?.('error');
@@ -336,6 +348,7 @@ export async function triggerBackupNow(
   // No folder (e.g. Firefox, Safari, or user has not chosen a folder): save locally so autobackup works on all browsers.
   try {
     await saveLocalAutobackup(snapshot as FullBackupSnapshot);
+    try { localStorage.setItem(LAST_BACKUP_SUCCESS_KEY, String(Date.now())); } catch { /* ignore */ }
     if (!silent) autobackupNotify?.('done');
     return { ok: true };
   } catch (e) {

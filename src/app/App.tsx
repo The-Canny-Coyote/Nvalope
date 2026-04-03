@@ -664,6 +664,7 @@ export default function App() {
             setAssistantOpen={setAssistantOpen}
             useCardLayout={useCardLayout}
             setUseCardLayout={setUseCardLayout}
+            isMobile={isMobile}
           />
         </AppErrorBoundary>
       </BudgetProvider>

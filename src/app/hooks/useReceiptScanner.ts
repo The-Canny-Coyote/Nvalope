@@ -399,6 +399,26 @@ export function useReceiptScanner() {
     [api, state.envelopes.length]
   );
 
+  /** Save all unsaved scans that have a non-zero amount, one at a time. */
+  const handleSaveAll = useCallback(async () => {
+    const eligible = scansRef.current.filter(
+      (s) => !s.addedToEnvelope && s.amount != null && s.amount !== 0
+    );
+    for (const s of eligible) {
+      await handleSaveReceipt(s);
+    }
+  }, [handleSaveReceipt]);
+
+  const clearGlossary = useCallback(async () => {
+    setGlossary({});
+    try {
+      const data = await getAppData();
+      await setAppData({ ...data, receiptGlossary: {} });
+    } catch {
+      delayedToast.error('Could not clear glossary. Try again.');
+    }
+  }, []);
+
   const loadGlossaryFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -444,6 +464,8 @@ export function useReceiptScanner() {
     handleFileChange,
     handleRemoveScan,
     handleSaveReceipt,
+    handleSaveAll,
+    clearGlossary,
     loadGlossaryFile,
     updateScan,
   };

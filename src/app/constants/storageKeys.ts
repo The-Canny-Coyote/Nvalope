@@ -40,6 +40,8 @@ export const STORAGE_KEYS = {
   PREMIUM_AI_DOWNLOAD_NOTICE_SEEN: 'nvalope-premium-ai-download-notice-seen',
   /** Whether the QoL update toasts have been shown (show once, never repeat) */
   QOL_UPDATE_TOASTS_SEEN: 'nvalope-qol-update-toasts-seen',
+  /** Whether the receipt scanner first-use guide has been dismissed */
+  RECEIPT_SCANNER_INTRO_SEEN: 'nvalope-receipt-scanner-intro-seen',
   /** Prefix for entitlement flags (append the entitlement key) */
   ENTITLEMENT_PREFIX: 'nvalope-entitlement-',
   /** Light/dark theme preference (next-themes compatible key) */

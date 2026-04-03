@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { ChevronDown, ChevronUp, Database, Download, FolderOpen, HelpCircle, Lock, Upload } from 'lucide-react';
-import { isExternalBackupSupported, scheduleBackup } from '@/app/services/externalBackup';
+import { isExternalBackupSupported, scheduleBackup, getLastBackupSuccessTime } from '@/app/services/externalBackup';
 import { SHOW_BANK_STATEMENT_IMPORT } from '@/app/constants/features';
 import { useBudget } from '@/app/store/BudgetContext';
 import { parseBudgetBackup, type BudgetBackup } from '@/app/store/budgetTypes';
@@ -29,6 +29,7 @@ import {
   findTemplateByFingerprint,
   importTemplatesAndRulesFromParsed,
   listAssignmentRules,
+  listStatementTemplates,
   putStatementTemplate,
   type StatementTemplateRecord,
 } from '@/app/services/statementImport/statementTemplates';
@@ -87,6 +88,24 @@ function HelpTip({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Pulls export date + counts from a raw backup object for the import confirm dialog. */
+function extractImportMeta(raw: Record<string, unknown>): { exportDate?: string; envelopeCount?: number; transactionCount?: number } {
+  const exportDate = typeof raw.exportDate === 'string' ? raw.exportDate : undefined;
+  const data = (raw.data ?? raw.budget ?? raw) as Record<string, unknown>;
+  const envelopeCount = Array.isArray(data.envelopes) ? (data.envelopes as unknown[]).length : undefined;
+  const transactionCount = Array.isArray(data.transactions) ? (data.transactions as unknown[]).length : undefined;
+  return { exportDate, envelopeCount, transactionCount };
+}
+
+/** Returns a short human-readable string like "just now", "5 min ago", "2 hr ago", or a date. */
+function formatLastBackupTime(ts: number): string {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 export function BackupSettings({
   enabledModules,
   onChooseBackupFolder,
@@ -124,6 +143,12 @@ export function BackupSettings({
   const [showImportConfirmDialog, setShowImportConfirmDialog] = useState(false);
   const pendingImportRawRef = useRef<Record<string, unknown> | null>(null);
   const [showSampleDataConfirmDialog, setShowSampleDataConfirmDialog] = useState(false);
+  // 3.1 — last backup timestamp (refreshed when backup section opens)
+  const [lastBackupTs, setLastBackupTs] = useState<number>(() => getLastBackupSuccessTime());
+  // 3.2 — metadata extracted from the backup file before showing confirm dialog
+  const [pendingImportMeta, setPendingImportMeta] = useState<{ exportDate?: string; envelopeCount?: number; transactionCount?: number } | null>(null);
+  // 3.4 — count of saved CSV templates (loaded once on mount)
+  const [savedTemplateCount, setSavedTemplateCount] = useState<number>(0);
 
   // jumpToDataRef opens the backup collapsible (backward-compat: callers expect
   // the data section to open, which is the backup section).
@@ -160,6 +185,16 @@ export function BackupSettings({
     };
   }, [jumpToDataRef, openDataSection]);
 
+  // 3.1 — refresh last-backup timestamp when the backup section is opened
+  useEffect(() => {
+    if (backupOpen) setLastBackupTs(getLastBackupSuccessTime());
+  }, [backupOpen]);
+
+  // 3.4 — load saved CSV template count once on mount
+  useEffect(() => {
+    void listStatementTemplates().then((ts) => setSavedTemplateCount(ts.length)).catch(() => {});
+  }, []);
+
   const handleImportClick = () => importInputRef.current?.click();
   const handleStatementImportClick = () => {
     if (!showBankStatementImport) return;
@@ -189,6 +224,35 @@ export function BackupSettings({
     a.click();
     URL.revokeObjectURL(url);
     delayedToast.success('Backup downloaded.');
+  };
+
+  // 3.3 — CSV export of transactions
+  const handleExportTransactionsCsv = () => {
+    if (!api) {
+      delayedToast.error('Budget not ready. Try again.');
+      return;
+    }
+    const txs = api.getState().transactions ?? [];
+    const envelopes = api.getState().envelopes ?? [];
+    const envelopeMap = new Map(envelopes.map((e) => [e.id, e.name]));
+    const rows = [
+      ['Date', 'Amount', 'Description', 'Envelope'],
+      ...txs.map((t) => [
+        t.date ?? '',
+        t.amount != null ? String(t.amount) : '',
+        `"${(t.description ?? '').replace(/"/g, '""')}"`,
+        `"${(envelopeMap.get(t.envelopeId ?? '') ?? '').replace(/"/g, '""')}"`,
+      ]),
+    ];
+    const csv = rows.map((r) => r.join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nvalope-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    delayedToast.success(`Downloaded ${txs.length} transactions as CSV.`);
   };
 
   const applyImportedRaw = (raw: Record<string, unknown>, toastId: string) => {
@@ -299,6 +363,7 @@ export function BackupSettings({
       }
       const raw = JSON.parse(text) as Record<string, unknown>;
       pendingImportRawRef.current = raw;
+      setPendingImportMeta(extractImportMeta(raw));
       setShowImportConfirmDialog(true);
     } catch {
       toast.dismiss(toastId);
@@ -455,6 +520,7 @@ export function BackupSettings({
           try {
             const raw = JSON.parse(decrypted) as Record<string, unknown>;
             pendingImportRawRef.current = raw;
+            setPendingImportMeta(extractImportMeta(raw));
             setShowImportConfirmDialog(true);
           } catch (parseErr) {
             toast.dismiss(toastId);
@@ -544,6 +610,12 @@ export function BackupSettings({
               }`}>
                 <Lock className="w-3 h-3" aria-hidden />
                 {encryptBackups ? 'Encryption: on' : 'Encryption: off'}
+              </span>
+              {/* 3.1 — last backup timestamp */}
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-muted/50 border-border text-muted-foreground">
+                {lastBackupTs > 0
+                  ? `Last backed up: ${formatLastBackupTime(lastBackupTs)}`
+                  : 'Not yet backed up this session'}
               </span>
             </div>
 
@@ -646,6 +718,22 @@ export function BackupSettings({
               </button>
               <HelpTip>
                 Downloads a smaller file with just your envelopes, transactions, and income — no settings or receipt images. Useful for sharing your numbers or opening in another tool.
+              </HelpTip>
+            </div>
+
+            {/* 3.3 ── Download transactions as CSV ── */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportTransactionsCsv}
+                disabled={!api}
+                className={`${btnBase} ${btnDisabled}`}
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                Download transactions as CSV
+              </button>
+              <HelpTip>
+                Downloads all your transactions as a spreadsheet-compatible CSV file. Open in Excel, Google Sheets, or any CSV editor.
               </HelpTip>
             </div>
 
@@ -792,6 +880,12 @@ export function BackupSettings({
                   <HelpTip>
                     Upload a CSV, PDF, OFX, QFX, or QIF export from your bank. Nvalope reads it on your device, lets you assign each transaction to an envelope, and skips duplicates. CSV or OFX are most reliable.
                   </HelpTip>
+                  {/* 3.4 — column-mapping memory indicator */}
+                  {savedTemplateCount > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {savedTemplateCount} saved {savedTemplateCount === 1 ? 'template' : 'templates'} — column mapping remembered
+                    </span>
+                  )}
                 </div>
                 {statementPreview && api && (
                   <StatementImportPanel
@@ -875,11 +969,21 @@ export function BackupSettings({
           setShowImportConfirmDialog(open);
           if (!open) {
             pendingImportRawRef.current = null;
+            setPendingImportMeta(null);
             toast.dismiss('import-file');
           }
         }}
         title="Replace your budget data?"
-        description="This will replace all your current envelopes, transactions, and income with the data in this file. This cannot be undone. Make sure you have a backup of your current data first."
+        description={[
+          'This will replace all your current envelopes, transactions, and income with the data in this file. This cannot be undone.',
+          pendingImportMeta?.exportDate
+            ? `This backup was exported on ${new Date(pendingImportMeta.exportDate).toLocaleString()}.`
+            : '',
+          pendingImportMeta?.envelopeCount != null || pendingImportMeta?.transactionCount != null
+            ? `It contains ${pendingImportMeta.envelopeCount ?? '?'} envelope${(pendingImportMeta.envelopeCount ?? 0) !== 1 ? 's' : ''} and ${pendingImportMeta.transactionCount ?? '?'} transaction${(pendingImportMeta.transactionCount ?? 0) !== 1 ? 's' : ''}.`
+            : '',
+          'Make sure you have a backup of your current data first.',
+        ].filter(Boolean).join(' ')}
         confirmLabel="Yes, replace my data"
         onConfirm={() => {
           const raw = pendingImportRawRef.current;
@@ -890,6 +994,7 @@ export function BackupSettings({
           }
           applyImportedRaw(raw, 'import-file');
           pendingImportRawRef.current = null;
+          setPendingImportMeta(null);
           setShowImportConfirmDialog(false);
         }}
       />

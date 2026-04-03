@@ -527,6 +527,26 @@ export function BackupSettings({
 
           <CollapsibleContent className="space-y-3 pt-3">
 
+            {/* 2.1 — At-a-glance backup status */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border ${
+                hasBackupFolder === true
+                  ? 'bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400'
+                  : 'bg-muted/50 border-border text-muted-foreground'
+              }`}>
+                <FolderOpen className="w-3 h-3" aria-hidden />
+                {hasBackupFolder === true ? 'Auto-backup: active' : 'Auto-backup: folder not set'}
+              </span>
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border ${
+                encryptBackups
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'bg-muted/50 border-border text-muted-foreground'
+              }`}>
+                <Lock className="w-3 h-3" aria-hidden />
+                {encryptBackups ? 'Encryption: on' : 'Encryption: off'}
+              </span>
+            </div>
+
             {/* Browser-data-clear warning — still important, kept compact */}
             <Alert className="border-amber-500/50 bg-amber-500/10 text-foreground [&_[data-slot=alert-description]]:text-muted-foreground">
               <AlertTitle>Clearing browser data removes your app data</AlertTitle>
@@ -555,7 +575,15 @@ export function BackupSettings({
                     When enabled, downloaded backups are protected with a password you choose. The password is not stored — you must remember it or the backup cannot be opened.
                   </HelpTip>
                 </label>
-                {encryptBackups && setBackupPassword && (
+              </div>
+              {/* 2.3 — progressive encryption setup: prompt card when no password set yet */}
+              {encryptBackups && setBackupPassword && (
+                <div className={`flex flex-wrap items-center gap-2 ${!getBackupPasswordRef?.current ? 'rounded-lg border border-amber-500/40 bg-amber-500/5 p-2' : ''}`}>
+                  {!getBackupPasswordRef?.current && (
+                    <p className="w-full text-xs font-medium text-amber-600 dark:text-amber-500">
+                      Set a password to use with encrypted backups.
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -565,13 +593,16 @@ export function BackupSettings({
                     className={btnBase}
                   >
                     <Lock className="h-4 w-4" aria-hidden />
-                    Set backup password
+                    {getBackupPasswordRef?.current ? 'Change backup password' : 'Set backup password'}
                   </button>
-                )}
-              </div>
+                  {getBackupPasswordRef?.current && (
+                    <span className="text-xs text-green-600 dark:text-green-400">Password set for this session</span>
+                  )}
+                </div>
+              )}
               {encryptBackups && (
                 <p className="text-xs text-amber-600 dark:text-amber-500">
-                  If you forget your password, encrypted backups cannot be opened — there is no recovery. Store backups on an external drive and keep your password safe.
+                  If you forget your password, encrypted backups cannot be recovered. Keep your password somewhere safe.
                 </p>
               )}
             </div>
@@ -709,33 +740,37 @@ export function BackupSettings({
               </p>
             )}
 
-            {/* ── Restore from backup file ── */}
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              aria-hidden
-              onChange={handleImportFile}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleImportClick}
-                disabled={importing || !api}
-                className={`${btnBase} ${btnDisabled}`}
-              >
-                <Upload className="h-4 w-4" aria-hidden />
-                {importing ? '⏳ Importing…' : 'Restore from backup file'}
-              </button>
-              <HelpTip>
-                Replaces all your current data with the contents of a Nvalope backup file (.json). Use this to restore data on this device or after a browser reset. Encrypted backups will ask for your password.
-              </HelpTip>
+            {/* 2.4 — Sub-section: Restore from backup */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-foreground">Restore from backup</p>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                aria-hidden
+                onChange={handleImportFile}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  disabled={importing || !api}
+                  className={`${btnBase} ${btnDisabled}`}
+                >
+                  <Upload className="h-4 w-4" aria-hidden />
+                  {importing ? '⏳ Importing…' : 'Restore from backup file'}
+                </button>
+                <HelpTip>
+                  Replaces all your current data with the contents of a Nvalope backup file (.json). Use this to restore data on this device or after a browser reset. Encrypted backups will ask for your password.
+                </HelpTip>
+              </div>
             </div>
 
-            {/* ── Bank statement import ── */}
+            {/* 2.4 — Sub-section: Bank statement import */}
             {showBankStatementImport && (
-              <>
+              <div className="space-y-2 pt-1 border-t border-border">
+                <p className="text-xs font-medium text-foreground">Bank statement import</p>
                 <input
                   ref={statementImportInputRef}
                   type="file"
@@ -798,7 +833,7 @@ export function BackupSettings({
                     }}
                   />
                 )}
-              </>
+              </div>
             )}
 
           </CollapsibleContent>

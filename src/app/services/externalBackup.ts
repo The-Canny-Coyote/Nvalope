@@ -20,7 +20,6 @@ export function getLastBackupSuccessTime(): number {
 
 const BACKUP_FILENAME_PREFIX = 'nvalope-backup-';
 const BACKUP_FILENAME_SUFFIX = '.json';
-const FIRST_INPUT_KEY = STORAGE_KEYS.FIRST_INPUT;
 const BACKUP_SUGGESTED_KEY = STORAGE_KEYS.BACKUP_SUGGESTED;
 const BACKUP_DOWNLOAD_SUGGESTED_KEY = STORAGE_KEYS.BACKUP_DOWNLOAD_SUGGESTED;
 
@@ -418,14 +417,6 @@ export async function downloadFullBackup(
 
 // --- First-input backup suggestion ---
 
-function hasSuggestedBackupFolder(): boolean {
-  try {
-    return localStorage.getItem(BACKUP_SUGGESTED_KEY) === 'true';
-  } catch {
-    return true; // avoid repeated toasts if localStorage fails
-  }
-}
-
 function setSuggestedBackupFolder(): void {
   try {
     localStorage.setItem(BACKUP_SUGGESTED_KEY, 'true');
@@ -443,70 +434,3 @@ export function markBackupSuggestionDismissed(): void {
   }
 }
 
-function hasSuggestedDownloadBackup(): boolean {
-  try {
-    return localStorage.getItem(BACKUP_DOWNLOAD_SUGGESTED_KEY) === 'true';
-  } catch {
-    return true;
-  }
-}
-
-function setSuggestedDownloadBackup(): void {
-  try {
-    localStorage.setItem(BACKUP_DOWNLOAD_SUGGESTED_KEY, 'true');
-  } catch {
-    // ignore
-  }
-}
-
-const BACKUP_REMINDER_KEY = STORAGE_KEYS.BACKUP_REMINDER;
-const BACKUP_REMINDER_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
-
-/**
- * Call occasionally (e.g. on app load or when opening Settings). Shows a friendly reminder
- * to back up or export if it's been at least 3 days since the last reminder.
- */
-export function maybeShowBackupReminder(showToast: (message: string) => void): void {
-  try {
-    const raw = localStorage.getItem(BACKUP_REMINDER_KEY);
-    const last = raw ? parseInt(raw, 10) : 0;
-    if (Date.now() - last < BACKUP_REMINDER_INTERVAL_MS) return;
-    localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
-    showToast(
-      'Tip: After 3 changes, a backup copy is saved on this device (at most once per minute). To keep a file elsewhere, download a full backup or set a backup folder (Chrome/Edge) in Settings → Data Management.'
-    );
-  } catch {
-    // ignore
-  }
-}
-
-/**
- * Call when the user performs their first meaningful action (e.g. opens a section, adds income).
- * If backup is supported, no folder is set yet, and we haven't suggested before, shows a one-time toast
- * suggesting they set up a backup folder in Settings → Data Management.
- */
-export function markFirstInput(): void {
-  try {
-    localStorage.setItem(FIRST_INPUT_KEY, 'true');
-  } catch {
-    return;
-  }
-  (async () => {
-    if (!backupSuggestionToast) return;
-    if (isExternalBackupSupported()) {
-      const handle = await getBackupFolderHandle();
-      if (handle) return;
-      if (hasSuggestedBackupFolder()) return;
-      setSuggestedBackupFolder();
-      backupSuggestionToast(
-        'Tip: After 3 changes, a copy is saved on this device (at most once per minute). To keep a file elsewhere, set a backup folder or download a backup in Settings → Data Management.'
-      );
-    } else {
-      if (hasSuggestedDownloadBackup()) return;
-      setSuggestedDownloadBackup();
-      backupSuggestionToast(
-        'Tip: After 3 changes, a copy is saved on this device (at most once per minute). Download a backup from Settings → Data Management to save a file elsewhere (e.g. USB drive).'
-      );
-    }
-  })();
-}

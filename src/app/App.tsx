@@ -93,6 +93,24 @@ export default function App() {
     });
   }, [updateAvailable, handleUpdateReload, setUpdateAvailable]);
 
+  useEffect(() => {
+    if (sessionStorage.getItem('nvalope-bmc-toast-shown') === 'true') return;
+    sessionStorage.setItem('nvalope-bmc-toast-shown', 'true');
+    const t = setTimeout(() => {
+      toast('Enjoying Nvalope? ☕', {
+        id: 'bmc-support',
+        description: 'If it\'s been useful, buying me a coffee goes a long way. The link is also in the footer anytime.',
+        duration: 10000,
+        position: 'bottom-right',
+        action: {
+          label: 'Buy me a coffee',
+          onClick: () => window.open('https://www.buymeacoffee.com/thecannycoyote', '_blank', 'noopener,noreferrer'),
+        },
+      });
+    }, 4000);
+    return () => clearTimeout(t);
+  }, []);
+
   const { mainScrollRef, scrollTopToRestoreRef, scrollHeightAtSaveRef: _scrollHeightAtSaveRef, saveScrollForRestore } = useScrollRestore();
   const anchorRestoreRef = useRef<{ sectionId: number; offsetTop: number } | null>(null);
   const isMobile = useIsMobile();
@@ -148,6 +166,8 @@ export default function App() {
 
   const { entitlementsFromApi, isPremium, effectiveEnabledModules } = usePremiumEntitlements(enabledModules);
   const hasPremiumImport = hasEntitlement('premium_import', entitlementsFromApi);
+  /** Stable string dep for useLayoutEffect — changes when module list changes so scroll can be restored. */
+  const effectiveEnabledModulesKey = effectiveEnabledModules.join(',');
 
   function syncAppDataToStore(data: AppData): void {
     useAppStore.getState().setBudgetPeriodMode(data.budgetPeriodMode ?? 'monthly');
@@ -235,10 +255,6 @@ export default function App() {
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEYS.QOL_UPDATE_TOASTS_SEEN) === 'true') return;
     localStorage.setItem(STORAGE_KEYS.QOL_UPDATE_TOASTS_SEEN, 'true');
-    delayedToast.info(
-      'Tip: After 3 changes, a backup copy is saved on this device (at most once per minute). Set a backup folder or download a backup in Settings → Data Management.',
-      { durationMs: 6500 }
-    );
     const t1 = setTimeout(() => {
       delayedToast.info(
         'Update: New colorblind settings help make category colors and charts easier to distinguish. Also new: Cache Savings Goals (Envelopes & Expenses → Cache Savings Goals).',
@@ -389,10 +405,9 @@ export default function App() {
   }, [getBackupSnapshotStable]);
 
   // Restore scroll position after layout changes (sliders, collapsibles, etc.). Module toggles save scroll via
-  // saveScrollAndAnchorBeforeModuleToggle; we intentionally omit enabledModules from deps so the restore effect
-  // does not re-run on every module list change (avoids clamp/ResizeObserver fighting while scrollHeight settles).
-  // Trade-off: if another section is open and enabling a module causes a large wheel/layout shift, scroll may
-  // not match a “perfect” restore for that rare case.
+  // saveScrollAndAnchorBeforeModuleToggle; effectiveEnabledModulesKey is included so the restore effect
+  // fires after module toggles (preserving scroll position). The early-return when savedTop is null prevents
+  // the ResizeObserver from being set up unnecessarily on unrelated module changes.
   useLayoutEffect(() => {
     const main = mainScrollRef.current;
     const section = sectionContentRef.current;
@@ -455,7 +470,7 @@ export default function App() {
       if (coalescedRaf !== 0) cancelAnimationFrame(coalescedRaf);
       ro.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs stable; restore on section/layout change only (not enabledModules — see comment above)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable; effectiveEnabledModulesKey added to restore scroll after module toggles
   }, [
     textSize,
     lineHeight,
@@ -471,6 +486,7 @@ export default function App() {
     accessibilityPresetModesOpen,
     settingsCoreFeaturesOpen,
     settingsOptionalFeaturesOpen,
+    effectiveEnabledModulesKey,
   ]);
 
   // Intentionally no scroll-into-view on section select: the page stays at its current position when a slice or card is clicked.
@@ -639,7 +655,7 @@ export default function App() {
         onBackupNoThanks={() => {
           markBackupSuggestionDismissed();
           delayedToast.info(
-            'After 3 changes, a backup copy is saved on this device (at most once per minute). You can set a backup folder or download a backup in Settings → Data Management.'
+            'You can set a backup folder or download a backup anytime in Settings → Data Management.'
           );
         }}
         showAdvancedAIDownloadNotice={showAdvancedAIDownloadNotice}

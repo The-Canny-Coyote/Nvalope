@@ -688,7 +688,7 @@ export function BackupSettings({
                   {hasBackupFolder === true ? 'Change backup folder' : 'Choose backup folder'}
                 </button>
                 <HelpTip>
-                  Pick a folder on your device. Nvalope will write one backup file there automatically after every 3 changes (at most once per minute). That file stays on your disk even if you clear browser data.
+                  Pick a folder on your device. Nvalope will write one backup file there automatically as you make changes. That file stays on your disk even if you clear browser data.
                 </HelpTip>
               </div>
             )}

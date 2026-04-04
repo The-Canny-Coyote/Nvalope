@@ -15,7 +15,7 @@ import { Checkbox } from '@/app/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/app/components/ui/collapsible';
 import { Alert, AlertTitle, AlertDescription } from '@/app/components/ui/alert';
 import { ConfirmDialog } from '@/app/components/ui/ConfirmDialog';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/app/components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '@/app/components/ui/popover';
 import { toast } from 'sonner';
 import {
   classifyImportedTransactions,
@@ -72,19 +72,20 @@ export interface BackupSettingsProps {
 // ---------------------------------------------------------------------------
 function HelpTip({ children }: { children: React.ReactNode }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className="inline-flex items-center justify-center w-4 h-4 text-muted-foreground cursor-help shrink-0"
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center w-5 h-5 text-muted-foreground hover:text-foreground shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
           aria-label="More information"
         >
           <HelpCircle className="w-3.5 h-3.5" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-[240px] text-xs leading-relaxed">
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" align="start" className="max-w-[240px] text-xs leading-relaxed p-3 w-auto">
         {children}
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
 

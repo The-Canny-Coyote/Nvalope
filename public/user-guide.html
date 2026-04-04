@@ -174,7 +174,7 @@
 <p>The import process:</p>
 <ol>
 <li>Choose your file. The app detects the format automatically.</li>
-<li>For CSV files, map your columns to the right fields (date, description, amount) if the app doesn&#39;t detect them automatically. Once mapped, the template is saved for next time.</li>
+<li>For CSV files, map your columns to the right fields (date, description, amount) if the app doesn&#39;t detect them automatically. Once mapped, the template is saved automatically — next time you import from the same bank, the column mapping is applied without asking.</li>
 <li>Preview the transactions. Potential duplicates are flagged — you can skip them, keep both, or replace the existing entry.</li>
 <li>Confirm to add the transactions to your budget.</li>
 </ol>
@@ -230,14 +230,22 @@
 <p>Settings covers three areas:</p>
 <p><strong>Appearance</strong> — switch between the Feature Wheel and Card Layout.</p>
 <p><strong>Optional features</strong> — turn individual sections on or off. Core sections (Overview, Income, Envelopes, Accessibility) can also be hidden if you don&#39;t use them. The AI assistant and advanced features are here too.</p>
-<p><strong>Data Management</strong> — everything to do with your budget data:</p>
+<p><strong>Data Management</strong> — split into two collapsible sections for clarity:</p>
+<p><strong>Back up &amp; restore</strong> contains everything for protecting your data:</p>
 <ul>
-<li><strong>Choose backup folder</strong> — pick a folder on your device and Nvalope will automatically save a backup there after every few changes</li>
-<li><strong>Download full backup</strong> — download a complete snapshot of your budget, settings, and receipt archive as a JSON file. You can optionally encrypt it with a password.</li>
-<li><strong>Export budget data</strong> — export just your budget (transactions, envelopes, income) without settings or receipts</li>
-<li><strong>Import from file</strong> — restore from a previous backup or import budget data exported from another device</li>
-<li><strong>Import bank statement</strong> — see <a href="#bank-statement-import">Bank statement import</a></li>
-<li><strong>Check for updates</strong> — manually check if a newer version of the app is available</li>
+<li><strong>Status pills</strong> at the top show at a glance whether auto-backup is active, whether encryption is on, and when the last backup ran (e.g. "5 min ago")</li>
+<li><strong>Encrypt backups</strong> — toggle to password-protect downloaded backups. When encryption is on and no password has been set yet, a prompt appears to guide you through setup. A "Password set for this session" indicator appears once it&#39;s ready.</li>
+<li><strong>Choose backup folder</strong> (Chrome/Edge only) — pick a folder on your device and Nvalope saves a backup automatically after every few changes</li>
+<li><strong>Download full backup (everything)</strong> — a complete snapshot of your budget, settings, receipts, and chat history as a JSON file</li>
+<li><strong>Export budget only (no receipts)</strong> — a smaller file with just your envelopes, transactions, and income; useful for sharing or opening in another tool</li>
+<li><strong>Download transactions as CSV</strong> — exports all transactions as a spreadsheet-compatible CSV file you can open in Excel or Google Sheets</li>
+<li><strong>Check for updates</strong> — manually check if a newer version is available</li>
+<li><strong>Load sample data</strong> — load demo envelopes and transactions to explore features without entering real data</li>
+</ul>
+<p><strong>Import data</strong> contains two sub-sections:</p>
+<ul>
+<li><strong>Restore from backup</strong> — load a Nvalope backup file (.json) to replace your current data. Before replacing, the app shows you what&#39;s in the file: the export date and the number of envelopes and transactions, so you can confirm you&#39;ve got the right file.</li>
+<li><strong>Bank statement import</strong> — see <a href="#bank-statement-import">Bank statement import</a>. If you&#39;ve imported a CSV from the same bank before, you&#39;ll see "N saved templates — column mapping remembered" next to the import button.</li>
 </ul>
 <hr>
 <h2 id="your-data-and-backups">Your data and backups</h2>
@@ -261,7 +269,7 @@
 <p><strong>On desktop (Chrome or Edge):</strong> Look for the install icon in the address bar, or open the browser menu and choose &quot;Install Nvalope.&quot;</p>
 <p><strong>On iPhone/iPad (Safari):</strong> Tap the Share button, then &quot;Add to Home Screen.&quot;</p>
 <p><strong>On Android (Chrome):</strong> Tap the three-dot menu, then &quot;Add to Home Screen&quot; or &quot;Install app.&quot;</p>
-<p>Once installed, Nvalope works fully offline after the first load. If a new version of the app is available, you&#39;ll see an update prompt. Tap &quot;Update now&quot; to get it — your data is not affected by updates.</p>
+<p>Once installed, Nvalope works fully offline after the first load. If a new version is available, a small notification appears at the bottom of the screen with an &quot;Update now&quot; button — tap it when you&#39;re ready. You can dismiss it and update later; your data is never affected by updates.</p>
 <hr>
 <h2 id="privacy">Privacy</h2>
 <p>Nvalope was designed with privacy as a constraint, not a feature checkbox.</p>

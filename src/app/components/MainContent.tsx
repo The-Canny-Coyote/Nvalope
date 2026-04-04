@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { WheelMenu } from '@/app/components/WheelMenu';
 import { SimpleListView } from '@/app/components/SimpleListView';
@@ -108,6 +108,8 @@ export function MainContent({
   const cardsSectionWidthPercent = useAppStore((s) => s.cardsSectionWidthPercent);
   const supportBlockMinimized = useAppStore((s) => s.supportBlockMinimized);
   const setSupportBlockMinimized = useAppStore((s) => s.setSupportBlockMinimized);
+  const supportBlockDismissed = useAppStore((s) => s.supportBlockDismissed);
+  const setSupportBlockDismissed = useAppStore((s) => s.setSupportBlockDismissed);
   const storageBarMinimized = useAppStore((s) => s.storageBarMinimized);
   const setStorageBarMinimized = useAppStore((s) => s.setStorageBarMinimized);
   const wheelMinimized = useAppStore((s) => s.wheelMinimized);
@@ -299,13 +301,13 @@ export function MainContent({
                     </sup>
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1.5">
-                    A Free Privacy-Focused, Offline Capable, Envelope Budgeting PWA.
+                    No account required and no ads or tracking.
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    No account needed and no data leaves your device unless you choose.
+                    Your data only leaves your device when you choose.
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Absolutely no ads or tracking.
+                  <p className="text-sm text-muted-foreground mt-1 italic">
+                    Do business like it&apos;s nobody&apos;s business.
                   </p>
                 </div>
               </Card>
@@ -331,52 +333,64 @@ export function MainContent({
               </div>
             </div>
 
-            <div className="mt-4 focus-mode-hide flex flex-col items-center gap-1 relative z-20">
-              <div className="flex flex-wrap items-center justify-center gap-2 w-full">
-                {supportBlockMinimized ? (
-                  <div className="flex items-center justify-center gap-2 w-full">
-                    <span className="text-sm text-muted-foreground">Support the project</span>
-                    <button
-                      type="button"
-                      onClick={() => setSupportBlockMinimized(false)}
-                      className="inline-flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0"
-                      aria-expanded={false}
-                      aria-label="Expand support / Buy me a coffee"
-                    >
-                      <ChevronDown className="w-4 h-4" aria-hidden />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative w-full max-w-[16rem] mx-auto">
-                    <a
-                      href="https://www.buymeacoffee.com/thecannycoyote"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="glow-support block p-4 rounded-2xl text-center min-w-[10rem]"
-                      aria-label="Support the project — Buy me a coffee (opens Buy Me a Coffee; their privacy policy applies)"
-                      title="Opens Buy Me a Coffee. Their data and privacy policy applies on that site."
-                    >
-                      <span className="text-2xl" aria-hidden>
-                        ☕
-                      </span>
-                      <p className="text-sm font-semibold text-foreground mt-1">
-                        Support the project
-                      </p>
-                      <p className="text-xs text-primary font-medium">Buy me a coffee</p>
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setSupportBlockMinimized(true)}
-                      className="absolute top-2 right-2 inline-flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0 z-10"
-                      aria-expanded={true}
-                      aria-label="Minimize support section"
-                    >
-                      <ChevronUp className="w-4 h-4" aria-hidden />
-                    </button>
-                  </div>
-                )}
+            {!supportBlockDismissed && (
+              <div className="mt-4 focus-mode-hide flex flex-col items-center gap-1 relative z-20">
+                <div className="flex flex-wrap items-center justify-center gap-2 w-full">
+                  {supportBlockMinimized ? (
+                    <div className="flex items-center justify-center gap-2 w-full">
+                      <span className="text-sm text-muted-foreground">Support the project</span>
+                      <button
+                        type="button"
+                        onClick={() => setSupportBlockMinimized(false)}
+                        className="inline-flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0"
+                        aria-expanded={false}
+                        aria-label="Expand support / Buy me a coffee"
+                      >
+                        <ChevronDown className="w-4 h-4" aria-hidden />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative w-full max-w-[16rem] mx-auto">
+                      <a
+                        href="https://www.buymeacoffee.com/thecannycoyote"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="glow-support block p-4 rounded-2xl text-center min-w-[10rem]"
+                        aria-label="Support the project — Buy me a coffee (opens Buy Me a Coffee; their privacy policy applies)"
+                        title="Opens Buy Me a Coffee. Their data and privacy policy applies on that site."
+                      >
+                        <span className="text-2xl" aria-hidden>
+                          ☕
+                        </span>
+                        <p className="text-sm font-semibold text-foreground mt-1">
+                          Support the project
+                        </p>
+                        <p className="text-xs text-primary font-medium">Buy me a coffee</p>
+                      </a>
+                      {/* Minimize button */}
+                      <button
+                        type="button"
+                        onClick={() => setSupportBlockMinimized(true)}
+                        className="absolute top-2 right-8 inline-flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0 z-10"
+                        aria-expanded={true}
+                        aria-label="Minimize support section"
+                      >
+                        <ChevronUp className="w-4 h-4" aria-hidden />
+                      </button>
+                      {/* Dismiss button — hides permanently */}
+                      <button
+                        type="button"
+                        onClick={() => setSupportBlockDismissed(true)}
+                        className="absolute top-2 right-2 inline-flex items-center justify-center p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0 z-10"
+                        aria-label="Dismiss support banner"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
           <div className="mt-4 w-full flex flex-col items-center gap-4">
             {selectedMode === 'focus' ? (
@@ -582,8 +596,7 @@ export function MainContent({
               </Popover>
               </div>
               <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                All data and processing occurs on your device only • Nvalope™, Cache™, and
-                Cache the AI Assistant™ are trademarks of Canny Coyote Labs{' '}
+                Nvalope™, Cache™, and Cache the AI Assistant™ are trademarks of Canny Coyote Labs{' '}
                 <BrandCoyoteMark decorativeOnly className="inline" />
               </p>
             </div>
@@ -651,6 +664,16 @@ export function MainContent({
                 aria-label="Nvalope user guide — full documentation (opens in new tab)"
               >
                 User guide
+              </a>
+              <span aria-hidden="true">·</span>
+              <a
+                href="https://www.buymeacoffee.com/thecannycoyote"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="Support the project — Buy me a coffee (opens in new tab)"
+              >
+                Buy me a coffee ☕
               </a>
             </footer>
           </div>

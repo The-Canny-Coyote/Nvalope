@@ -131,6 +131,8 @@ export interface AppState {
   titleAreaMinimized: boolean;
   /** When true, Support / Buy me a coffee block is minimized to a single row with chevron to expand. Persisted. */
   supportBlockMinimized: boolean;
+  /** When true, Support / Buy me a coffee block is permanently dismissed (hidden entirely). Persisted. */
+  supportBlockDismissed: boolean;
   /** When true, storage capacity bar at bottom is minimized to a single row with chevron to expand. Persisted. */
   storageBarMinimized: boolean;
   /** When true, section wheel is minimized to a single row with chevron to expand. Persisted. */
@@ -177,6 +179,7 @@ export interface AppState {
   setColorblindMode: (v: 'none' | 'deuteranopia' | 'tritanopia' | 'monochromacy') => void;
   setTitleAreaMinimized: (v: boolean) => void;
   setSupportBlockMinimized: (v: boolean) => void;
+  setSupportBlockDismissed: (v: boolean) => void;
   setStorageBarMinimized: (v: boolean) => void;
   setWheelMinimized: (v: boolean) => void;
   setEncryptBackups: (v: boolean) => void;
@@ -220,6 +223,7 @@ export const useAppStore = create<AppState>()(
       colorblindMode: 'none',
       titleAreaMinimized: false,
       supportBlockMinimized: false,
+      supportBlockDismissed: false,
       storageBarMinimized: false,
       wheelMinimized: false,
       encryptBackups: false,
@@ -260,6 +264,7 @@ export const useAppStore = create<AppState>()(
       setColorblindMode: (v) => set({ colorblindMode: v }),
       setTitleAreaMinimized: (v) => set({ titleAreaMinimized: v }),
       setSupportBlockMinimized: (v) => set({ supportBlockMinimized: v }),
+      setSupportBlockDismissed: (v) => set({ supportBlockDismissed: v }),
       setStorageBarMinimized: (v) => set({ storageBarMinimized: v }),
       setWheelMinimized: (v) => set({ wheelMinimized: v }),
       setEncryptBackups: (v) => set({ encryptBackups: v }),
@@ -302,6 +307,7 @@ export const useAppStore = create<AppState>()(
         colorblindMode: s.colorblindMode,
         titleAreaMinimized: s.titleAreaMinimized,
         supportBlockMinimized: s.supportBlockMinimized,
+        supportBlockDismissed: s.supportBlockDismissed,
         storageBarMinimized: s.storageBarMinimized,
         wheelMinimized: s.wheelMinimized,
         encryptBackups: s.encryptBackups,
@@ -372,6 +378,7 @@ export function getAppStoreSettingsSnapshot(): Record<string, unknown> {
     colorblindMode: s.colorblindMode,
     titleAreaMinimized: s.titleAreaMinimized,
     supportBlockMinimized: s.supportBlockMinimized,
+    supportBlockDismissed: s.supportBlockDismissed,
     storageBarMinimized: s.storageBarMinimized,
     wheelMinimized: s.wheelMinimized,
     encryptBackups: s.encryptBackups,

@@ -76,6 +76,23 @@ export default function App() {
 
   const { handleCheckForUpdates } = useCheckUpdatesToast(checkForUpdates, checkingForUpdate, updateAvailable);
 
+  // Show a non-blocking persistent toast instead of an interrupting modal when
+  // an update is available. The user can dismiss it and update later.
+  useEffect(() => {
+    if (!updateAvailable) return;
+    toast('Update ready', {
+      id: 'pwa-update',
+      description: 'A new version of Nvalope is available.',
+      duration: Infinity,
+      position: 'bottom-right',
+      action: {
+        label: 'Update now',
+        onClick: handleUpdateReload,
+      },
+      onDismiss: () => setUpdateAvailable(false),
+    });
+  }, [updateAvailable, handleUpdateReload, setUpdateAvailable]);
+
   const { mainScrollRef, scrollTopToRestoreRef, scrollHeightAtSaveRef: _scrollHeightAtSaveRef, saveScrollForRestore } = useScrollRestore();
   const anchorRestoreRef = useRef<{ sectionId: number; offsetTop: number } | null>(null);
   const isMobile = useIsMobile();
@@ -625,14 +642,9 @@ export default function App() {
             'After 3 changes, a backup copy is saved on this device (at most once per minute). You can set a backup folder or download a backup in Settings → Data Management.'
           );
         }}
-        updateAvailable={updateAvailable}
-        onUpdateAvailableOpenChange={setUpdateAvailable}
-        onUpdateReload={handleUpdateReload}
         showAdvancedAIDownloadNotice={showAdvancedAIDownloadNotice}
         onAdvancedAIDownloadNoticeOpenChange={setShowAdvancedAIDownloadNotice}
         onAdvancedAIDownloadNoticeAck={handleAdvancedAIDownloadNoticeAck}
-        hasBackupFolder={hasBackupFolder}
-        isExternalBackupSupported={isExternalBackupSupported()}
       />
       <BudgetProvider
         budgetStateRef={budgetStateRef}
@@ -664,6 +676,7 @@ export default function App() {
             setAssistantOpen={setAssistantOpen}
             useCardLayout={useCardLayout}
             setUseCardLayout={setUseCardLayout}
+            isMobile={isMobile}
           />
         </AppErrorBoundary>
       </BudgetProvider>
